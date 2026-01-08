@@ -41,7 +41,7 @@
 		"prettier": ">=3.7"
 	},
 	"devDependencies": {
-		"@standard-config/tsconfig": "^1.0.0",
+		"@standard-config/tsconfig": "^2.0.0",
 		"@vitest/coverage-v8": "~4.0.16",
 		"oxlint": "~1.38.0",
 		"oxlint-tsgolint": "~0.10.1",
