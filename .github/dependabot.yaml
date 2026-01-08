@@ -11,3 +11,5 @@ updates:
     schedule:
       interval: 'weekly'
     versioning-strategy: 'increase-if-necessary'
+    ignore:
+      - dependency-name: 'tsdown'

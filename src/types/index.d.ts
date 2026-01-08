@@ -1,3 +1,4 @@
+import 'prettier';
 import './vendor.d.ts';
 
 declare module 'prettier' {
