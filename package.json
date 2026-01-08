@@ -51,7 +51,10 @@
 	},
 	"scripts": {
 		"format": "prettier --write --ignore-unknown .",
+		"format:ci": "prettier --check --ignore-unknown .",
 		"lint": "oxlint --fix --type-aware --type-check --deny-warnings --report-unused-disable-directives",
+		"lint:ci": "oxlint --type-aware --type-check --deny-warnings --report-unused-disable-directives",
+		"prepack": "pnpm run '/^(format:ci|lint:ci|test|typecheck)$/'",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
 	}
