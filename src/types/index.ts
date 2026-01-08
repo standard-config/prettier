@@ -1,5 +1,4 @@
-import 'prettier';
-import './vendor.d.ts';
+import type {} from 'prettier';
 
 declare module 'prettier' {
 	interface Options {

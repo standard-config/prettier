@@ -179,12 +179,14 @@
 	},
 	"overrides": [
 		{
-			"files": ["*.d.ts"],
+			"files": ["*.d.ts", "src/types/**/*.ts"],
 			"rules": {
+				"import/no-empty-named-blocks": "off",
 				"import/no-unassigned-import": "off",
 				"import/unambiguous": "off",
 				"typescript/consistent-type-definitions": "off",
-				"typescript/no-restricted-types": "off"
+				"typescript/no-restricted-types": "off",
+				"unicorn/require-module-specifiers": "off"
 			}
 		},
 		{
