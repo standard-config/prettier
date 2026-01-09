@@ -52,7 +52,8 @@
 		"vitest": "4.0.16"
 	},
 	"scripts": {
-		"build": "tsdown --publint",
+		"build": "tsdown",
+		"fix": "pnpm run format && pnpm run lint",
 		"format": "prettier --write --ignore-unknown .",
 		"format:ci": "prettier --check --ignore-unknown .",
 		"lint": "oxlint --fix --type-aware --type-check --deny-warnings --report-unused-disable-directives",
