@@ -1,3 +1,6 @@
+[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier?color=success)](https://www.npmjs.com/package/@standard-config/prettier)
+[![](https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml)](https://github.com/standard-config/prettier/actions/workflows/test.yaml)
+
 # @standard-config/prettier
 
 Curated Prettier config for modern TypeScript projects.
@@ -25,7 +28,7 @@ import { defineConfig } from '@standard-config/prettier';
 export default defineConfig();
 ```
 
-Optionally, pass your own [config options](https://prettier.io/docs/options) to overwrite the [package defaults](src/config.ts):
+You can override the defaults by passing your own [config options](https://prettier.io/docs/options).
 
 ```ts
 import { defineConfig } from '@standard-config/prettier';
