@@ -1,5 +1,6 @@
-[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier?color=success)](https://www.npmjs.com/package/@standard-config/prettier)
+[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier)](https://www.npmjs.com/package/@standard-config/prettier)
 [![](https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml)](https://github.com/standard-config/prettier/actions/workflows/test.yaml)
+[![](https://img.shields.io/codecov/c/github/standard-config/prettier)](https://codecov.io/github/standard-config/prettier)
 
 # @standard-config/prettier
 
