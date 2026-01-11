@@ -1,10 +1,14 @@
-import type { Config } from 'prettier';
+import type { Config, Options } from 'prettier';
 import { expectTypeOf, test } from 'vitest';
-import BASE_CONFIG from './config.ts';
+import { DEFAULT_CONFIG, DEFAULT_OPTIONS } from './config.ts';
 
 test('is a valid Prettier config', () => {
-	expectTypeOf(BASE_CONFIG).toExtend<Config>();
+	expectTypeOf(DEFAULT_CONFIG).toExtend<Config>();
+	expectTypeOf(DEFAULT_OPTIONS).toExtend<Options>();
 
 	/* @ts-expect-error */
-	BASE_CONFIG.quoteProps = 'all';
+	DEFAULT_CONFIG.quoteProps = 'all';
+
+	/* @ts-expect-error */
+	DEFAULT_OPTIONS.quoteProps = 'all';
 });

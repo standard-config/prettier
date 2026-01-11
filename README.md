@@ -7,6 +7,7 @@
 Curated Prettier config for modern TypeScript projects.
 
 - Enables the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript formatting.
+- Formats shell scripts out of the box, including `git` hooks.
 - Sorts all JSON files, with curated order patterns for common config files: `package.json`, `tsconfig.json`, `.oxlintrc.json`, and more.
 
 ## Install
