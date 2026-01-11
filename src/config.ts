@@ -88,6 +88,15 @@ export const DEFAULT_CONFIG = {
 			},
 		},
 		{
+			files: ['*.xml', '*.plist', '*.svg'],
+			options: {
+				...DEFAULT_OPTIONS,
+				parser: 'html',
+				printWidth: 80,
+				singleAttributePerLine: true,
+			},
+		},
+		{
 			files: [
 				'oxlintrc.json',
 				'oxlintrc.jsonc',
