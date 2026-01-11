@@ -6,6 +6,7 @@ import prioritizeKeys from './prioritize-keys/index.ts';
 
 const config = {
 	bracketSpacing: true,
+	plugins: [pluginOxidation, pluginPackageJSON, pluginSortJSON],
 	printWidth: 80,
 	quoteProps: 'consistent',
 	singleQuote: true,
@@ -24,20 +25,17 @@ const config = {
 			files: ['*.html'],
 			options: {
 				printWidth: 100,
-				singleQuote: false,
 			},
 		},
 		{
 			files: ['*.js', '*.jsx', '*.cjs', '*.mjs'],
 			options: {
-				plugins: [pluginOxidation],
 				parser: 'oxc',
 			},
 		},
 		{
 			files: ['*.json', '*.jsonc'],
 			options: {
-				plugins: [pluginSortJSON],
 				jsonRecursiveSort: true,
 				jsonSortOrder: prioritizeKeys('$schema'),
 			},
@@ -45,7 +43,6 @@ const config = {
 		{
 			files: ['*.ts', '*.tsx', '*.cts', '*.mts'],
 			options: {
-				plugins: [pluginOxidation],
 				parser: 'oxc-ts',
 			},
 		},
@@ -58,26 +55,32 @@ const config = {
 		},
 		{
 			files: [
-				'jsconfig.json',
-				'jsconfig.*.json',
-				'tsconfig.json',
-				'tsconfig.*.json',
+				'oxlintrc.json',
+				'oxlintrc.jsonc',
+				'oxlintrc.*.json',
+				'oxlintrc.*.jsonc',
+				'.oxlintrc.json',
+				'.oxlintrc.jsonc',
+				'.oxlintrc.*.json',
+				'.oxlintrc.*.jsonc',
 			],
 			options: {
-				plugins: [pluginSortJSON],
 				jsonSortOrder: prioritizeKeys(
-					'extends',
-					'compilerOptions',
+					'$schema',
 					'files',
-					'include',
-					'exclude'
+					'extends',
+					'plugins',
+					'categories',
+					'env',
+					'settings',
+					'rules',
+					'overrides'
 				),
 			},
 		},
 		{
 			files: ['package.json'],
 			options: {
-				plugins: [pluginSortJSON, pluginPackageJSON],
 				packageSortOrder: [
 					'name',
 					'private',
@@ -108,27 +111,18 @@ const config = {
 		},
 		{
 			files: [
-				'oxlintrc.json',
-				'oxlintrc.jsonc',
-				'oxlintrc.*.json',
-				'oxlintrc.*.jsonc',
-				'.oxlintrc.json',
-				'.oxlintrc.jsonc',
-				'.oxlintrc.*.json',
-				'.oxlintrc.*.jsonc',
+				'tsconfig.json',
+				'tsconfig.*.json',
+				'jsconfig.json',
+				'jsconfig.*.json',
 			],
 			options: {
-				plugins: [pluginSortJSON],
 				jsonSortOrder: prioritizeKeys(
-					'$schema',
-					'files',
 					'extends',
-					'plugins',
-					'categories',
-					'env',
-					'settings',
-					'rules',
-					'overrides'
+					'compilerOptions',
+					'files',
+					'include',
+					'exclude'
 				),
 			},
 		},
