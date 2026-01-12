@@ -75,10 +75,23 @@ export const DEFAULT_CONFIG = {
 				jsonSortOrder: prioritizeKeys('$schema'),
 			},
 		},
+		/**
+		 * Tab-based indentation becomes inconvenient when rendered outside the
+		 * context of a code editor. In documentation, tabs in code blocks
+		 * require special handling that very few renderers support.
+		 *
+		 * At the time of writing, GitHub renders tabs correctly on the web, but
+		 * not in its mobile app. `npm`, often the point of discovery for
+		 * packages, does not provide any special handling for tabs either.
+		 *
+		 * To maximize the readability of code blocks in documentation, spaces
+		 * are the right compromise.
+		 */
 		{
 			files: ['*.md', '*.mdx'],
 			options: {
 				...DEFAULT_OPTIONS,
+				useTabs: false,
 			},
 		},
 		{
