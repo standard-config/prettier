@@ -19,7 +19,7 @@ export const DEFAULT_OPTIONS = {
 } as const satisfies Options;
 
 export const DEFAULT_CONFIG = {
-	plugins: [pluginOxidation, pluginPackageJSON, pluginShell, pluginSortJSON],
+	plugins: [pluginOxidation, pluginShell],
 	bracketSpacing: true,
 	printWidth: 80,
 	quoteProps: 'consistent',
@@ -70,6 +70,7 @@ export const DEFAULT_CONFIG = {
 			files: ['*.json', '*.jsonc', '*.json5'],
 			options: {
 				...DEFAULT_OPTIONS,
+				plugins: [pluginSortJSON],
 				jsonRecursiveSort: true,
 				jsonSortOrder: prioritizeKeys('$schema'),
 			},
@@ -124,6 +125,7 @@ export const DEFAULT_CONFIG = {
 		{
 			files: ['package.json'],
 			options: {
+				plugins: [pluginPackageJSON, pluginSortJSON],
 				packageSortOrder: [
 					'name',
 					'private',
