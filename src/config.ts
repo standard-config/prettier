@@ -197,11 +197,16 @@ export const DEFAULT_CONFIG = {
 			],
 			options: {
 				jsonSortOrder: prioritizeKeys(
+					'$schema',
 					'extends',
+					'references',
 					'compilerOptions',
+					'typeAcquisition',
 					'files',
 					'include',
-					'exclude'
+					'exclude',
+					'watchOptions',
+					'compileOnSave'
 				),
 			},
 		},
