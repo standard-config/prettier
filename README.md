@@ -4,11 +4,11 @@
 
 # @standard-config/prettier
 
-Curated Prettier config for modern TypeScript projects.
+TypeScript-first Prettier config with carefully considered details.
 
-- Enables the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript formatting.
-- Formats shell scripts out of the box, including `git` hooks.
-- Sorts all JSON files, with curated order patterns for common config files: `package.json`, `tsconfig.json`, `.oxlintrc.json`, and more.
+- Uses the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
+- Formats shell scripts out of the box, including `git` hook files.
+- Sorts all JSON files, with sensible order patterns for common configs like `package.json`, `tsconfig.json`, `.oxlintrc.json`, and more.
 
 ## Install
 
