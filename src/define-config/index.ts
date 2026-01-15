@@ -1,5 +1,5 @@
 import type { Config } from 'prettier';
-import { DEFAULT_CONFIG } from '../config.ts';
+import { DEFAULT_CONFIG } from '../config/index.ts';
 import mergeConfig from '../merge-config/index.ts';
 
 export default function defineConfig(config: Config = {}): Config {

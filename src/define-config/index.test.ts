@@ -1,6 +1,6 @@
 import type { Config } from 'prettier';
 import { expect, expectTypeOf, test } from 'vitest';
-import { DEFAULT_CONFIG } from '../config.ts';
+import { DEFAULT_CONFIG } from '../config/index.ts';
 import defineConfig from './index.ts';
 
 test('returns the base config by default', () => {

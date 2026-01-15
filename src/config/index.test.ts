@@ -1,6 +1,6 @@
 import type { Config, Options } from 'prettier';
 import { expectTypeOf, test } from 'vitest';
-import { DEFAULT_CONFIG, DEFAULT_OPTIONS } from './config.ts';
+import { DEFAULT_CONFIG, DEFAULT_OPTIONS } from './index.ts';
 
 test('is a valid Prettier config', () => {
 	expectTypeOf(DEFAULT_CONFIG).toExtend<Config>();
