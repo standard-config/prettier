@@ -1,0 +1,15 @@
+.notice {
+	padding: 12px;
+	border: 1px solid deepskyblue;
+	background: linear-gradient(
+		to bottom right,
+		lightskyblue,
+		color(from deepskyblue srgb-linear r g b / 50%)
+	);
+}
+
+@media (min-width: 480px) {
+	.notice {
+		padding: 24px;
+	}
+}

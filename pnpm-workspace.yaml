@@ -1,2 +1,6 @@
+autoInstallPeers: false
+
 onlyBuiltDependencies:
   - esbuild
+
+strictPeerDependencies: true

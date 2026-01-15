@@ -3,7 +3,7 @@ import * as pluginOxidation from '@prettier/plugin-oxc';
 import * as pluginPackageJSON from 'prettier-plugin-packagejson';
 import * as pluginSortJSON from 'prettier-plugin-sort-json';
 import * as pluginShell from 'prettier-plugin-sh';
-import prioritizeKeys from './prioritize-keys/index.ts';
+import prioritizeKeys from '../prioritize-keys/index.ts';
 
 /**
  * Shell files can’t be reliably identified by name alone—they’re recognized by
@@ -124,6 +124,7 @@ export const DEFAULT_CONFIG = {
 			options: {
 				jsonSortOrder: prioritizeKeys(
 					'$schema',
+					'ignorePatterns',
 					'files',
 					'extends',
 					'plugins',
@@ -135,6 +136,12 @@ export const DEFAULT_CONFIG = {
 				),
 			},
 		},
+		/**
+		 * All `package.json` fields defined in the `npm@11` specification
+		 * are sorted, along with additional commonly used fields.
+		 *
+		 * @see https://docs.npmjs.com/cli/v11/configuring-npm/package-json
+		 */
 		{
 			files: ['package.json'],
 			options: {
@@ -188,6 +195,12 @@ export const DEFAULT_CONFIG = {
 				],
 			},
 		},
+		/**
+		 * All root-level `tsconfig.json` fields defined by the TypeScript
+		 * documentation are sorted.
+		 *
+		 * @see https://typescriptlang.org/tsconfig/#root-fields
+		 */
 		{
 			files: [
 				'tsconfig.json',
