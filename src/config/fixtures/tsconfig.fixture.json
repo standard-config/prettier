@@ -1,0 +1,29 @@
+{
+	"extends": "@standard-config/tsconfig",
+	"references": [
+		{
+			"path": "packages/core"
+		},
+		{
+			"path": "packages/utilities"
+		}
+	],
+	"typeAcquisition": {
+		"enable": true,
+		"include": ["node", "vitest"],
+		"exclude": ["jquery"],
+		"disableFilenameBasedTypeAcquisition": true
+	},
+	"files": ["src/fixtures.d.ts"],
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"exclude": ["coverage", "dist", "node_modules"],
+	"watchOptions": {
+		"watchDirectory": "useFsEvents",
+		"watchFile": "useFsEvents",
+		"fallbackPolling": "dynamicPriority",
+		"synchronousWatchDirectory": true,
+		"excludeDirectories": ["src/fixtures"],
+		"excludeFiles": ["src/**/*.test.ts"]
+	},
+	"compileOnSave": false
+}

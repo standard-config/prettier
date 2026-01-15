@@ -1,8 +1,8 @@
 import type { Config, Options } from 'prettier';
 import * as pluginOxidation from '@prettier/plugin-oxc';
 import * as pluginPackageJSON from 'prettier-plugin-packagejson';
-import * as pluginSortJSON from 'prettier-plugin-sort-json';
 import * as pluginShell from 'prettier-plugin-sh';
+import * as pluginSortJSON from 'prettier-plugin-sort-json';
 import prioritizeKeys from '../prioritize-keys/index.ts';
 
 /**
@@ -200,8 +200,8 @@ export const DEFAULT_CONFIG = {
 			},
 		},
 		/**
-		 * All root-level `tsconfig.json` fields defined by the TypeScript
-		 * documentation are sorted.
+		 * All `tsconfig.json` fields defined by the TypeScript documentation
+		 * are sorted, including nested fields.
 		 */
 		{
 			files: [
@@ -214,6 +214,7 @@ export const DEFAULT_CONFIG = {
 				jsonSortOrder: prioritizeKeys(
 					'$schema',
 					'extends',
+					'enable',
 					'references',
 					'compilerOptions',
 					'typeAcquisition',
@@ -221,6 +222,10 @@ export const DEFAULT_CONFIG = {
 					'include',
 					'exclude',
 					'watchOptions',
+					'watchDirectory',
+					'watchFile',
+					'fallbackPolling',
+					'synchronousWatchDirectory',
 					'compileOnSave'
 				),
 			},
