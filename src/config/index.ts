@@ -124,6 +124,7 @@ export const DEFAULT_CONFIG = {
 			options: {
 				jsonSortOrder: prioritizeKeys(
 					'$schema',
+					'ignorePatterns',
 					'files',
 					'extends',
 					'plugins',
