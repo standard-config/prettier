@@ -1,0 +1,60 @@
+{
+	"extends": ["@standard-config/oxlint", "@standard-config/oxlint/react"],
+	"ignorePatterns": ["coverage/**", "dist/**", "node_modules/**"],
+	"plugins": ["react", "react-perf", "typescript"],
+	"jsPlugins": [
+		{
+			"name": "react-js",
+			"specifier": "eslint-plugin-react"
+		}
+	],
+	"categories": {
+		"correctness": "error",
+		"restriction": "error",
+		"style": "error"
+	},
+	"env": {
+		"browser": true,
+		"es2022": true
+	},
+	"globals": {
+		"React": "readonly"
+	},
+	"settings": {
+		"jsx-a11y": {
+			"components": {
+				"Button": "button",
+				"Link": "a"
+			},
+			"polymorphicPropName": "as"
+		},
+		"react": {
+			"version": "19.2.0"
+		}
+	},
+	"rules": {
+		"react/jsx-filename-extension": ["error", { "extensions": [".tsx"] }],
+		"react/jsx-max-depth": "off"
+	},
+	"overrides": [
+		{
+			"files": ["**/*.test.ts", "**/*.test.tsx"],
+			"extends": ["@standard-config/oxlint/vitest"],
+			"rules": {
+				"typescript/no-explicit-any": "off"
+			}
+		},
+		{
+			"files": ["**/*.config.ts"],
+			"env": {
+				"node": true
+			},
+			"globals": {
+				"process": "readonly"
+			},
+			"rules": {
+				"typescript/no-restricted-types": "off"
+			}
+		}
+	]
+}

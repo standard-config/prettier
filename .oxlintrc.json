@@ -181,7 +181,7 @@
 	},
 	"overrides": [
 		{
-			"files": ["*.d.ts", "src/types/**/*.ts"],
+			"files": ["*.d.ts"],
 			"rules": {
 				"import/no-empty-named-blocks": "off",
 				"import/no-unassigned-import": "off",

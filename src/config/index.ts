@@ -110,6 +110,10 @@ export const DEFAULT_CONFIG = {
 				singleAttributePerLine: true,
 			},
 		},
+		/**
+		 * All `.oxlintrc.json` fields defined by the Oxlint documentation
+		 * are sorted, including nested fields.
+		 */
 		{
 			files: [
 				'oxlintrc.json',
@@ -124,12 +128,14 @@ export const DEFAULT_CONFIG = {
 			options: {
 				jsonSortOrder: prioritizeKeys(
 					'$schema',
-					'ignorePatterns',
 					'files',
 					'extends',
+					'ignorePatterns',
 					'plugins',
+					'jsPlugins',
 					'categories',
 					'env',
+					'globals',
 					'settings',
 					'rules',
 					'overrides'
@@ -139,8 +145,6 @@ export const DEFAULT_CONFIG = {
 		/**
 		 * All `package.json` fields defined in the `npm@11` specification
 		 * are sorted, along with additional commonly used fields.
-		 *
-		 * @see https://docs.npmjs.com/cli/v11/configuring-npm/package-json
 		 */
 		{
 			files: ['package.json'],
@@ -198,8 +202,6 @@ export const DEFAULT_CONFIG = {
 		/**
 		 * All root-level `tsconfig.json` fields defined by the TypeScript
 		 * documentation are sorted.
-		 *
-		 * @see https://typescriptlang.org/tsconfig/#root-fields
 		 */
 		{
 			files: [
