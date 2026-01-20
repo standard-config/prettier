@@ -44,7 +44,7 @@
 		"@standard-config/tsconfig": "2.0.0",
 		"@vitest/coverage-v8": "4.0.17",
 		"husky": "9.1.7",
-		"oxlint": "1.40.0",
+		"oxlint": "1.41.0",
 		"oxlint-tsgolint": "0.11.1",
 		"prettier": "3.8.0",
 		"publint": "0.3.16",
