@@ -36,6 +36,6 @@ You can override the defaults by passing your own [config options](https://prett
 import { defineConfig } from '@standard-config/prettier';
 
 export default defineConfig({
-    semi: false,
+    useTabs: false,
 });
 ```

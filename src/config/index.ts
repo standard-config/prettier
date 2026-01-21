@@ -1,5 +1,6 @@
 import type { Config, Options } from 'prettier';
 import * as pluginOxidation from '@prettier/plugin-oxc';
+import * as pluginExpandJSON from 'prettier-plugin-expand-json';
 import * as pluginPackageJSON from 'prettier-plugin-packagejson';
 import * as pluginShell from 'prettier-plugin-sh';
 import * as pluginSortJSON from 'prettier-plugin-sort-json';
@@ -19,7 +20,7 @@ export const DEFAULT_OPTIONS = {
 } as const satisfies Options;
 
 export const DEFAULT_CONFIG = {
-	plugins: [pluginOxidation, pluginShell],
+	plugins: [pluginOxidation, pluginShell, pluginExpandJSON],
 	bracketSpacing: true,
 	printWidth: 80,
 	quoteProps: 'consistent',
@@ -70,7 +71,13 @@ export const DEFAULT_CONFIG = {
 			files: ['*.json', '*.jsonc', '*.json5'],
 			options: {
 				...DEFAULT_OPTIONS,
-				plugins: [pluginSortJSON],
+			},
+		},
+		{
+			files: ['*.json', '*.jsonc', '*.json5'],
+			excludeFiles: ['package.json'],
+			options: {
+				plugins: [pluginSortJSON, pluginExpandJSON],
 				jsonRecursiveSort: true,
 				jsonSortOrder: prioritizeKeys('$schema'),
 			},
@@ -149,7 +156,7 @@ export const DEFAULT_CONFIG = {
 		{
 			files: ['package.json'],
 			options: {
-				plugins: [pluginPackageJSON, pluginSortJSON],
+				plugins: [pluginPackageJSON, pluginExpandJSON],
 				packageSortOrder: [
 					'$schema',
 					'name',

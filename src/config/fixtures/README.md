@@ -8,6 +8,10 @@
 ```json
 {
     "name": "fixtures",
+    "files": [
+        "fixture.ts",
+        "fixture.d.ts"
+    ],
     "exports": null,
     "scripts": {
         "test": "pnpm format:check"

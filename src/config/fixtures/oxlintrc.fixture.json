@@ -1,7 +1,18 @@
 {
-	"extends": ["@standard-config/oxlint", "@standard-config/oxlint/react"],
-	"ignorePatterns": ["coverage/**", "dist/**", "node_modules/**"],
-	"plugins": ["react", "react-perf", "typescript"],
+	"extends": [
+		"@standard-config/oxlint",
+		"@standard-config/oxlint/react"
+	],
+	"ignorePatterns": [
+		"coverage/**",
+		"dist/**",
+		"node_modules/**"
+	],
+	"plugins": [
+		"react",
+		"react-perf",
+		"typescript"
+	],
 	"jsPlugins": [
 		{
 			"name": "react-js",
@@ -33,19 +44,33 @@
 		}
 	},
 	"rules": {
-		"react/jsx-filename-extension": ["error", { "extensions": [".tsx"] }],
+		"react/jsx-filename-extension": [
+			"error",
+			{
+				"extensions": [
+					".tsx"
+				]
+			}
+		],
 		"react/jsx-max-depth": "off"
 	},
 	"overrides": [
 		{
-			"files": ["**/*.test.ts", "**/*.test.tsx"],
-			"extends": ["@standard-config/oxlint/vitest"],
+			"files": [
+				"**/*.test.ts",
+				"**/*.test.tsx"
+			],
+			"extends": [
+				"@standard-config/oxlint/vitest"
+			],
 			"rules": {
 				"typescript/no-explicit-any": "off"
 			}
 		},
 		{
-			"files": ["**/*.config.ts"],
+			"files": [
+				"**/*.config.ts"
+			],
 			"env": {
 				"node": true
 			},

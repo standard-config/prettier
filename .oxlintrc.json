@@ -1,5 +1,7 @@
 {
-	"ignorePatterns": ["src/config/fixtures/**"],
+	"ignorePatterns": [
+		"src/config/fixtures/**"
+	],
 	"plugins": [
 		"eslint",
 		"import",
@@ -28,17 +30,32 @@
 		}
 	},
 	"rules": {
-		"eslint/accessor-pairs": ["error", { "enforceForClassMembers": true }],
-		"eslint/array-callback-return": ["error", { "allowImplicit": true }],
+		"eslint/accessor-pairs": [
+			"error",
+			{
+				"enforceForClassMembers": true
+			}
+		],
+		"eslint/array-callback-return": [
+			"error",
+			{
+				"allowImplicit": true
+			}
+		],
 		"eslint/arrow-body-style": "off",
 		"eslint/capitalized-comments": "off",
 		"eslint/func-names": "off",
 		"eslint/func-style": [
 			"error",
 			"declaration",
-			{ "allowArrowFunctions": true }
+			{
+				"allowArrowFunctions": true
+			}
 		],
-		"eslint/grouped-accessor-pairs": ["error", "getBeforeSet"],
+		"eslint/grouped-accessor-pairs": [
+			"error",
+			"getBeforeSet"
+		],
 		"eslint/id-length": "off",
 		"eslint/init-declarations": "off",
 		"eslint/max-lines": "off",
@@ -49,23 +66,55 @@
 		"eslint/no-await-in-loop": "off",
 		"eslint/no-continue": "off",
 		"eslint/no-duplicate-imports": "off",
-		"eslint/no-else-return": ["error", { "allowElseIf": false }],
-		"eslint/no-empty": ["error", { "allowEmptyCatch": true }],
+		"eslint/no-else-return": [
+			"error",
+			{
+				"allowElseIf": false
+			}
+		],
+		"eslint/no-empty": [
+			"error",
+			{
+				"allowEmptyCatch": true
+			}
+		],
 		"eslint/no-magic-numbers": "off",
-		"eslint/no-param-reassign": ["error", { "props": true }],
-		"eslint/no-return-assign": ["error", "always"],
-		"eslint/no-self-assign": ["error", { "props": true }],
+		"eslint/no-param-reassign": [
+			"error",
+			{
+				"props": true
+			}
+		],
+		"eslint/no-return-assign": [
+			"error",
+			"always"
+		],
+		"eslint/no-self-assign": [
+			"error",
+			{
+				"props": true
+			}
+		],
 		"eslint/no-ternary": "off",
 		"eslint/no-undefined": "off",
 		"eslint/no-unsafe-negation": [
 			"error",
-			{ "enforceForOrderingRelations": true }
+			{
+				"enforceForOrderingRelations": true
+			}
 		],
 		"eslint/no-unsafe-optional-chaining": [
 			"error",
-			{ "disallowArithmeticOperators": true }
+			{
+				"disallowArithmeticOperators": true
+			}
 		],
-		"eslint/no-unused-expressions": ["error", { "enforceForJSX": true }],
+		"eslint/no-unused-expressions": [
+			"error",
+			{
+				"enforceForJSX": true
+			}
+		],
 		"eslint/no-unused-vars": [
 			"error",
 			{
@@ -78,17 +127,26 @@
 		"eslint/no-void": "off",
 		"eslint/prefer-destructuring": [
 			"error",
-			{ "enforceForRenamedProperties": false }
+			{
+				"enforceForRenamedProperties": false
+			}
 		],
 		"eslint/prefer-promise-reject-errors": "off",
 		"eslint/prefer-regex-literals": [
 			"error",
-			{ "disallowRedundantWrapping": true }
+			{
+				"disallowRedundantWrapping": true
+			}
 		],
 		"eslint/require-await": "off",
 		"eslint/sort-imports": "off",
 		"eslint/sort-keys": "off",
-		"eslint/valid-typeof": ["error", { "requireStringLiterals": false }],
+		"eslint/valid-typeof": [
+			"error",
+			{
+				"requireStringLiterals": false
+			}
+		],
 		"import/exports-last": "off",
 		"import/group-exports": "off",
 		"import/max-dependencies": "off",
@@ -117,7 +175,10 @@
 				"ts-nocheck": true
 			}
 		],
-		"typescript/consistent-type-definitions": ["error", "type"],
+		"typescript/consistent-type-definitions": [
+			"error",
+			"type"
+		],
 		"typescript/consistent-type-imports": [
 			"error",
 			{
@@ -128,13 +189,23 @@
 		"typescript/explicit-function-return-type": "off",
 		"typescript/no-confusing-void-expression": [
 			"error",
-			{ "ignoreArrowShorthand": true }
+			{
+				"ignoreArrowShorthand": true
+			}
 		],
 		"typescript/no-misused-promises": [
 			"error",
-			{ "checksConditionals": true, "checksVoidReturn": false }
+			{
+				"checksConditionals": true,
+				"checksVoidReturn": false
+			}
 		],
-		"typescript/no-namespace": ["error", { "allowDeclarations": true }],
+		"typescript/no-namespace": [
+			"error",
+			{
+				"allowDeclarations": true
+			}
+		],
 		"typescript/no-non-null-assertion": "off",
 		"typescript/no-restricted-types": [
 			"error",
@@ -149,20 +220,29 @@
 		"typescript/no-unsafe-type-assertion": "off",
 		"typescript/only-throw-error": [
 			"error",
-			{ "allowThrowingAny": false, "allowThrowingUnknown": true }
+			{
+				"allowThrowingAny": false,
+				"allowThrowingUnknown": true
+			}
 		],
 		"typescript/prefer-nullish-coalescing": [
 			"error",
-			{ "ignoreConditionalTests": false }
+			{
+				"ignoreConditionalTests": false
+			}
 		],
 		"typescript/prefer-promise-reject-errors": "off",
 		"typescript/require-array-sort-compare": [
 			"error",
-			{ "ignoreStringArrays": true }
+			{
+				"ignoreStringArrays": true
+			}
 		],
 		"typescript/restrict-template-expressions": [
 			"error",
-			{ "allowNumber": true }
+			{
+				"allowNumber": true
+			}
 		],
 		"typescript/strict-boolean-expressions": "off",
 		"typescript/switch-exhaustiveness-check": [
@@ -181,7 +261,9 @@
 	},
 	"overrides": [
 		{
-			"files": ["*.d.ts"],
+			"files": [
+				"*.d.ts"
+			],
 			"rules": {
 				"import/no-empty-named-blocks": "off",
 				"import/no-unassigned-import": "off",
@@ -192,7 +274,9 @@
 			}
 		},
 		{
-			"files": ["**/*.test.ts"],
+			"files": [
+				"**/*.test.ts"
+			],
 			"rules": {
 				"eslint/no-alert": "off",
 				"promise/prefer-await-to-then": "off",

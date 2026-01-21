@@ -10,20 +10,38 @@
 	],
 	"typeAcquisition": {
 		"enable": true,
-		"include": ["node", "vitest"],
-		"exclude": ["jquery"],
+		"include": [
+			"node",
+			"vitest"
+		],
+		"exclude": [
+			"jquery"
+		],
 		"disableFilenameBasedTypeAcquisition": true
 	},
-	"files": ["src/fixtures.d.ts"],
-	"include": ["src/**/*.ts", "src/**/*.tsx"],
-	"exclude": ["coverage", "dist", "node_modules"],
+	"files": [
+		"src/fixtures.d.ts"
+	],
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx"
+	],
+	"exclude": [
+		"coverage",
+		"dist",
+		"node_modules"
+	],
 	"watchOptions": {
 		"watchDirectory": "useFsEvents",
 		"watchFile": "useFsEvents",
 		"fallbackPolling": "dynamicPriority",
 		"synchronousWatchDirectory": true,
-		"excludeDirectories": ["src/fixtures"],
-		"excludeFiles": ["src/**/*.test.ts"]
+		"excludeDirectories": [
+			"src/fixtures"
+		],
+		"excludeFiles": [
+			"src/**/*.test.ts"
+		]
 	},
 	"compileOnSave": false
 }
