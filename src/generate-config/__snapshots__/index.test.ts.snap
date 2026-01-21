@@ -1,0 +1,217 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generates a valid Prettier config 1`] = `
+{
+  "bracketSpacing": true,
+  "overrides": [
+    {
+      "files": [
+        "*.css",
+        "*.scss",
+      ],
+      "options": {
+        "printWidth": 100,
+        "singleQuote": false,
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "*.graphql",
+        "*.graphqls",
+        "*.gql",
+      ],
+      "options": {
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "*.html",
+        "*.htm",
+      ],
+      "options": {
+        "printWidth": 100,
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "*.js",
+        "*.jsx",
+        "*.cjs",
+        "*.mjs",
+      ],
+      "options": {
+        "parser": "oxc",
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "*.json",
+        "*.jsonc",
+        "*.json5",
+      ],
+      "options": {
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "excludeFiles": [
+        "package.json",
+      ],
+      "files": [
+        "*.json",
+        "*.jsonc",
+        "*.json5",
+      ],
+      "options": {
+        "jsonRecursiveSort": true,
+        "jsonSortOrder": "{"$schema":null,"/.*/":"lexical"}",
+        "plugins": [
+          "prettier-plugin-sort-json",
+          "prettier-plugin-expand-json",
+        ],
+      },
+    },
+    {
+      "files": [
+        "*.md",
+        "*.mdx",
+      ],
+      "options": {
+        "tabWidth": 4,
+        "useTabs": false,
+      },
+    },
+    {
+      "files": [
+        "*.ts",
+        "*.tsx",
+        "*.cts",
+        "*.mts",
+      ],
+      "options": {
+        "parser": "oxc-ts",
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "*.xml",
+        "*.plist",
+        "*.svg",
+      ],
+      "options": {
+        "parser": "html",
+        "printWidth": 80,
+        "singleAttributePerLine": true,
+        "tabWidth": 4,
+        "useTabs": true,
+      },
+    },
+    {
+      "files": [
+        "oxlintrc.json",
+        "oxlintrc.jsonc",
+        "oxlintrc.*.json",
+        "oxlintrc.*.jsonc",
+        ".oxlintrc.json",
+        ".oxlintrc.jsonc",
+        ".oxlintrc.*.json",
+        ".oxlintrc.*.jsonc",
+      ],
+      "options": {
+        "jsonSortOrder": "{"$schema":null,"files":null,"extends":null,"ignorePatterns":null,"plugins":null,"jsPlugins":null,"categories":null,"env":null,"globals":null,"settings":null,"rules":null,"overrides":null,"/.*/":"lexical"}",
+      },
+    },
+    {
+      "files": [
+        "package.json",
+      ],
+      "options": {
+        "packageSortOrder": [
+          "$schema",
+          "name",
+          "version",
+          "private",
+          "description",
+          "license",
+          "author",
+          "contributors",
+          "funding",
+          "homepage",
+          "repository",
+          "bugs",
+          "keywords",
+          "workspaces",
+          "directories",
+          "files",
+          "type",
+          "browser",
+          "sideEffects",
+          "main",
+          "module",
+          "exports",
+          "types",
+          "typesVersions",
+          "bin",
+          "man",
+          "imports",
+          "engines",
+          "os",
+          "cpu",
+          "libc",
+          "gypfile",
+          "packageManager",
+          "devEngines",
+          "dependencies",
+          "bundleDependencies",
+          "peerDependencies",
+          "peerDependenciesMeta",
+          "optionalDependencies",
+          "devDependencies",
+          "overrides",
+          "pnpm",
+          "config",
+          "publishConfig",
+          "scripts",
+        ],
+        "plugins": [
+          "prettier-plugin-packagejson",
+          "prettier-plugin-expand-json",
+        ],
+      },
+    },
+    {
+      "files": [
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "jsconfig.json",
+        "jsconfig.*.json",
+      ],
+      "options": {
+        "jsonSortOrder": "{"$schema":null,"extends":null,"enable":null,"references":null,"compilerOptions":null,"typeAcquisition":null,"files":null,"include":null,"exclude":null,"watchOptions":null,"watchDirectory":null,"watchFile":null,"fallbackPolling":null,"synchronousWatchDirectory":null,"compileOnSave":null,"/.*/":"lexical"}",
+      },
+    },
+  ],
+  "plugins": [
+    "@prettier/plugin-oxc",
+    "prettier-plugin-sh",
+    "prettier-plugin-expand-json",
+  ],
+  "printWidth": 80,
+  "quoteProps": "consistent",
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": false,
+}
+`;

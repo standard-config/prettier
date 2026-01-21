@@ -1,0 +1,11 @@
+{
+	"name": "fixture",
+	"files": [
+		"fixtures.ts",
+		"fixtures.d.ts"
+	],
+	"exports": null,
+	"scripts": {
+		"test": "pnpm test:fixtures"
+	}
+}

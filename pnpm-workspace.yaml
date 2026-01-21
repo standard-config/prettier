@@ -4,3 +4,7 @@ onlyBuiltDependencies:
   - esbuild
 
 strictPeerDependencies: true
+
+updateConfig:
+  ignoreDependencies:
+    - '@types/node'

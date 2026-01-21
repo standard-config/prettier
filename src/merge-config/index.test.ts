@@ -1,11 +1,11 @@
-import type { Config, Options } from 'prettier';
+import type { StandardConfig } from '../types/index.d.ts';
 import { expect, expectTypeOf, test } from 'vitest';
 import mergeConfig from './index.ts';
 
 test('merges two valid configs into one', () => {
 	let result = mergeConfig({}, {});
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({});
 
 	result = mergeConfig(
@@ -19,7 +19,7 @@ test('merges two valid configs into one', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -39,7 +39,7 @@ test('merges two valid configs into one', () => {
 test('removes config options that resolve to `undefined`', () => {
 	let result = mergeConfig({}, {});
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({});
 
 	result = mergeConfig(
@@ -53,7 +53,7 @@ test('removes config options that resolve to `undefined`', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		singleQuote: true,
 		useTabs: true,
@@ -73,7 +73,7 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo'],
 		printWidth: 120,
@@ -93,7 +93,7 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo'],
 		printWidth: 120,
@@ -114,7 +114,7 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo', 'bar', 'baz'],
 		printWidth: 120,
@@ -135,7 +135,7 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -163,7 +163,7 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -197,7 +197,7 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -239,7 +239,7 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -280,7 +280,7 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -301,7 +301,7 @@ test('doesn’t mutate any of the input configs', () => {
 				},
 			},
 		],
-	} as const satisfies Config;
+	} as const satisfies StandardConfig;
 
 	let customConfig = {
 		plugins: ['bar', 'baz'],
@@ -316,11 +316,11 @@ test('doesn’t mutate any of the input configs', () => {
 				},
 			},
 		],
-	} as const satisfies Config;
+	} as const satisfies StandardConfig;
 
 	let result = mergeConfig(baseConfig, customConfig);
 
-	expectTypeOf(result).toEqualTypeOf<Config>();
+	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo', 'bar', 'baz'],
 		printWidth: 120,
@@ -351,13 +351,7 @@ test('doesn’t mutate any of the input configs', () => {
 	expect(baseConfig.plugins).toStrictEqual(['foo']);
 	expect(customConfig.plugins).toStrictEqual(['bar', 'baz']);
 
-	type ConfigOverride = {
-		excludeFiles?: string[];
-		files: string[];
-		options: Options;
-	};
-
-	let override = result.overrides![0]! as ConfigOverride;
+	let override = result.overrides![0]!;
 
 	override.files.push('*.tsx');
 	override.excludeFiles = ['*.d.ts'];
@@ -370,7 +364,7 @@ test('doesn’t mutate any of the input configs', () => {
 		},
 	});
 
-	override = result.overrides![1]! as ConfigOverride;
+	override = result.overrides![1]!;
 
 	override.files.push('*.svg');
 	override.excludeFiles = ['build/**'];

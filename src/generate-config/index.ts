@@ -1,83 +1,96 @@
-import type { Config, Options } from 'prettier';
-import * as pluginOxidation from '@prettier/plugin-oxc';
-import * as pluginExpandJSON from 'prettier-plugin-expand-json';
-import * as pluginPackageJSON from 'prettier-plugin-packagejson';
-import * as pluginShell from 'prettier-plugin-sh';
-import * as pluginSortJSON from 'prettier-plugin-sort-json';
+import type {
+	IndentationOptions,
+	ShellIndentationOptions,
+	StandardConfig,
+	StandardConfigOverrides,
+} from '../types/index.d.ts';
+import { klona as clone } from 'klona/lite';
 import prioritizeKeys from '../prioritize-keys/index.ts';
 
 /**
- * Shell files can’t be reliably identified by name alone—they’re recognized by
- * the shebang, not the extension. As a result, shell formatting options
+ * Generate the base Standard Config.
+ *
+ * Shell scripts can’t be reliably identified by name alone—they’re recognized
+ * by the shebang, not the extension. As a result, shell formatting options
  * (two-space indentation) must be defined as the global defaults.
  *
  * This requires overriding those options for other file types individually
- * with what we consider the actual defaults. This object defines them.
+ * with what we consider the actual defaults (`baseDefaults`). `generateConfig`
+ * is a factory that encapsulates this logic and returns the final config.
  */
-export const DEFAULT_OPTIONS = {
-	tabWidth: 4,
-	useTabs: true,
-} as const satisfies Options;
+export default function generateConfig(
+	baseDefaults: IndentationOptions = {},
+	shellDefaults: ShellIndentationOptions = {}
+): StandardConfig {
+	const { tabWidth = 4, useTabs = true } = baseDefaults;
+	const { shellTabWidth = 2, shellUseTabs = false } = shellDefaults;
 
-export const DEFAULT_CONFIG = {
-	plugins: [pluginOxidation, pluginShell, pluginExpandJSON],
-	bracketSpacing: true,
-	printWidth: 80,
-	quoteProps: 'consistent',
-	singleQuote: true,
-	tabWidth: 2,
-	trailingComma: 'es5',
-	useTabs: false,
-	overrides: [
+	return clone({
+		plugins: [
+			'@prettier/plugin-oxc',
+			'prettier-plugin-sh',
+			'prettier-plugin-expand-json',
+		],
+		bracketSpacing: true,
+		printWidth: 80,
+		quoteProps: 'consistent',
+		singleQuote: true,
+		tabWidth: shellTabWidth,
+		trailingComma: 'es5',
+		useTabs: shellUseTabs,
+		overrides: [
+			...getFileTypeOverrides({ tabWidth, useTabs }),
+			...getFileNameOverrides(),
+		],
+	});
+}
+
+function getFileTypeOverrides(
+	baseDefaults: IndentationOptions = {}
+): StandardConfigOverrides {
+	return [
 		{
 			files: ['*.css', '*.scss'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				printWidth: 100,
 				singleQuote: false,
-			},
-		},
-		/**
-		 * Fish file formatting follows the output of `fish_indent`, which
-		 * defaults to four-space indentation.
-		 */
-		{
-			files: ['*.fish'],
-			options: {
-				tabWidth: 4,
 			},
 		},
 		{
 			files: ['*.graphql', '*.graphqls', '*.gql'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 			},
 		},
 		{
 			files: ['*.html', '*.htm'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				printWidth: 100,
 			},
 		},
 		{
 			files: ['*.js', '*.jsx', '*.cjs', '*.mjs'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				parser: 'oxc',
 			},
 		},
 		{
 			files: ['*.json', '*.jsonc', '*.json5'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 			},
 		},
 		{
 			files: ['*.json', '*.jsonc', '*.json5'],
 			excludeFiles: ['package.json'],
 			options: {
-				plugins: [pluginSortJSON, pluginExpandJSON],
+				plugins: [
+					'prettier-plugin-sort-json',
+					'prettier-plugin-expand-json',
+				],
 				jsonRecursiveSort: true,
 				jsonSortOrder: prioritizeKeys('$schema'),
 			},
@@ -97,26 +110,31 @@ export const DEFAULT_CONFIG = {
 		{
 			files: ['*.md', '*.mdx'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				useTabs: false,
 			},
 		},
 		{
 			files: ['*.ts', '*.tsx', '*.cts', '*.mts'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				parser: 'oxc-ts',
 			},
 		},
 		{
 			files: ['*.xml', '*.plist', '*.svg'],
 			options: {
-				...DEFAULT_OPTIONS,
+				...baseDefaults,
 				parser: 'html',
 				printWidth: 80,
 				singleAttributePerLine: true,
 			},
 		},
+	];
+}
+
+function getFileNameOverrides(): StandardConfigOverrides {
+	return [
 		/**
 		 * All `.oxlintrc.json` fields defined by the Oxlint documentation
 		 * are sorted, including nested fields.
@@ -150,13 +168,21 @@ export const DEFAULT_CONFIG = {
 			},
 		},
 		/**
+		 * By default, Prettier uses a different parser for `package.json`
+		 * files, which causes most JSON plugins to skip them entirely.
+		 * This override ensures `package.json` is treated (and sorted)
+		 * like any other `*.json` file.
+		 *
 		 * All `package.json` fields defined in the `npm@11` specification
 		 * are sorted, along with additional commonly used fields.
 		 */
 		{
 			files: ['package.json'],
 			options: {
-				plugins: [pluginPackageJSON, pluginExpandJSON],
+				plugins: [
+					'prettier-plugin-packagejson',
+					'prettier-plugin-expand-json',
+				],
 				packageSortOrder: [
 					'$schema',
 					'name',
@@ -237,5 +263,5 @@ export const DEFAULT_CONFIG = {
 				),
 			},
 		},
-	],
-} as const satisfies Config;
+	];
+}

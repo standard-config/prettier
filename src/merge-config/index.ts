@@ -1,10 +1,13 @@
-import type { Config } from 'prettier';
+import type { StandardConfig } from '../types/index.d.ts';
 import { klona as clone } from 'klona/lite';
 
+/**
+ * Deep-merge two Standard Config objects.
+ */
 export default function mergeConfig(
-	baseConfig: Config,
-	extensionConfig: Config
-): Config {
+	baseConfig: StandardConfig,
+	extensionConfig: StandardConfig
+): StandardConfig {
 	if (
 		!(typeof baseConfig === 'object' && typeof extensionConfig === 'object')
 	) {

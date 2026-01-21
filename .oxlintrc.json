@@ -1,11 +1,10 @@
 {
 	"ignorePatterns": [
-		"src/config/fixtures/**"
+		"fixtures/**"
 	],
 	"plugins": [
 		"eslint",
 		"import",
-		"jsdoc",
 		"node",
 		"oxc",
 		"promise",
