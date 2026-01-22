@@ -209,6 +209,14 @@ exports[`generates a valid Prettier config 1`] = `
         "jsonSortOrder": "{"command":null,"/.*/":"lexical"}",
       },
     },
+    {
+      "files": [
+        ".vscode/sessions.json",
+      ],
+      "options": {
+        "jsonSortOrder": "{"name":null,"commands":null,"active":null,"/.*/":"lexical"}",
+      },
+    },
   ],
   "plugins": [
     "@prettier/plugin-oxc",

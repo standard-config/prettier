@@ -269,5 +269,11 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				jsonSortOrder: prioritizeKeys('command'),
 			},
 		},
+		{
+			files: ['.vscode/sessions.json'],
+			options: {
+				jsonSortOrder: prioritizeKeys('name', 'commands', 'active'),
+			},
+		},
 	];
 }
