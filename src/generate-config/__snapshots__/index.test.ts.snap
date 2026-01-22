@@ -201,6 +201,14 @@ exports[`generates a valid Prettier config 1`] = `
         "jsonSortOrder": "{"$schema":null,"extends":null,"enable":null,"references":null,"compilerOptions":null,"typeAcquisition":null,"files":null,"include":null,"exclude":null,"watchOptions":null,"watchDirectory":null,"watchFile":null,"fallbackPolling":null,"synchronousWatchDirectory":null,"compileOnSave":null,"/.*/":"lexical"}",
       },
     },
+    {
+      "files": [
+        ".vscode/mcp.json",
+      ],
+      "options": {
+        "jsonSortOrder": "{"command":null,"/.*/":"lexical"}",
+      },
+    },
   ],
   "plugins": [
     "@prettier/plugin-oxc",

@@ -263,5 +263,11 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				),
 			},
 		},
+		{
+			files: ['.vscode/mcp.json'],
+			options: {
+				jsonSortOrder: prioritizeKeys('command'),
+			},
+		},
 	];
 }
