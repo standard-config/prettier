@@ -1,11 +1,19 @@
 import type { Options as PrettierOptions } from 'prettier';
 
+export type PrettierPlugin = NonNullable<PrettierOptions['plugins']>[number];
+
+export type PrettierPlugins = PrettierPlugin[];
+
 export interface StandardOptions extends PrettierOptions {
 	/**
 	 * Print spaces between brackets in object literals.
 	 * @default true
 	 */
 	bracketSpacing?: PrettierOptions['bracketSpacing'];
+	/**
+	 * Define a custom sort order for JSON files.
+	 */
+	jsonSortOrder?: string | string[] | undefined;
 	/**
 	 * Maximum line length before wrapping.
 	 * @default 80
@@ -63,6 +71,18 @@ export type StandardConfigOverride = {
 
 export type StandardConfigOverrides = StandardConfigOverride[];
 
+export type StandardConfigPluginOverrides = Record<
+	string,
+	PrettierPlugin | undefined
+>;
+
 export interface StandardConfig extends StandardOptions {
+	/**
+	 * File-based config overrides.
+	 */
 	overrides?: StandardConfigOverrides;
+	/**
+	 * @deprecated Intended for development use and not covered by semver.
+	 */
+	pluginOverrides?: StandardConfigPluginOverrides;
 }

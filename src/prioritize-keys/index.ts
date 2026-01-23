@@ -1,6 +1,5 @@
 /**
- * Define the sort order value for the `jsonSortOrder` property. Provided keys
- * take precedence over all other keys.
+ * @deprecated Use an array value for the `jsonSortOrder` property instead.
  */
 export default function prioritizeKeys(...keys: ReadonlyArray<string>): string {
 	/* oxlint-disable-next-line typescript/no-restricted-types */

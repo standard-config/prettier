@@ -39,3 +39,7 @@ export default defineConfig({
     useTabs: false,
 });
 ```
+
+## License
+
+MIT © [Dom Porada](https://dom.engineering)

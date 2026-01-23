@@ -1,5 +1,5 @@
 import type { StandardConfig } from '../types/index.d.ts';
-import { klona as clone } from 'klona/lite';
+import clone from '../clone/index.ts';
 
 /**
  * Deep-merge two Standard Config objects.
@@ -12,7 +12,7 @@ export default function mergeConfig(
 		!(typeof baseConfig === 'object' && typeof extensionConfig === 'object')
 	) {
 		throw new TypeError(
-			'Prettier config error: expected config to be an object'
+			'Standard Config error: expected config to be an object'
 		);
 	}
 

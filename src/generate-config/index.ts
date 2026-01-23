@@ -4,8 +4,7 @@ import type {
 	StandardConfig,
 	StandardConfigOverrides,
 } from '../types/index.d.ts';
-import { klona as clone } from 'klona/lite';
-import prioritizeKeys from '../prioritize-keys/index.ts';
+import clone from '../clone/index.ts';
 
 /**
  * Generate the base Standard Config.
@@ -92,7 +91,7 @@ function getFileTypeOverrides(
 					'prettier-plugin-expand-json',
 				],
 				jsonRecursiveSort: true,
-				jsonSortOrder: prioritizeKeys('$schema'),
+				jsonSortOrder: ['$schema'],
 			},
 		},
 		/**
@@ -151,7 +150,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				'.oxlintrc.*.jsonc',
 			],
 			options: {
-				jsonSortOrder: prioritizeKeys(
+				jsonSortOrder: [
 					'$schema',
 					'files',
 					'extends',
@@ -163,8 +162,8 @@ function getFileNameOverrides(): StandardConfigOverrides {
 					'globals',
 					'settings',
 					'rules',
-					'overrides'
-				),
+					'overrides',
+				],
 			},
 		},
 		/**
@@ -244,7 +243,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				'jsconfig.*.json',
 			],
 			options: {
-				jsonSortOrder: prioritizeKeys(
+				jsonSortOrder: [
 					'$schema',
 					'extends',
 					'enable',
@@ -259,20 +258,20 @@ function getFileNameOverrides(): StandardConfigOverrides {
 					'watchFile',
 					'fallbackPolling',
 					'synchronousWatchDirectory',
-					'compileOnSave'
-				),
+					'compileOnSave',
+				],
 			},
 		},
 		{
 			files: ['.vscode/mcp.json'],
 			options: {
-				jsonSortOrder: prioritizeKeys('command'),
+				jsonSortOrder: ['command'],
 			},
 		},
 		{
 			files: ['.vscode/sessions.json'],
 			options: {
-				jsonSortOrder: prioritizeKeys('name', 'commands', 'active'),
+				jsonSortOrder: ['name', 'commands', 'active'],
 			},
 		},
 	];

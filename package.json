@@ -32,11 +32,11 @@
 	"packageManager": "pnpm@10.28.1",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.1.3",
-		"klona": "^2.0.6",
 		"prettier-plugin-expand-json": "^1.0.0",
 		"prettier-plugin-packagejson": "^3.0.0",
 		"prettier-plugin-sh": "^0.18.0",
-		"prettier-plugin-sort-json": "^4.2.0"
+		"prettier-plugin-sort-json": "^4.2.0",
+		"rfdc": "1.4.1"
 	},
 	"peerDependencies": {
 		"prettier": ">=3.7"
@@ -62,8 +62,8 @@
 	"scripts": {
 		"build": "tsdown",
 		"fix": "pnpm format && pnpm lint",
-		"fixtures:scramble": "prettier --config fixtures/config.ts --write fixtures",
-		"fixtures:unscramble": "pnpm prettier --write fixtures",
+		"fixtures:scramble": "prettier --config fixtures/config.ts --write fixtures && sleep 1",
+		"fixtures:unscramble": "pnpm prettier --write fixtures && sleep 1",
 		"format": "prettier --write --ignore-unknown .",
 		"format:check": "prettier --check --ignore-unknown .",
 		"lint": "oxlint --fix --type-aware --type-check --deny-warnings --report-unused-disable-directives && eslint . --fix",

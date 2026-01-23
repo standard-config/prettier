@@ -73,7 +73,9 @@ exports[`generates a valid Prettier config 1`] = `
       ],
       "options": {
         "jsonRecursiveSort": true,
-        "jsonSortOrder": "{"$schema":null,"/.*/":"lexical"}",
+        "jsonSortOrder": [
+          "$schema",
+        ],
         "plugins": [
           "prettier-plugin-sort-json",
           "prettier-plugin-expand-json",
@@ -129,7 +131,20 @@ exports[`generates a valid Prettier config 1`] = `
         ".oxlintrc.*.jsonc",
       ],
       "options": {
-        "jsonSortOrder": "{"$schema":null,"files":null,"extends":null,"ignorePatterns":null,"plugins":null,"jsPlugins":null,"categories":null,"env":null,"globals":null,"settings":null,"rules":null,"overrides":null,"/.*/":"lexical"}",
+        "jsonSortOrder": [
+          "$schema",
+          "files",
+          "extends",
+          "ignorePatterns",
+          "plugins",
+          "jsPlugins",
+          "categories",
+          "env",
+          "globals",
+          "settings",
+          "rules",
+          "overrides",
+        ],
       },
     },
     {
@@ -198,7 +213,23 @@ exports[`generates a valid Prettier config 1`] = `
         "jsconfig.*.json",
       ],
       "options": {
-        "jsonSortOrder": "{"$schema":null,"extends":null,"enable":null,"references":null,"compilerOptions":null,"typeAcquisition":null,"files":null,"include":null,"exclude":null,"watchOptions":null,"watchDirectory":null,"watchFile":null,"fallbackPolling":null,"synchronousWatchDirectory":null,"compileOnSave":null,"/.*/":"lexical"}",
+        "jsonSortOrder": [
+          "$schema",
+          "extends",
+          "enable",
+          "references",
+          "compilerOptions",
+          "typeAcquisition",
+          "files",
+          "include",
+          "exclude",
+          "watchOptions",
+          "watchDirectory",
+          "watchFile",
+          "fallbackPolling",
+          "synchronousWatchDirectory",
+          "compileOnSave",
+        ],
       },
     },
     {
@@ -206,7 +237,9 @@ exports[`generates a valid Prettier config 1`] = `
         ".vscode/mcp.json",
       ],
       "options": {
-        "jsonSortOrder": "{"command":null,"/.*/":"lexical"}",
+        "jsonSortOrder": [
+          "command",
+        ],
       },
     },
     {
@@ -214,7 +247,11 @@ exports[`generates a valid Prettier config 1`] = `
         ".vscode/sessions.json",
       ],
       "options": {
-        "jsonSortOrder": "{"name":null,"commands":null,"active":null,"/.*/":"lexical"}",
+        "jsonSortOrder": [
+          "name",
+          "commands",
+          "active",
+        ],
       },
     },
   ],
