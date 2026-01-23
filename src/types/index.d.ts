@@ -4,7 +4,7 @@ export type PrettierPlugin = NonNullable<PrettierOptions['plugins']>[number];
 
 export type PrettierPlugins = PrettierPlugin[];
 
-export interface StandardOptions extends PrettierOptions {
+type DefaultOptions = {
 	/**
 	 * Print spaces between brackets in object literals.
 	 * @default true
@@ -54,7 +54,15 @@ export interface StandardOptions extends PrettierOptions {
 	 * @default true
 	 */
 	useTabs?: PrettierOptions['useTabs'];
-}
+};
+
+export type StandardOptions = {
+	// Prettier’s `Options` is a mapped type, so overlapping keys must
+	// be explicitly omitted before merging with `DefaultOptions`
+	[K in keyof PrettierOptions as K extends keyof DefaultOptions
+		? never
+		: K]: PrettierOptions[K];
+} & DefaultOptions;
 
 export type IndentationOptions = Pick<StandardOptions, 'tabWidth' | 'useTabs'>;
 
@@ -76,7 +84,7 @@ export type StandardConfigPluginOverrides = Record<
 	PrettierPlugin | undefined
 >;
 
-export interface StandardConfig extends StandardOptions {
+export type StandardConfig = StandardOptions & {
 	/**
 	 * File-based config overrides.
 	 */
@@ -85,4 +93,4 @@ export interface StandardConfig extends StandardOptions {
 	 * @deprecated Intended for development use and not covered by semver.
 	 */
 	pluginOverrides?: StandardConfigPluginOverrides;
-}
+};
