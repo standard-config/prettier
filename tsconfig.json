@@ -4,6 +4,7 @@
 		"**/*"
 	],
 	"exclude": [
+		"coverage",
 		"dist",
 		"fixtures",
 		"node_modules"
