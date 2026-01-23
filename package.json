@@ -45,7 +45,7 @@
 		"@eslint/compat": "2.0.1",
 		"@standard-config/tsconfig": "2.0.0",
 		"@types/node": "^20.19.30",
-		"@vitest/coverage-v8": "4.0.17",
+		"@vitest/coverage-v8": "4.0.18",
 		"eslint": "9.39.2",
 		"eslint-plugin-perfectionist": "5.4.0",
 		"husky": "9.1.7",
