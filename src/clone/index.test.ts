@@ -9,7 +9,7 @@ test('clones the input object', () => {
 	expect(result).not.toBe(object);
 });
 
-test('keeps circular references', () => {
+test('maintains circular references', () => {
 	const object: Record<string, unknown> = { foo: 1 };
 
 	object.bar = object;

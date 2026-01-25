@@ -42,7 +42,7 @@ export default defineConfig({
 
 ### .editorconfig
 
-For a consistent editor experience, you can use the included `.editorconfig`, aligned with the Prettier configuration.
+For a consistent editor experience, use the included [`.editorconfig`](https://editorconfig.org) file:
 
 ```sh
 ln -s node_modules/@standard-config/prettier/.editorconfig

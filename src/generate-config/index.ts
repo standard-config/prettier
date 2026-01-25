@@ -265,13 +265,13 @@ function getFileNameOverrides(): StandardConfigOverrides {
 		{
 			files: ['.vscode/mcp.json'],
 			options: {
-				jsonSortOrder: ['command'],
+				jsonSortOrder: ['$schema', 'command'],
 			},
 		},
 		{
 			files: ['.vscode/sessions.json'],
 			options: {
-				jsonSortOrder: ['name', 'commands', 'active'],
+				jsonSortOrder: ['$schema', 'name', 'commands', 'active'],
 			},
 		},
 	];
