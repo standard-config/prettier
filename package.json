@@ -28,7 +28,7 @@
 	"exports": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"engines": {
-		"node": ">=22"
+		"node": ">=20"
 	},
 	"packageManager": "pnpm@10.28.1",
 	"dependencies": {
