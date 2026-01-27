@@ -48,6 +48,10 @@ For a consistent editor experience, you can use the included [`.editorconfig`](h
 ln -s node_modules/@standard-config/prettier/.editorconfig
 ```
 
+## Related
+
+- [**@standard-config/eslint**](https://github.com/standard-config/eslint)
+
 ## License
 
 MIT © [Dom Porada](https://dom.engineering)
