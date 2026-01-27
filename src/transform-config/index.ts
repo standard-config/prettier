@@ -10,6 +10,7 @@ import * as pluginExpandJSON from 'prettier-plugin-expand-json';
 import * as pluginPackageJSON from 'prettier-plugin-packagejson';
 import * as pluginShell from 'prettier-plugin-sh';
 import * as pluginSortJSON from 'prettier-plugin-sort-json';
+import * as pluginYAML from 'prettier-plugin-yaml';
 import clone from '../clone/index.ts';
 import prioritizeKeys from '../prioritize-keys/index.ts';
 
@@ -70,6 +71,7 @@ function transformPlugins(
 		'prettier-plugin-packagejson': pluginPackageJSON,
 		'prettier-plugin-sh': pluginShell,
 		'prettier-plugin-sort-json': pluginSortJSON,
+		'prettier-plugin-yaml': pluginYAML,
 		...pluginOverrides,
 	};
 

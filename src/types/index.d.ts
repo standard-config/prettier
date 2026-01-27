@@ -20,7 +20,7 @@ type DefaultOptions = {
 	 */
 	printWidth?: PrettierOptions['printWidth'];
 	/**
-	 * Change when properties in objects are quoted.
+	 * Control when object properties are quoted.
 	 * @default 'consistent'
 	 */
 	quoteProps?: PrettierOptions['quoteProps'];

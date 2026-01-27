@@ -121,6 +121,16 @@ exports[`generates a valid Prettier config 1`] = `
     },
     {
       "files": [
+        "*.yaml",
+        "*.yml",
+      ],
+      "options": {
+        "useTabs": false,
+        "yamlCollectionStyle": "block",
+      },
+    },
+    {
+      "files": [
         "oxlintrc.json",
         "oxlintrc.jsonc",
         "oxlintrc.*.json",
@@ -259,8 +269,9 @@ exports[`generates a valid Prettier config 1`] = `
   ],
   "plugins": [
     "@prettier/plugin-oxc",
-    "prettier-plugin-sh",
     "prettier-plugin-expand-json",
+    "prettier-plugin-sh",
+    "prettier-plugin-yaml",
   ],
   "printWidth": 80,
   "quoteProps": "consistent",

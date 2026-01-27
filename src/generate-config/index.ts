@@ -27,8 +27,9 @@ export default function generateConfig(
 	return clone({
 		plugins: [
 			'@prettier/plugin-oxc',
-			'prettier-plugin-sh',
 			'prettier-plugin-expand-json',
+			'prettier-plugin-sh',
+			'prettier-plugin-yaml',
 		],
 		bracketSpacing: true,
 		printWidth: 80,
@@ -127,6 +128,13 @@ function getFileTypeOverrides(
 				parser: 'html',
 				printWidth: 80,
 				singleAttributePerLine: true,
+			},
+		},
+		{
+			files: ['*.yaml', '*.yml'],
+			options: {
+				yamlCollectionStyle: 'block',
+				useTabs: false,
 			},
 		},
 	];
