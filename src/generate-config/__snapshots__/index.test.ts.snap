@@ -94,6 +94,15 @@ exports[`generates a valid Prettier config 1`] = `
     },
     {
       "files": [
+        "*.sh",
+      ],
+      "options": {
+        "tabWidth": 2,
+        "useTabs": false,
+      },
+    },
+    {
+      "files": [
         "*.ts",
         "*.tsx",
         "*.cts",

@@ -39,14 +39,18 @@ export default function generateConfig(
 		trailingComma: 'es5',
 		useTabs: shellUseTabs,
 		overrides: [
-			...getFileTypeOverrides({ tabWidth, useTabs }),
+			...getFileTypeOverrides(
+				{ tabWidth, useTabs },
+				{ tabWidth: shellTabWidth, useTabs: shellUseTabs }
+			),
 			...getFileNameOverrides(),
 		],
 	});
 }
 
 function getFileTypeOverrides(
-	baseDefaults: IndentationOptions = {}
+	baseDefaults: IndentationOptions = {},
+	shellDefaults: IndentationOptions = {}
 ): StandardConfigOverrides {
 	return [
 		{
@@ -112,6 +116,12 @@ function getFileTypeOverrides(
 			options: {
 				...baseDefaults,
 				useTabs: false,
+			},
+		},
+		{
+			files: ['*.sh'],
+			options: {
+				...shellDefaults,
 			},
 		},
 		{
