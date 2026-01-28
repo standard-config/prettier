@@ -24,8 +24,8 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0(prettier@3.8.1)
       prettier-plugin-yaml:
-        specifier: ^1.0.0
-        version: 1.0.0(prettier@3.8.1)
+        specifier: ^1.0.1
+        version: 1.0.1(prettier@3.8.1)
       rfdc:
         specifier: ^1.4.1
         version: 1.4.1
@@ -1835,8 +1835,8 @@ packages:
     peerDependencies:
       prettier: ^3.0.0
 
-  prettier-plugin-yaml@1.0.0:
-    resolution: {integrity: sha512-KgY7wHj3PwxH71v1yeQq5W0SzsOx5x23HwScfaIeNhzGjW/7CgD+wdoHbFkY2B7yyOHhZD0yS/+HSFBMxuSy0A==}
+  prettier-plugin-yaml@1.0.1:
+    resolution: {integrity: sha512-evFueeMkmnaH0njXIf2TeKe5grF23EXh0gPY0pdHegapaxAzL1w0llh18VdkhqKLgYOW9n957e4Z7TmmgTOUEQ==}
     engines: {node: '>=22'}
     peerDependencies:
       prettier: '>=3'
@@ -4018,7 +4018,7 @@ snapshots:
     dependencies:
       prettier: 3.8.1
 
-  prettier-plugin-yaml@1.0.0(prettier@3.8.1):
+  prettier-plugin-yaml@1.0.1(prettier@3.8.1):
     dependencies:
       prettier: 3.8.1
       yaml: 2.8.2
