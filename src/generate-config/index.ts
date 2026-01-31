@@ -28,6 +28,7 @@ export default function generateConfig(
 		plugins: [
 			'@prettier/plugin-oxc',
 			'prettier-plugin-expand-json',
+			'prettier-plugin-markdown-html',
 			'prettier-plugin-sh',
 			'prettier-plugin-yaml',
 		],
@@ -116,6 +117,13 @@ function getFileTypeOverrides(
 			options: {
 				...baseDefaults,
 				useTabs: false,
+			},
+		},
+		{
+			files: ['*.md'],
+			options: {
+				printWidth: Number.POSITIVE_INFINITY,
+				singleAttributePerLine: true,
 			},
 		},
 		{

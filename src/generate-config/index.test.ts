@@ -4,9 +4,12 @@ import generateConfig from './index.ts';
 
 test('generates a valid Prettier config', () => {
 	const config = generateConfig();
+	const { overrides, plugins, ...options } = config;
 
 	expectTypeOf(config).toEqualTypeOf<StandardConfig>();
-	expect(config).toMatchSnapshot();
+	expect({ plugins }).toMatchSnapshot();
+	expect(options).toMatchSnapshot();
+	expect({ overrides }).toMatchSnapshot();
 });
 
 test('accepts custom formatting options', () => {

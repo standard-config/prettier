@@ -2,7 +2,30 @@
 
 exports[`generates a valid Prettier config 1`] = `
 {
+  "plugins": [
+    "@prettier/plugin-oxc",
+    "prettier-plugin-expand-json",
+    "prettier-plugin-markdown-html",
+    "prettier-plugin-sh",
+    "prettier-plugin-yaml",
+  ],
+}
+`;
+
+exports[`generates a valid Prettier config 2`] = `
+{
   "bracketSpacing": true,
+  "printWidth": 80,
+  "quoteProps": "consistent",
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "useTabs": false,
+}
+`;
+
+exports[`generates a valid Prettier config 3`] = `
+{
   "overrides": [
     {
       "files": [
@@ -90,6 +113,15 @@ exports[`generates a valid Prettier config 1`] = `
       "options": {
         "tabWidth": 4,
         "useTabs": false,
+      },
+    },
+    {
+      "files": [
+        "*.md",
+      ],
+      "options": {
+        "printWidth": Infinity,
+        "singleAttributePerLine": true,
       },
     },
     {
@@ -276,17 +308,5 @@ exports[`generates a valid Prettier config 1`] = `
       },
     },
   ],
-  "plugins": [
-    "@prettier/plugin-oxc",
-    "prettier-plugin-expand-json",
-    "prettier-plugin-sh",
-    "prettier-plugin-yaml",
-  ],
-  "printWidth": 80,
-  "quoteProps": "consistent",
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "es5",
-  "useTabs": false,
 }
 `;
