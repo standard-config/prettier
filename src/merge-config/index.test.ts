@@ -289,7 +289,7 @@ test('merges `overrides` correctly', () => {
 });
 
 test('doesn’t mutate any of the input configs', () => {
-	let baseConfig = {
+	const baseConfig = {
 		plugins: ['foo'],
 		printWidth: 100,
 		singleQuote: true,
@@ -303,7 +303,7 @@ test('doesn’t mutate any of the input configs', () => {
 		],
 	} as const satisfies StandardConfig;
 
-	let customConfig = {
+	const customConfig = {
 		plugins: ['bar', 'baz'],
 		printWidth: 120,
 		singleQuote: undefined,
@@ -318,7 +318,7 @@ test('doesn’t mutate any of the input configs', () => {
 		],
 	} as const satisfies StandardConfig;
 
-	let result = mergeConfig(baseConfig, customConfig);
+	const result = mergeConfig(baseConfig, customConfig);
 
 	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({

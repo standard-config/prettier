@@ -149,7 +149,10 @@
 		"import/no-default-export": "off",
 		"import/no-named-export": "off",
 		"import/no-namespace": "off",
+		"import/no-nodejs-modules": "off",
+		"import/no-relative-parent-imports": "off",
 		"import/no-unassigned-import": "error",
+		"import/unambiguous": "warn",
 		"oxc/no-async-await": "off",
 		"oxc/no-optional-chaining": "off",
 		"oxc/no-rest-spread-properties": "off",
@@ -235,6 +238,7 @@
 				"ignoreStringArrays": true
 			}
 		],
+		"typescript/require-await": "warn",
 		"typescript/restrict-template-expressions": [
 			"error",
 			{
@@ -246,6 +250,7 @@
 			"error",
 			{
 				"allowDefaultCaseForExhaustiveSwitch": false,
+				"considerDefaultExhaustiveForUnions": true,
 				"requireDefaultForNonUnion": true
 			}
 		],
@@ -264,10 +269,24 @@
 			"rules": {
 				"import/no-empty-named-blocks": "off",
 				"import/no-unassigned-import": "off",
+				"import/prefer-default-export": "off",
 				"import/unambiguous": "off",
 				"typescript/consistent-type-definitions": "off",
+				"typescript/no-empty-interface": "off",
+				"typescript/no-empty-object-type": "off",
 				"typescript/no-restricted-types": "off",
 				"unicorn/require-module-specifiers": "off"
+			}
+		},
+		{
+			"files": [
+				"**/*.config.ts",
+				"**/*.setup.ts"
+			],
+			"rules": {
+				"import/unambiguous": "off",
+				"unicorn/no-empty-file": "off",
+				"vitest/require-hook": "off"
 			}
 		},
 		{
@@ -276,6 +295,7 @@
 			],
 			"rules": {
 				"eslint/no-alert": "off",
+				"import/unambiguous": "off",
 				"promise/prefer-await-to-then": "off",
 				"typescript/ban-ts-comment": "off",
 				"typescript/no-confusing-void-expression": "off",
@@ -284,6 +304,8 @@
 				"typescript/no-unsafe-assignment": "off",
 				"typescript/no-unsafe-member-access": "off",
 				"unicorn/consistent-function-scoping": "off",
+				"unicorn/error-message": "off",
+				"unicorn/no-empty-file": "off",
 				"vitest/no-conditional-tests": "off",
 				"vitest/prefer-to-be-falsy": "off",
 				"vitest/prefer-to-be-truthy": "off"
