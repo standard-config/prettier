@@ -120,8 +120,8 @@ exports[`generates a valid Prettier config 3`] = `
         "*.md",
       ],
       "options": {
-        "printWidth": Infinity,
-        "singleAttributePerLine": true,
+        "htmlFragmentPrintWidth": Infinity,
+        "htmlFragmentSingleAttributePerLine": true,
       },
     },
     {

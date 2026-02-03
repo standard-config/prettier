@@ -122,8 +122,8 @@ function getFileTypeOverrides(
 		{
 			files: ['*.md'],
 			options: {
-				printWidth: Number.POSITIVE_INFINITY,
-				singleAttributePerLine: true,
+				htmlFragmentPrintWidth: Number.POSITIVE_INFINITY,
+				htmlFragmentSingleAttributePerLine: true,
 			},
 		},
 		{
