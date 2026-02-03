@@ -4,6 +4,7 @@ exports[`generates a valid Prettier config 1`] = `
 {
   "plugins": [
     "@prettier/plugin-oxc",
+    "@prettier/plugin-xml",
     "prettier-plugin-expand-json",
     "prettier-plugin-markdown-html",
     "prettier-plugin-sh",
@@ -153,11 +154,13 @@ exports[`generates a valid Prettier config 3`] = `
         "*.svg",
       ],
       "options": {
-        "parser": "html",
+        "parser": "xml",
         "printWidth": 80,
         "singleAttributePerLine": true,
         "tabWidth": 4,
         "useTabs": true,
+        "xmlQuoteAttributes": "double",
+        "xmlWhitespaceSensitivity": "ignore",
       },
     },
     {

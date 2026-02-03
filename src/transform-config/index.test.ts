@@ -82,7 +82,10 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 
 	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toStrictEqual({
-		plugins: [expect.any(Object), 'prettier-plugin-foo'],
+		plugins: [
+			expect.stringContaining('node_modules'),
+			'prettier-plugin-foo',
+		],
 		overrides: [
 			{
 				files: ['*.json'],

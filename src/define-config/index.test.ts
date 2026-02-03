@@ -38,6 +38,6 @@ test('merges custom config with the base config', () => {
 
 	for (const plugin of result.plugins!) {
 		expect(plugin).toBeDefined();
-		expect(plugin).not.toBeTypeOf('string');
+		expect(plugin).toContain('node_modules');
 	}
 });
