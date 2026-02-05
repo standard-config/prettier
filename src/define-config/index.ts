@@ -20,11 +20,10 @@ export default function defineConfig(
 	} = config;
 
 	const baseConfig = generateConfig(
-		{ useTabs, tabWidth },
-		{ shellUseTabs, shellTabWidth }
+		{ tabWidth, useTabs },
+		{ shellTabWidth, shellUseTabs }
 	);
 
 	const extendedConfig = mergeConfig(baseConfig, extensionConfig);
-
 	return transformConfig(extendedConfig, pluginOverrides);
 }

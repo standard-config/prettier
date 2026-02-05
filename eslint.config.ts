@@ -1,4 +1,11 @@
-import { defineConfig } from '@standard-config/eslint';
-import { globalIgnores } from 'eslint/config';
+import { configConfigFiles, defineConfig } from '@standard-config/eslint';
 
-export default defineConfig(globalIgnores(['fixtures/**']));
+export default defineConfig([
+	{
+		ignores: ['fixtures/**'],
+	},
+	{
+		files: ['src/*-config/index.ts'],
+		...configConfigFiles,
+	},
+]);

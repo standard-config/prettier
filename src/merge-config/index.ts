@@ -8,9 +8,7 @@ export default function mergeConfig(
 	baseConfig: StandardConfig,
 	extensionConfig: StandardConfig
 ): StandardConfig {
-	if (
-		!(typeof baseConfig === 'object' && typeof extensionConfig === 'object')
-	) {
+	if (!(isObject(baseConfig) && isObject(extensionConfig))) {
 		throw new TypeError(
 			'Standard Config error: expected config to be an object'
 		);
@@ -19,7 +17,7 @@ export default function mergeConfig(
 	const result = clone(baseConfig);
 
 	for (const [key, value] of Object.entries(clone(extensionConfig))) {
-		if (value === undefined) {
+		if (value === undefined || value === null) {
 			/* oxlint-disable-next-line typescript/no-dynamic-delete */
 			delete result[key];
 			continue;
@@ -38,4 +36,8 @@ export default function mergeConfig(
 
 function isArray(value: unknown): value is unknown[] {
 	return Array.isArray(value);
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
 }

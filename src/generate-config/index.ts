@@ -154,8 +154,8 @@ function getFileTypeOverrides(
 		{
 			files: ['*.yaml', '*.yml'],
 			options: {
-				yamlCollectionStyle: 'block',
 				useTabs: false,
+				yamlCollectionStyle: 'block',
 			},
 		},
 	];

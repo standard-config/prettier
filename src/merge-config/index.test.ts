@@ -2,7 +2,7 @@ import type { StandardConfig } from '../types/index.d.ts';
 import { expect, expectTypeOf, test } from 'vitest';
 import mergeConfig from './index.ts';
 
-test('merges two valid configs into one', () => {
+test('merges two valid configs', () => {
 	let result = mergeConfig({}, {});
 
 	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
@@ -36,13 +36,8 @@ test('merges two valid configs into one', () => {
 	expect(() => mergeConfig(undefined, {})).toThrow(TypeError);
 });
 
-test('removes config options that resolve to `undefined`', () => {
-	let result = mergeConfig({}, {});
-
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
-	expect(result).toStrictEqual({});
-
-	result = mergeConfig(
+test('removes config properties that resolve to `undefined`', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,

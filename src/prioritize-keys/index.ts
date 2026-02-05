@@ -11,7 +11,6 @@ export default function prioritizeKeys(...keys: ReadonlyArray<string>): string {
 
 	return JSON.stringify({
 		...order,
-		/* oxlint-disable-next-line typescript/no-explicit-any */
 		[/.*/ as any]: 'lexical',
 	});
 }

@@ -2,7 +2,6 @@ import { expect, test } from 'vitest';
 import prioritizeKeys from './index.ts';
 
 const KEY_WILDCARD = {
-	/* oxlint-disable-next-line typescript/no-explicit-any */
 	[/.*/ as any]: 'lexical',
 };
 
