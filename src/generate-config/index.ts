@@ -163,16 +163,23 @@ function getFileTypeOverrides(
 
 function getFileNameOverrides(): StandardConfigOverrides {
 	return [
+		{
+			files: [
+				'.oxfmtrc.json',
+				'.oxfmtrc.jsonc',
+				'.oxfmtrc.*.json',
+				'.oxfmtrc.*.jsonc',
+			],
+			options: {
+				jsonSortOrder: ['$schema', '*', 'overrides'],
+			},
+		},
 		/**
 		 * All `.oxlintrc.json` fields defined by the Oxlint documentation
 		 * are sorted, including nested fields.
 		 */
 		{
 			files: [
-				'oxlintrc.json',
-				'oxlintrc.jsonc',
-				'oxlintrc.*.json',
-				'oxlintrc.*.jsonc',
 				'.oxlintrc.json',
 				'.oxlintrc.jsonc',
 				'.oxlintrc.*.json',

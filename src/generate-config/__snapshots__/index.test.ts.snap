@@ -175,10 +175,21 @@ exports[`generates a valid Prettier config 3`] = `
     },
     {
       "files": [
-        "oxlintrc.json",
-        "oxlintrc.jsonc",
-        "oxlintrc.*.json",
-        "oxlintrc.*.jsonc",
+        ".oxfmtrc.json",
+        ".oxfmtrc.jsonc",
+        ".oxfmtrc.*.json",
+        ".oxfmtrc.*.jsonc",
+      ],
+      "options": {
+        "jsonSortOrder": [
+          "$schema",
+          "*",
+          "overrides",
+        ],
+      },
+    },
+    {
+      "files": [
         ".oxlintrc.json",
         ".oxlintrc.jsonc",
         ".oxlintrc.*.json",
