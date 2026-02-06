@@ -12,6 +12,9 @@ type DefaultOptions = {
 	bracketSpacing?: PrettierOptions['bracketSpacing'];
 	/**
 	 * Define a custom sort order for JSON files.
+	 *
+	 * When using an array, use `*` to place unmatched keys anywhere in the sort
+	 * order. If the wildcard isn’t present, unmatched keys will be sorted last.
 	 */
 	jsonSortOrder?: string | string[] | undefined;
 	/**
