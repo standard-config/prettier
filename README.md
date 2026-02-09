@@ -8,7 +8,7 @@ TypeScript-first Prettier config with carefully considered details.
 
 - Uses the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
 - Formats shell scripts out of the box, including `git` hook files.
-- Formats raw HTML fragments in `README.md` and other Markdown documents.
+- Formats HTML fragments in `README.md` and any other GitHub-Flavored Markdown document.
 - Sorts all JSON files, with curated order patterns for common configs like `package.json`, `tsconfig.json`, `.oxlintrc.json`, and more.
 
 ## Install
