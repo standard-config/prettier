@@ -18,8 +18,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4(prettier@3.8.1)
       prettier-plugin-markdown-html:
-        specifier: ^1.1.0
-        version: 1.1.0(prettier@3.8.1)
+        specifier: ^1.2.0
+        version: 1.2.0(prettier@3.8.1)
       prettier-plugin-packagejson:
         specifier: ^3.0.0
         version: 3.0.0(prettier@3.8.1)
@@ -1824,8 +1824,8 @@ packages:
     peerDependencies:
       prettier: '>=3'
 
-  prettier-plugin-markdown-html@1.1.0:
-    resolution: {integrity: sha512-2mUHv+AvnG35sHe8eKdpOC/iGTFYsrUte/aKFb3FUjAUZ6lr0gKxng4uZnInWSjxUyi37BT01JJd1nQ57TXXDA==}
+  prettier-plugin-markdown-html@1.2.0:
+    resolution: {integrity: sha512-57d+ibXuYdmF728ZUnw473v+lxAm2QQDATltcbHMpKPNDA/VNtOBrkJndLhvZxCfLSuw4Y+XhMzzy0G//3VjMQ==}
     engines: {node: '>=20'}
     peerDependencies:
       prettier: '>=3'
@@ -4019,7 +4019,7 @@ snapshots:
     dependencies:
       prettier: 3.8.1
 
-  prettier-plugin-markdown-html@1.1.0(prettier@3.8.1):
+  prettier-plugin-markdown-html@1.2.0(prettier@3.8.1):
     dependencies:
       prettier: 3.8.1
 
