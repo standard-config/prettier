@@ -38,10 +38,10 @@ importers:
     devDependencies:
       '@standard-config/eslint':
         specifier: ^1.4.1
-        version: 1.4.1(@standard-config/oxlint@1.1.1(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1)))(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)
+        version: 1.4.1(@standard-config/oxlint@1.1.2(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1)))(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)
       '@standard-config/oxlint':
-        specifier: ^1.1.1
-        version: 1.1.1(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))
+        specifier: ^1.1.2
+        version: 1.1.2(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))
       '@standard-config/tsconfig':
         specifier: ^2.0.2
         version: 2.0.2(typescript@5.9.3)
@@ -929,8 +929,8 @@ packages:
       '@standard-config/oxlint':
         optional: true
 
-  '@standard-config/oxlint@1.1.1':
-    resolution: {integrity: sha512-ED4FLL1j2EJhsxEK3IAvpAsL4MXCoDghLDYfJzNy2CxfOBzt4l1LKPkpsjHhA23zSLT1IIknU+Nj1RFH0RCvUg==}
+  '@standard-config/oxlint@1.1.2':
+    resolution: {integrity: sha512-XwaCw5ngkj4T16/4c4FXW2y5MOe3PPGjbSrz88LIHr9b1H+Mc1MTWiOQXZwvyGuexZPbqtP6qEgtQ08QAapSyA==}
     engines: {node: '>=20'}
     peerDependencies:
       oxlint: '>=1.43'
@@ -2889,7 +2889,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.57.1':
     optional: true
 
-  '@standard-config/eslint@1.4.1(@standard-config/oxlint@1.1.1(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1)))(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)':
+  '@standard-config/eslint@1.4.1(@standard-config/oxlint@1.1.2(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1)))(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
       '@eslint/compat': 2.0.2(eslint@10.0.0(jiti@2.6.1))
       eslint: 10.0.0(jiti@2.6.1)
@@ -2900,11 +2900,11 @@ snapshots:
       typescript: 5.9.3
       typescript-eslint: 8.55.0(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)
     optionalDependencies:
-      '@standard-config/oxlint': 1.1.1(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))
+      '@standard-config/oxlint': 1.1.2(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))
     transitivePeerDependencies:
       - supports-color
 
-  '@standard-config/oxlint@1.1.1(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))':
+  '@standard-config/oxlint@1.1.2(oxlint-tsgolint@0.12.1)(oxlint@1.47.0(oxlint-tsgolint@0.12.1))':
     dependencies:
       oxlint: 1.47.0(oxlint-tsgolint@0.12.1)
       rfdc: 1.4.1
