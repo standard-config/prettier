@@ -5,5 +5,8 @@ export default defineConfig({
 		coverage: {
 			exclude: ['fixtures/**'],
 		},
+		typecheck: {
+			enabled: true,
+		},
 	},
 });
