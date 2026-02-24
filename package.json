@@ -52,7 +52,7 @@
 		"@standard-config/tsconfig": "^2.0.2",
 		"@types/node": "^22.19.11",
 		"@vitest/coverage-v8": "^4.0.18",
-		"eslint": "^10.0.1",
+		"eslint": "^10.0.2",
 		"husky": "^9.1.7",
 		"jiti": "^2.6.1",
 		"oxlint": "^1.50.0",
