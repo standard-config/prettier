@@ -1,11 +1,17 @@
+import { getOxlintConfigs } from '@standard-config/eslint/utilities';
 import { defineConfig } from '@standard-config/oxlint';
 
-export default defineConfig({
+const { configBase, configConfigFiles } = getOxlintConfigs();
+
+export default defineConfig(configBase, {
 	ignorePatterns: ['fixtures/**'],
-	categories: {
-		nursery: 'error',
-	},
 	rules: {
 		'typescript/no-deprecated': 'off',
 	},
+	overrides: [
+		{
+			files: ['src/*-config/index.ts'],
+			...configConfigFiles,
+		},
+	],
 });

@@ -6,5 +6,6 @@
 		"**/*.snap": true,
 		"pnpm-lock.yaml": true
 	},
+	"typescript.showDeprecated": false,
 	"typescript.tsdk": "node_modules/typescript/lib"
 }
