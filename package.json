@@ -70,7 +70,7 @@
 		"fixtures:unscramble": "pnpm prettier --write fixtures && sleep 1",
 		"format": "prettier --ignore-unknown --log-level=warn --write .",
 		"format:check": "prettier --check --ignore-unknown .",
-		"lint": "oxlint --fix --report-unused-disable-directives --type-aware --type-check",
+		"lint": "oxlint --fix --report-unused-disable-directives --type-aware",
 		"lint:check": "oxlint --deny-warnings --report-unused-disable-directives --type-aware --type-check",
 		"prepack": "pnpm run '/^(format:check|lint:check|test|typecheck)$/' && pnpm build",
 		"prepare": "husky",

@@ -112,6 +112,7 @@ exports[`generates a valid Prettier config 3`] = `
         "*.mdx",
       ],
       "options": {
+        "proseWrap": "never",
         "tabWidth": 4,
         "useTabs": false,
       },

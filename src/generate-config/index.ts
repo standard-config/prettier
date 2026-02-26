@@ -117,6 +117,7 @@ function getFileTypeOverrides(
 			files: ['*.md', '*.mdx'],
 			options: {
 				...baseDefaults,
+				proseWrap: 'never',
 				useTabs: false,
 			},
 		},
