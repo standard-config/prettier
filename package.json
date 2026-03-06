@@ -37,7 +37,7 @@
 		"@prettier/plugin-xml": "^3.4.2",
 		"prettier-plugin-expand-json": "^1.0.4",
 		"prettier-plugin-markdown-html": "^1.3.0",
-		"prettier-plugin-packagejson": "^3.0.1",
+		"prettier-plugin-packagejson": "^3.0.2",
 		"prettier-plugin-sh": "^0.18.0",
 		"prettier-plugin-sort-json": "^4.2.0",
 		"prettier-plugin-yaml": "^1.1.2",
