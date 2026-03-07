@@ -7,7 +7,7 @@ TypeScript-first Prettier config with carefully considered details.
 - Uses the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
 - Formats shell scripts out of the box, including `git` hook files.
 - Formats HTML fragments in `README.md` and any other GitHub-Flavored Markdown document.
-- Sorts all JSON files, with curated order patterns for common configs like `package.json`, `tsconfig.json`, `.oxlintrc.json`, and more.
+- Sorts all JSON files, with curated order patterns for common config files like `package.json`, `tsconfig.json`, and more.
 
 ## Install
 
@@ -50,6 +50,7 @@ ln -s node_modules/@standard-config/prettier/.editorconfig
 ## Related
 
 - [**@standard-config/oxlint**](https://github.com/standard-config/oxlint)
+- [**@standard-config/tsconfig**](https://github.com/standard-config/tsconfig)
 - [**prettier-plugin-expand-json**](https://github.com/porada/prettier-plugin-expand-json)
 - [**prettier-plugin-markdown-html**](https://github.com/porada/prettier-plugin-markdown-html)
 - [**prettier-plugin-yaml**](https://github.com/porada/prettier-plugin-yaml)
