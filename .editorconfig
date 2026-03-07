@@ -37,7 +37,3 @@ indent_size = 4
 [*.{ts,tsx,cts,mts}]
 indent_size = 4
 indent_style = tab
-
-[*.{xml,plist,svg}]
-indent_size = 4
-indent_style = tab

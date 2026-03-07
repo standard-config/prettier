@@ -27,7 +27,6 @@ export default function generateConfig(
 	return clone({
 		plugins: [
 			'@prettier/plugin-oxc',
-			'@prettier/plugin-xml',
 			'prettier-plugin-expand-json',
 			'prettier-plugin-markdown-html',
 			'prettier-plugin-sh',
@@ -142,17 +141,6 @@ function getFileTypeOverrides(
 			},
 		},
 		{
-			files: ['*.xml', '*.plist', '*.svg'],
-			options: {
-				...baseDefaults,
-				parser: 'xml',
-				printWidth: 80,
-				singleAttributePerLine: true,
-				xmlQuoteAttributes: 'double',
-				xmlWhitespaceSensitivity: 'ignore',
-			},
-		},
-		{
 			files: ['*.yaml', '*.yml'],
 			options: {
 				useTabs: false,
@@ -216,7 +204,8 @@ function getFileNameOverrides(): StandardConfigOverrides {
 			files: ['package.json'],
 			options: {
 				plugins: [
-					'prettier-plugin-packagejson',
+					/* prettier-ignore */
+					'prettier-plugin-pkg',
 					'prettier-plugin-expand-json',
 				],
 				packageSortOrder: [

@@ -1,8 +1,7 @@
 {
 	"name": "fixture",
 	"files": [
-		"fixtures.ts",
-		"fixtures.d.ts"
+		"fixtures.js"
 	],
 	"exports": null,
 	"scripts": {

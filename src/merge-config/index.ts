@@ -16,7 +16,7 @@ export default function mergeConfig(
 
 	const result = clone(baseConfig);
 
-	for (const [key, value] of Object.entries(clone(extensionConfig))) {
+	for (const [key, value] of Object.entries(extensionConfig)) {
 		if (value === undefined || value === null) {
 			/* oxlint-disable-next-line typescript/no-dynamic-delete */
 			delete result[key];
@@ -24,11 +24,11 @@ export default function mergeConfig(
 		}
 
 		if (isArray(value) && isArray(result[key])) {
-			result[key] = [...result[key], ...value];
+			result[key] = [...result[key], ...clone(value)];
 			continue;
 		}
 
-		result[key] = value;
+		result[key] = typeof value === 'object' ? clone(value) : value;
 	}
 
 	return result;

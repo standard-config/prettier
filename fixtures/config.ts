@@ -18,11 +18,5 @@ export default {
 				useTabs: true,
 			},
 		},
-		{
-			files: '*.svg',
-			options: {
-				parser: 'html',
-			},
-		},
 	],
 } as const satisfies Config;

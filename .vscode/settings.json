@@ -1,11 +1,7 @@
 {
-	"files.exclude": {
-		".editorconfig": true
-	},
 	"search.exclude": {
 		"**/*.snap": true,
 		"pnpm-lock.yaml": true
 	},
-	"typescript.showDeprecated": false,
-	"typescript.tsdk": "node_modules/typescript/lib"
+	"typescript.showDeprecated": false
 }

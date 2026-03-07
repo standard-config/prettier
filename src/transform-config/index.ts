@@ -64,10 +64,9 @@ function transformPlugins(
 		...Object.fromEntries(
 			[
 				'@prettier/plugin-oxc',
-				'@prettier/plugin-xml',
 				'prettier-plugin-expand-json',
 				'prettier-plugin-markdown-html',
-				'prettier-plugin-packagejson',
+				'prettier-plugin-pkg',
 				'prettier-plugin-sh',
 				'prettier-plugin-sort-json',
 				'prettier-plugin-yaml',
