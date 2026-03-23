@@ -50,7 +50,7 @@
 		"@standard-config/tsconfig": "^2.0.2",
 		"@types/node": "^22.19.15",
 		"@vitest/coverage-v8": "^4.1.0",
-		"eslint": "^10.0.3",
+		"eslint": "^10.1.0",
 		"husky": "^9.1.7",
 		"oxlint": "^1.56.0",
 		"oxlint-tsgolint": "^0.17.1",
