@@ -1,9 +1,9 @@
-import { getOxlintConfigs } from '@standard-config/eslint/utilities';
-import { defineConfig } from '@standard-config/oxlint';
+import {
+	defineOxlintConfig,
+	oxlintConfigConfigFiles,
+} from '@standard-config/eslint/utilities';
 
-const { configBase, configConfigFiles } = getOxlintConfigs();
-
-export default defineConfig(configBase, {
+export default defineOxlintConfig({
 	ignorePatterns: ['fixtures/**'],
 	rules: {
 		'typescript/no-deprecated': 'off',
@@ -11,7 +11,7 @@ export default defineConfig(configBase, {
 	overrides: [
 		{
 			files: ['src/*-config/index.ts'],
-			...configConfigFiles,
+			...oxlintConfigConfigFiles,
 		},
 	],
 });

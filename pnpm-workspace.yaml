@@ -4,9 +4,9 @@ onlyBuiltDependencies:
   - esbuild
 
 peerDependencyRules:
-  allowedVersions:
-    eslint: '*'
-    vitest: '*'
+  allowAny:
+    - typescript
+    - vitest
 
 strictPeerDependencies: true
 
