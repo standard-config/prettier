@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm build
 
@@ -31,6 +33,8 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm test --coverage
       - uses: codecov/codecov-action@v5
@@ -52,6 +56,8 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm add --save-dev prettier@~${{ matrix.prettier-version }}
       - run: pnpm exec prettier --version
@@ -72,6 +78,8 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm add --save-dev prettier@~${{ matrix.prettier-version }}
       - run: pnpm exec prettier --version
@@ -85,6 +93,8 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm lint:check
 
@@ -96,5 +106,7 @@ jobs:
         with:
           node-version: 24
       - uses: pnpm/action-setup@v5
+        with:
+          cache: true
       - run: pnpm install
       - run: pnpm typecheck
