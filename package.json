@@ -39,7 +39,7 @@
 		"prettier-plugin-pkg": "^0.22.0",
 		"prettier-plugin-sh": "^0.18.0",
 		"prettier-plugin-sort-json": "^4.2.0",
-		"prettier-plugin-yaml": "^1.1.2"
+		"prettier-plugin-yaml": "^1.1.3"
 	},
 	"peerDependencies": {
 		"prettier": ">=3.7"
