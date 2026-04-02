@@ -46,7 +46,7 @@
 	},
 	"devDependencies": {
 		"@standard-config/eslint": "^2.0.2",
-		"@standard-config/oxlint": "^1.6.1",
+		"@standard-config/oxlint": "^1.6.2",
 		"@standard-config/tsconfig": "^3.1.0",
 		"@types/node": "^24.12.0",
 		"@vitest/coverage-v8": "^4.1.2",
