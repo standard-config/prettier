@@ -43,11 +43,11 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(typescript@6.0.2)
       '@types/node':
-        specifier: ^24.12.0
-        version: 24.12.0
+        specifier: ^24.12.2
+        version: 24.12.2
       '@vitest/coverage-v8':
         specifier: ^4.1.2
-        version: 4.1.2(vitest@4.1.2(@types/node@24.12.0)(yaml@2.8.3))
+        version: 4.1.2(vitest@4.1.2(@types/node@24.12.2)(yaml@2.8.3))
       eslint:
         specifier: ^10.2.0
         version: 10.2.0
@@ -62,10 +62,10 @@ importers:
         version: 6.0.2
       vite-plus:
         specifier: ^0.1.14
-        version: 0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))(yaml@2.8.3)
+        version: 0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))(yaml@2.8.3)
       vitest:
         specifier: ^4.1.2
-        version: 4.1.2(@types/node@24.12.0)(yaml@2.8.3)
+        version: 4.1.2(@types/node@24.12.2)(yaml@2.8.3)
 
 packages:
 
@@ -616,8 +616,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@24.12.0':
-    resolution: {integrity: sha512-GYDxsZi3ChgmckRT9HPU0WEhKLP08ev/Yfcq2AstjrDASOYCSXeyjDsHg4v5t4jOj7cyDX3vmprafKlWIG9MXQ==}
+  '@types/node@24.12.2':
+    resolution: {integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==}
 
   '@typescript-eslint/project-service@8.58.0':
     resolution: {integrity: sha512-8Q/wBPWLQP1j16NxoPNIKpDZFMaxl7yWIoqXWYeWO+Bbd2mjgvoF0dxP2jKZg5+x49rgKdf7Ck473M8PC3V9lg==}
@@ -1907,7 +1907,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@24.12.0':
+  '@types/node@24.12.2':
     dependencies:
       undici-types: 7.16.0
 
@@ -1974,7 +1974,7 @@ snapshots:
       '@typescript-eslint/types': 8.58.0
       eslint-visitor-keys: 5.0.1
 
-  '@vitest/coverage-v8@4.1.2(vitest@4.1.2(@types/node@24.12.0)(yaml@2.8.3))':
+  '@vitest/coverage-v8@4.1.2(vitest@4.1.2(@types/node@24.12.2)(yaml@2.8.3))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.1.2
@@ -1986,7 +1986,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.2(@types/node@24.12.0)(yaml@2.8.3)
+      vitest: 4.1.2(@types/node@24.12.2)(yaml@2.8.3)
 
   '@vitest/expect@4.1.2':
     dependencies:
@@ -1997,13 +1997,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.2(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.2(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.3(@types/node@24.12.0)(yaml@2.8.3)
+      vite: 8.0.3(@types/node@24.12.2)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.2':
     dependencies:
@@ -2029,14 +2029,14 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@voidzero-dev/vite-plus-core@0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-core@0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)':
     dependencies:
       '@oxc-project/runtime': 0.121.0
       '@oxc-project/types': 0.122.0
       lightningcss: 1.32.0
       postcss: 8.5.8
     optionalDependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.12.2
       fsevents: 2.3.3
       publint: 0.3.18
       typescript: 6.0.2
@@ -2060,11 +2060,11 @@ snapshots:
   '@voidzero-dev/vite-plus-linux-x64-musl@0.1.14':
     optional: true
 
-  '@voidzero-dev/vite-plus-test@0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))(yaml@2.8.3)':
+  '@voidzero-dev/vite-plus-test@0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))(yaml@2.8.3)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@voidzero-dev/vite-plus-core': 0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)
       es-module-lexer: 1.7.0
       obug: 2.1.1
       pixelmatch: 7.1.0
@@ -2074,10 +2074,10 @@ snapshots:
       tinybench: 2.9.0
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
-      vite: 8.0.3(@types/node@24.12.0)(yaml@2.8.3)
+      vite: 8.0.3(@types/node@24.12.2)(yaml@2.8.3)
       ws: 8.20.0
     optionalDependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.12.2
     transitivePeerDependencies:
       - '@arethetypeswrong/core'
       - '@tsdown/css'
@@ -2653,11 +2653,11 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  vite-plus@0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))(yaml@2.8.3):
+  vite-plus@0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))(yaml@2.8.3):
     dependencies:
       '@oxc-project/types': 0.122.0
-      '@voidzero-dev/vite-plus-core': 0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)
-      '@voidzero-dev/vite-plus-test': 0.1.14(@types/node@24.12.0)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-core': 0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(yaml@2.8.3)
+      '@voidzero-dev/vite-plus-test': 0.1.14(@types/node@24.12.2)(publint@0.3.18)(typescript@6.0.2)(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))(yaml@2.8.3)
       cac: 7.0.0
       cross-spawn: 7.0.6
       oxlint: 1.57.0(oxlint-tsgolint@0.17.3)
@@ -2700,7 +2700,7 @@ snapshots:
       - vite
       - yaml
 
-  vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3):
+  vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -2708,14 +2708,14 @@ snapshots:
       rolldown: 1.0.0-rc.12
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.12.2
       fsevents: 2.3.3
       yaml: 2.8.3
 
-  vitest@4.1.2(@types/node@24.12.0)(yaml@2.8.3):
+  vitest@4.1.2(@types/node@24.12.2)(yaml@2.8.3):
     dependencies:
       '@vitest/expect': 4.1.2
-      '@vitest/mocker': 4.1.2(vite@8.0.3(@types/node@24.12.0)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.2(vite@8.0.3(@types/node@24.12.2)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.2
       '@vitest/runner': 4.1.2
       '@vitest/snapshot': 4.1.2
@@ -2732,10 +2732,10 @@ snapshots:
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vite: 8.0.3(@types/node@24.12.0)(yaml@2.8.3)
+      vite: 8.0.3(@types/node@24.12.2)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 24.12.0
+      '@types/node': 24.12.2
     transitivePeerDependencies:
       - '@vitejs/devtools'
       - esbuild
