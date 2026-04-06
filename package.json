@@ -1,6 +1,6 @@
 {
 	"name": "@standard-config/prettier",
-	"version": "1.11.3",
+	"version": "1.12.0",
 	"description": "TypeScript-first Prettier config",
 	"license": "MIT",
 	"author": {
