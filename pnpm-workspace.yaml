@@ -1,5 +1,7 @@
 autoInstallPeers: false
 
+blockExoticSubdeps: true
+
 onlyBuiltDependencies:
   - esbuild
 
@@ -12,6 +14,8 @@ peerDependencyRules:
     - vitest
 
 strictPeerDependencies: true
+
+trustPolicy: no-downgrade
 
 updateConfig:
   ignoreDependencies:
