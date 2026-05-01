@@ -1,15 +1,19 @@
 autoInstallPeers: false
 
-blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  - '@standard-config/*'
+  - prettier
+  - prettier-plugin-expand-json
+  - prettier-plugin-markdown-html
+  - prettier-plugin-yaml
 
 overrides:
   vite-plus>oxfmt: '-'
 
 peerDependencyRules:
   allowAny:
+    - '@vitest/coverage-v8'
     - vitest
-
-strictDepBuilds: true
 
 strictPeerDependencies: true
 
