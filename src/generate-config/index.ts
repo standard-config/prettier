@@ -291,13 +291,57 @@ function getFileNameOverrides(): StandardConfigOverrides {
 		{
 			files: ['.vscode/mcp.json'],
 			options: {
-				jsonSortOrder: ['$schema', 'command'],
+				jsonSortOrder: ['$schema', 'command', 'args'],
 			},
 		},
 		{
 			files: ['.vscode/sessions.json'],
 			options: {
 				jsonSortOrder: ['$schema', 'name', 'commands', 'active'],
+			},
+		},
+		{
+			files: [
+				/* prettier-ignore */
+				'.zed/settings.json',
+				'**/zed/settings.json',
+			],
+			options: {
+				jsonSortOrder: [
+					'$schema',
+					'default',
+					'command',
+					'args',
+					'*',
+					'agent',
+				],
+			},
+		},
+		{
+			files: [
+				/* prettier-ignore */
+				'.zed/keymap.json',
+				'**/zed/keymap.json',
+			],
+			options: {
+				jsonSortOrder: ['$schema', 'context', 'bindings'],
+			},
+		},
+		{
+			files: [
+				/* prettier-ignore */
+				'.zed/settings.json',
+				'**/zed/settings.json',
+			],
+			options: {
+				jsonSortOrder: [
+					'$schema',
+					'default',
+					'command',
+					'args',
+					'*',
+					'agent',
+				],
 			},
 		},
 	];

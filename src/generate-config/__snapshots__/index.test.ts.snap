@@ -289,6 +289,7 @@ exports[`generates a valid Prettier config 3`] = `
         "jsonSortOrder": [
           "$schema",
           "command",
+          "args",
         ],
       },
     },
@@ -302,6 +303,51 @@ exports[`generates a valid Prettier config 3`] = `
           "name",
           "commands",
           "active",
+        ],
+      },
+    },
+    {
+      "files": [
+        ".zed/settings.json",
+        "**/zed/settings.json",
+      ],
+      "options": {
+        "jsonSortOrder": [
+          "$schema",
+          "default",
+          "command",
+          "args",
+          "*",
+          "agent",
+        ],
+      },
+    },
+    {
+      "files": [
+        ".zed/keymap.json",
+        "**/zed/keymap.json",
+      ],
+      "options": {
+        "jsonSortOrder": [
+          "$schema",
+          "context",
+          "bindings",
+        ],
+      },
+    },
+    {
+      "files": [
+        ".zed/settings.json",
+        "**/zed/settings.json",
+      ],
+      "options": {
+        "jsonSortOrder": [
+          "$schema",
+          "default",
+          "command",
+          "args",
+          "*",
+          "agent",
         ],
       },
     },
