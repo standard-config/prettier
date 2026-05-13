@@ -56,7 +56,11 @@ test('resolves `jsonSortOrder` to a Prettier-compatible format', () => {
 
 test('resolves `plugins` to a Prettier-compatible format', () => {
 	const config = {
-		plugins: ['prettier-plugin-sort-json', 'prettier-plugin-foo'],
+		plugins: [
+			/* prettier-ignore */
+			'prettier-plugin-sort-json',
+			'prettier-plugin-foo',
+		],
 		overrides: [
 			{
 				files: ['*.json'],
@@ -95,6 +99,48 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 			},
 			{
 				files: ['package.json'],
+				options: {},
+			},
+		],
+	});
+});
+
+test('allows for disabling `@prettier/plugin-oxc`', () => {
+	const config = {
+		plugins: [
+			/* prettier-ignore */
+			'@prettier/plugin-oxc',
+			'prettier-plugin-foo',
+		],
+		overrides: [
+			{
+				files: ['*.js'],
+				options: {
+					parser: 'oxc',
+				},
+			},
+			{
+				files: ['*.ts'],
+				options: {
+					parser: 'oxc-ts',
+				},
+			},
+		],
+	} as const satisfies StandardConfig;
+
+	const result = transformConfig(config, {
+		'@prettier/plugin-oxc': undefined,
+	});
+
+	expect(result).toStrictEqual({
+		plugins: ['prettier-plugin-foo'],
+		overrides: [
+			{
+				files: ['*.js'],
+				options: {},
+			},
+			{
+				files: ['*.ts'],
 				options: {},
 			},
 		],

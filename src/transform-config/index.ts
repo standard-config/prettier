@@ -19,6 +19,10 @@ export default function transformConfig(
 	/* oxlint-disable-next-line eslint/no-param-reassign */
 	config = clone(config);
 
+	const disableOxcParser =
+		Object.hasOwn(pluginOverrides, '@prettier/plugin-oxc') &&
+		pluginOverrides['@prettier/plugin-oxc'] === undefined;
+
 	const transform = (options: StandardOptions) => {
 		if (options.jsonSortOrder) {
 			options.jsonSortOrder = transformJSONSortOrder(
@@ -35,14 +39,20 @@ export default function transformConfig(
 				delete options.plugins;
 			}
 		}
+
+		if (disableOxcParser) {
+			const { parser } = options;
+
+			if (typeof parser === 'string' && parser.startsWith('oxc')) {
+				delete options.parser;
+			}
+		}
 	};
 
 	transform(config);
 
-	if (config.overrides) {
-		for (const override of config.overrides) {
-			transform(override.options);
-		}
+	for (const override of config.overrides ?? []) {
+		transform(override.options);
 	}
 
 	return config as PrettierConfig;
