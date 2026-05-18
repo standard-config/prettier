@@ -1,10 +1,10 @@
-[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier)](https://www.npmjs.com/package/@standard-config/prettier) [![](https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml)](https://github.com/standard-config/prettier/actions/workflows/test.yaml) [![](https://img.shields.io/codecov/c/github/standard-config/prettier)](https://codecov.io/github/standard-config/prettier)
+[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier?style=flat-square)](https://www.npmx.dev/package/@standard-config/prettier) [![](https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml?style=flat-square)](https://github.com/standard-config/prettier/actions/workflows/test.yaml) [![](https://img.shields.io/codecov/c/github/standard-config/prettier?style=flat-square)](https://codecov.io/github/standard-config/prettier)
 
 # @standard-config/prettier
 
 TypeScript-first Prettier config with carefully considered details.
 
-- Uses the [`oxc` parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
+- Uses the [Oxc parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
 - Formats shell scripts out of the box, including `git` hook files.
 - Formats HTML fragments in `README.md` and any other GitHub-Flavored Markdown document.
 - Sorts all JSON files, with curated order patterns for common config files like `package.json`, `tsconfig.json`, and more.
@@ -35,7 +35,7 @@ You can override the defaults by passing your own [config options](https://prett
 import { defineConfig } from '@standard-config/prettier';
 
 export default defineConfig({
-    useTabs: false,
+    printWidth: 100,
 });
 ```
 
