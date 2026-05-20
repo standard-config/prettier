@@ -1,7 +1,6 @@
 autoInstallPeers: false
 
 minimumReleaseAgeExclude:
-  - '@standard-config/*'
   - prettier
   - prettier-plugin-expand-json
   - prettier-plugin-markdown-html
