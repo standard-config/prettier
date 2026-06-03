@@ -1,12 +1,44 @@
-[![](https://img.shields.io/npm/v/%40standard-config%2Fprettier?style=flat-square)](https://npmx.dev/package/@standard-config/prettier) [![](https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml?style=flat-square)](https://github.com/standard-config/prettier/actions/workflows/test.yaml) [![](https://img.shields.io/codecov/c/github/standard-config/prettier?style=flat-square)](https://codecov.io/github/standard-config/prettier)
+<p align="center">
+    <a href="https://github.com/standard-config/prettier">
+        <img
+            src="https://github.com/standard-config/.github/blob/main/.github/assets/standard-config-prettier@3x.png?raw=true"
+            width="500"
+            alt=""
+        />
+    </a>
+</p>
 
-# @standard-config/prettier
+<h1 align="center">@standard&#8209;config/prettier</h1>
+
+<p align="center">TypeScript-first Prettier&nbsp;config.</p>
+
+<p align="center">
+    <a href="https://npmx.dev/package/@standard-config/prettier"
+        ><img
+            src="https://img.shields.io/npm/v/%40standard-config%2Fprettier?style=flat-square"
+            alt=""
+    /></a>
+    <a href="https://github.com/standard-config/prettier/actions/workflows/test.yaml"
+        ><img
+            src="https://img.shields.io/github/actions/workflow/status/standard-config/prettier/test.yaml?style=flat-square"
+            alt=""
+    /></a>
+    <a href="https://codecov.io/github/standard-config/prettier"
+        ><img
+            src="https://img.shields.io/codecov/c/github/standard-config/prettier?style=flat-square"
+            alt=""
+    /></a>
+</p>
+
+<div>&nbsp;</div>
+
+## Overview
 
 TypeScript-first Prettier config with carefully considered details.
 
 - Uses the [Oxc parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
-- Formats shell scripts out of the box, including `git` hook files.
-- Formats HTML fragments in `README.md` and any other GitHub-Flavored Markdown document.
+- Formats shell scripts out of the box.
+- Formats HTML fragments in GitHub-Flavored Markdown documents.
 - Sorts all JSON files, with curated order patterns for common config files like `package.json`, `tsconfig.json`, and more.
 
 ## Install
