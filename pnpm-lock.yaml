@@ -40,8 +40,8 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0(oxlint@1.67.0(vite-plus@0.1.24(@types/node@24.12.4)(@vitest/coverage-v8@4.1.8)(publint@0.3.21)(typescript@6.0.3)(vite@8.0.16(@types/node@24.12.4)(yaml@2.9.0))(yaml@2.9.0)))
       '@standard-config/tsconfig':
-        specifier: ^3.1.0
-        version: 3.1.0(typescript@6.0.3)
+        specifier: ^3.2.0
+        version: 3.2.0(typescript@6.0.3)
       '@types/node':
         specifier: ^24.12.4
         version: 24.12.4
@@ -652,8 +652,8 @@ packages:
       oxlint-tsgolint:
         optional: true
 
-  '@standard-config/tsconfig@3.1.0':
-    resolution: {integrity: sha512-y+wzCIBI84QITjMHaCbHRXRSQFngafQoH+Nrpd5Fc1vJo8767i9+eR8PwqsKqOZzSBCcy4TOWTtz7wby2VjHfQ==}
+  '@standard-config/tsconfig@3.2.0':
+    resolution: {integrity: sha512-hI4zzQYl8pQOcZzyHZuQnLHFBANXN38k9syrSVAvvWwZ3zcmvvBmuwWDHQuR2SwoCPwN7UfxFCSbSKSBIFTJxg==}
     peerDependencies:
       typescript: '>=6.0.2'
     peerDependenciesMeta:
@@ -2077,7 +2077,7 @@ snapshots:
     dependencies:
       oxlint: 1.67.0(oxlint-tsgolint@0.23.0)(vite-plus@0.1.24(@types/node@24.12.4)(@vitest/coverage-v8@4.1.8)(publint@0.3.21)(typescript@6.0.3)(vite@8.0.16(@types/node@24.12.4)(yaml@2.9.0))(yaml@2.9.0))
 
-  '@standard-config/tsconfig@3.1.0(typescript@6.0.3)':
+  '@standard-config/tsconfig@3.2.0(typescript@6.0.3)':
     optionalDependencies:
       typescript: 6.0.3
 
