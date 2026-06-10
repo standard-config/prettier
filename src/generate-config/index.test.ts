@@ -7,11 +7,8 @@ test('generates a valid Prettier config', () => {
 	const { overrides, plugins, ...options } = config;
 
 	expectTypeOf(config).toEqualTypeOf<StandardConfig>();
-	/* oxlint-disable-next-line vitest/prefer-snapshot-hint */
 	expect({ plugins }).toMatchSnapshot();
-	/* oxlint-disable-next-line vitest/prefer-snapshot-hint */
 	expect(options).toMatchSnapshot();
-	/* oxlint-disable-next-line vitest/prefer-snapshot-hint */
 	expect({ overrides }).toMatchSnapshot();
 });
 
