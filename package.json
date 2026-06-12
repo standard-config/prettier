@@ -49,7 +49,7 @@
 		"@standard-config/oxlint": "^2.0.2",
 		"@standard-config/oxlint-stylistic": "^2.0.2",
 		"@standard-config/tsconfig": "^3.2.0",
-		"@types/node": "^24.13.1",
+		"@types/node": "^24.13.2",
 		"@vitest/coverage-v8": "^4.1.8",
 		"eslint": "^10.4.1",
 		"prettier": "^3.8.4",
