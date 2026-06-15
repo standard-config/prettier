@@ -72,5 +72,8 @@
 		"test": "vitest run",
 		"test:fixtures": "pnpm run '/^fixtures:/' && git diff --exit-code fixtures",
 		"typecheck": "tsc --noEmit"
+	},
+	"bugs": {
+		"url": "https://github.com/standard-config/prettier/issues"
 	}
 }
