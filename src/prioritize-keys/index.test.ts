@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { expect, test } from 'vite-plus/test';
 import prioritizeKeys from './index.ts';
 
 test('returns a `jsonSortOrder` value that follows the spec', () => {

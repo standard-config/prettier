@@ -32,7 +32,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@11.5.3",
+	"packageManager": "pnpm@11.8.0",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.1.4",
 		"prettier-plugin-expand-json": "^1.0.5",
@@ -55,8 +55,7 @@
 		"prettier": "^3.8.4",
 		"publint": "^0.3.21",
 		"typescript": "^6.0.3",
-		"vite-plus": "^0.2.1",
-		"vitest": "^4.1.9"
+		"vite-plus": "^0.2.1"
 	},
 	"scripts": {
 		"build": "vp pack",
@@ -69,7 +68,7 @@
 		"lint:check": "vp lint --deny-warnings --type-check",
 		"prepack": "pnpm run '/^(format:check|lint:check|test|typecheck)$/' && pnpm build",
 		"prepare": "vp config",
-		"test": "vitest run",
+		"test": "vp test",
 		"test:fixtures": "pnpm run '/^fixtures:/' && git diff --exit-code fixtures",
 		"typecheck": "tsc --noEmit"
 	}

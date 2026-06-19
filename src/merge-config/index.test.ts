@@ -1,5 +1,5 @@
 import type { StandardConfig } from '../types/index.d.ts';
-import { expect, expectTypeOf, test } from 'vitest';
+import { expect, expectTypeOf, test } from 'vite-plus/test';
 import mergeConfig from './index.ts';
 
 test('merges two valid configs', () => {
