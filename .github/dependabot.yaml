@@ -16,6 +16,7 @@ updates:
     cooldown:
       default-days: 1
       exclude:
+        - '@prettier/*'
         - prettier
         - prettier-plugin-expand-json
         - prettier-plugin-markdown-html

@@ -62,9 +62,9 @@ type DefaultOptions = {
 export type StandardOptions = {
 	// Prettier’s `Options` is a mapped type, so overlapping keys must
 	// be explicitly omitted before merging with `DefaultOptions`
-	[K in keyof PrettierOptions as K extends keyof DefaultOptions
-		? never
-		: K]: PrettierOptions[K];
+	[
+		K in keyof PrettierOptions as K extends keyof DefaultOptions ? never : K
+	]: PrettierOptions[K];
 } & DefaultOptions;
 
 export type IndentationOptions = Pick<StandardOptions, 'tabWidth' | 'useTabs'>;

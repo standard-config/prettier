@@ -32,9 +32,9 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@11.8.0",
+	"packageManager": "pnpm@11.9.0",
 	"dependencies": {
-		"@prettier/plugin-oxc": "^0.1.4",
+		"@prettier/plugin-oxc": "^0.2.0",
 		"prettier-plugin-expand-json": "^1.0.5",
 		"prettier-plugin-markdown-html": "^1.4.1",
 		"prettier-plugin-pkg": "^0.22.1",
@@ -46,13 +46,13 @@
 		"prettier": "^3.8.0"
 	},
 	"devDependencies": {
-		"@standard-config/oxlint": "^2.2.1",
-		"@standard-config/oxlint-stylistic": "^2.2.1",
+		"@standard-config/oxlint": "^2.2.2",
+		"@standard-config/oxlint-stylistic": "^2.2.2",
 		"@standard-config/tsconfig": "^3.2.0",
 		"@types/node": "^24.13.2",
 		"@vitest/coverage-v8": "^4.1.9",
 		"eslint": "^10.5.0",
-		"prettier": "^3.8.4",
+		"prettier": "^3.9.0",
 		"publint": "^0.3.21",
 		"typescript": "^6.0.3",
 		"vite-plus": "^0.2.1"
