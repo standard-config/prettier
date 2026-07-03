@@ -17,6 +17,7 @@ updates:
       default-days: 1
       exclude:
         - '@prettier/*'
+        - '@standard-config/*'
         - prettier
         - prettier-plugin-expand-json
         - prettier-plugin-markdown-html
