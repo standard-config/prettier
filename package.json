@@ -32,7 +32,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@11.9.0",
+	"packageManager": "pnpm@11.10.0",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.2.0",
 		"prettier-plugin-expand-json": "^1.0.5",
@@ -50,12 +50,12 @@
 		"@standard-config/oxlint-stylistic": "^2.3.1",
 		"@standard-config/tsconfig": "^3.2.0",
 		"@types/node": "^24.13.3",
-		"@vitest/coverage-v8": "^4.1.9",
+		"@vitest/coverage-v8": "^4.1.10",
 		"eslint": "^10.6.0",
 		"prettier": "^3.9.4",
 		"publint": "^0.3.21",
 		"typescript": "^6.0.3",
-		"vite-plus": "^0.2.3"
+		"vite-plus": "^0.2.4"
 	},
 	"scripts": {
 		"build": "vp pack",
