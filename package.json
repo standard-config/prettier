@@ -60,8 +60,8 @@
 	"scripts": {
 		"build": "vp pack",
 		"fix": "pnpm format && pnpm lint && pnpm format",
-		"fixtures:scramble": "prettier --config fixtures/config.ts --write fixtures && sleep 1",
-		"fixtures:unscramble": "pnpm prettier --write fixtures && sleep 1",
+		"fixtures:scramble": "prettier --config fixtures/config.mts --write fixtures",
+		"fixtures:unscramble": "pnpm prettier --write fixtures",
 		"format": "prettier --ignore-unknown --log-level=warn --write .",
 		"format:check": "prettier --check --ignore-unknown .",
 		"lint": "vp lint --fix",
@@ -69,7 +69,7 @@
 		"prepack": "pnpm run '/^(format:check|lint:check|test|typecheck)$/' && pnpm build",
 		"prepare": "vp config",
 		"test": "vp test",
-		"test:fixtures": "pnpm run '/^fixtures:/' && git diff --exit-code fixtures",
+		"test:fixtures": "pnpm run --sequential '/^fixtures:/' && git diff --exit-code fixtures",
 		"typecheck": "tsc --noEmit"
 	}
 }

@@ -3,6 +3,7 @@ import type { Config } from 'prettier';
 export default {
 	plugins: ['prettier-plugin-sh'],
 	tabWidth: 0,
+	useTabs: false,
 	overrides: [
 		{
 			files: '*.json',
@@ -10,12 +11,6 @@ export default {
 				plugins: ['prettier-plugin-sort-json'],
 				parser: 'json',
 				jsonRecursiveSort: true,
-			},
-		},
-		{
-			files: '*.md',
-			options: {
-				useTabs: true,
 			},
 		},
 	],
