@@ -9,6 +9,14 @@ import { fileURLToPath } from 'node:url';
 import clone from '../clone/index.ts';
 import prioritizeKeys from '../prioritize-keys/index.ts';
 
+let disableOxcParser = false;
+
+try {
+	await import('@prettier/plugin-oxc');
+} catch {
+	disableOxcParser = true;
+}
+
 /**
  * Convert Standard Config to an exportable, Prettier-compatible format.
  */
@@ -18,10 +26,6 @@ export default function transformConfig(
 ): PrettierConfig {
 	/* oxlint-disable-next-line eslint/no-param-reassign */
 	config = clone(config);
-
-	const disableOxcParser =
-		Object.hasOwn(pluginOverrides, '@prettier/plugin-oxc') &&
-		pluginOverrides['@prettier/plugin-oxc'] === undefined;
 
 	const transform = (options: StandardOptions) => {
 		if (options.jsonSortOrder) {
@@ -101,7 +105,11 @@ function transformPlugins(
 	return resolved;
 }
 
-function transformPlugin(plugin: string): string {
+function transformPlugin(plugin: string): string | undefined {
+	if (disableOxcParser && plugin === '@prettier/plugin-oxc') {
+		return undefined;
+	}
+
 	try {
 		return fileURLToPath(import.meta.resolve(plugin));
 	} catch {

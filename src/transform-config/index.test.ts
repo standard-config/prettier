@@ -1,10 +1,15 @@
 import type { Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
-import { expect, expectTypeOf, test } from 'vite-plus/test';
+import { beforeEach, expect, expectTypeOf, test, vi } from 'vite-plus/test';
 import prioritizeKeys from '../prioritize-keys/index.ts';
-import transformConfig from './index.ts';
 
-test('doesn’t mutate the input config', () => {
+beforeEach(() => {
+	vi.resetModules();
+});
+
+test('doesn’t mutate the input config', async () => {
+	const { default: transformConfig } = await import('./index.ts');
+
 	const config = {} as const satisfies StandardConfig;
 	const result = transformConfig(config);
 
@@ -13,7 +18,9 @@ test('doesn’t mutate the input config', () => {
 	expect(result).not.toBe(config);
 });
 
-test('resolves `jsonSortOrder` to a Prettier-compatible format', () => {
+test('resolves `jsonSortOrder` to a Prettier-compatible format', async () => {
+	const { default: transformConfig } = await import('./index.ts');
+
 	const config = {
 		jsonSortOrder: prioritizeKeys('$schema'),
 		overrides: [
@@ -54,7 +61,9 @@ test('resolves `jsonSortOrder` to a Prettier-compatible format', () => {
 	});
 });
 
-test('resolves `plugins` to a Prettier-compatible format', () => {
+test('resolves `plugins` to a Prettier-compatible format', async () => {
+	const { default: transformConfig } = await import('./index.ts');
+
 	const config = {
 		plugins: [
 			/* prettier-ignore */
@@ -105,7 +114,13 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 	});
 });
 
-test('allows for disabling `@prettier/plugin-oxc`', () => {
+test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => {
+	vi.doMock('@prettier/plugin-oxc', () => {
+		throw new Error();
+	});
+
+	const { default: transformConfig } = await import('./index.ts');
+
 	const config = {
 		plugins: [
 			/* prettier-ignore */
@@ -128,10 +143,9 @@ test('allows for disabling `@prettier/plugin-oxc`', () => {
 		],
 	} as const satisfies StandardConfig;
 
-	const result = transformConfig(config, {
-		'@prettier/plugin-oxc': undefined,
-	});
+	const result = transformConfig(config);
 
+	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['prettier-plugin-foo'],
 		overrides: [
@@ -147,7 +161,9 @@ test('allows for disabling `@prettier/plugin-oxc`', () => {
 	});
 });
 
-test('normalizes jsonSortOrder arrays on config and overrides', () => {
+test('normalizes `jsonSortOrder` arrays on config and overrides', async () => {
+	const { default: transformConfig } = await import('./index.ts');
+
 	const config = {
 		jsonSortOrder: ['name', 'version'],
 		overrides: [
@@ -162,6 +178,7 @@ test('normalizes jsonSortOrder arrays on config and overrides', () => {
 
 	const result = transformConfig(config);
 
+	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result.jsonSortOrder).toBe(prioritizeKeys('name', 'version'));
 	expect(result.overrides?.[0]?.options?.jsonSortOrder).toBe(
 		prioritizeKeys('scripts', 'dependencies')
