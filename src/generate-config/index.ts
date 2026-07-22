@@ -128,7 +128,7 @@ function getFileTypeOverrides(
 			},
 		},
 		{
-			files: ['*.sh'],
+			files: ['*.sh', '*.bash', '*.zsh'],
 			options: {
 				...shellDefaults,
 			},

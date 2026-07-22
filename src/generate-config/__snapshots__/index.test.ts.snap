@@ -128,6 +128,8 @@ exports[`generates a valid Prettier config 3`] = `
     {
       "files": [
         "*.sh",
+        "*.bash",
+        "*.zsh",
       ],
       "options": {
         "tabWidth": 2,
