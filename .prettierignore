@@ -1,2 +1,3 @@
 *.snap
+.editorconfig
 pnpm-lock.yaml
