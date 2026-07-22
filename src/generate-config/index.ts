@@ -192,11 +192,50 @@ function getFileNameOverrides(): StandardConfigOverrides {
 			},
 		},
 		/**
-		 * By default, Prettier uses a different parser for `package.json`
-		 * files, which causes most JSON plugins to skip them entirely.
-		 * This override ensures `package.json` is treated (and sorted)
-		 * like any other `*.json` file.
-		 *
+		 * All `block.json` fields defined by the WordPress.org documentation
+		 * are sorted, including nested fields.
+		 */
+		{
+			files: ['block.json'],
+			options: {
+				jsonSortOrder: [
+					'$schema',
+					'apiVersion',
+					'name',
+					'category',
+					'version',
+					'title',
+					'description',
+					'icon',
+					'keywords',
+					'__experimental',
+					'textdomain',
+					'parent',
+					'ancestor',
+					'allowedBlocks',
+					'attributes',
+					'providesContext',
+					'usesContext',
+					'supports',
+					'selectors',
+					'styles',
+					'example',
+					'variations',
+					'blockHooks',
+					'style',
+					'viewStyle',
+					'script',
+					'viewScript',
+					'viewScriptModule',
+					'editorStyle',
+					'editorScript',
+					'render',
+					'*',
+					'default',
+				],
+			},
+		},
+		/**
 		 * All `package.json` fields defined in the `npm@11` specification
 		 * are sorted, along with additional commonly used fields.
 		 */
