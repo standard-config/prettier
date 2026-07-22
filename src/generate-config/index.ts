@@ -236,7 +236,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 			},
 		},
 		/**
-		 * All `package.json` fields defined in the `npm@11` specification
+		 * All `package.json` fields defined in the `npm@12` specification
 		 * are sorted, along with additional commonly used fields.
 		 */
 		{
@@ -289,6 +289,9 @@ function getFileNameOverrides(): StandardConfigOverrides {
 					'optionalDependencies',
 					'devDependencies',
 					'overrides',
+					'packageExtensions',
+					'patchedDependencies',
+					'allowScripts',
 					'pnpm',
 					'config',
 					'publishConfig',
