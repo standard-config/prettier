@@ -32,7 +32,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@11.16.0",
+	"packageManager": "pnpm@11.17.0",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.2.2",
 		"prettier-plugin-expand-json": "^1.0.5",
@@ -55,7 +55,7 @@
 		"prettier": "^3.9.6",
 		"publint": "^0.3.22",
 		"typescript": "^6.0.3",
-		"vite-plus": "^0.2.5"
+		"vite-plus": "^0.2.6"
 	},
 	"scripts": {
 		"build": "vp pack",
