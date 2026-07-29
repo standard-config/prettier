@@ -254,6 +254,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 					'private',
 					'description',
 					'license',
+					'contentPolicy',
 					'author',
 					'contributors',
 					'funding',

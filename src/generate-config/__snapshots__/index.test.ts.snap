@@ -252,6 +252,7 @@ exports[`generates a valid Prettier config 3`] = `
           "private",
           "description",
           "license",
+          "contentPolicy",
           "author",
           "contributors",
           "funding",
