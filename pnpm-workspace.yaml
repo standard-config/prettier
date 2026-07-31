@@ -25,6 +25,6 @@ strictPeerDependencies: true
 
 trustPolicy: no-downgrade
 
-updateConfig:
-  ignoreDependencies:
+update:
+  ignoreDeps:
     - '@types/node'
