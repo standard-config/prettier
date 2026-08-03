@@ -357,6 +357,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 					'args',
 					'*',
 					'agent',
+					'case_sensitive',
 				],
 			},
 		},
