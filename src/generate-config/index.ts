@@ -371,22 +371,5 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				jsonSortOrder: ['$schema', 'context', 'bindings'],
 			},
 		},
-		{
-			files: [
-				/* prettier-ignore */
-				'.zed/settings.json',
-				'**/zed/settings.json',
-			],
-			options: {
-				jsonSortOrder: [
-					'$schema',
-					'default',
-					'command',
-					'args',
-					'*',
-					'agent',
-				],
-			},
-		},
 	];
 }

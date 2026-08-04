@@ -384,22 +384,6 @@ exports[`generates a valid Prettier config 3`] = `
         ],
       },
     },
-    {
-      "files": [
-        ".zed/settings.json",
-        "**/zed/settings.json",
-      ],
-      "options": {
-        "jsonSortOrder": [
-          "$schema",
-          "default",
-          "command",
-          "args",
-          "*",
-          "agent",
-        ],
-      },
-    },
   ],
 }
 `;

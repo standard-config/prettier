@@ -1,0 +1,18 @@
+{
+	"autosave": "on_focus_change",
+	"theme": "One Dark",
+	"agent": {
+		"tool_permissions": {
+			"tools": {
+				"terminal": {
+					"always_allow": [
+						{
+							"pattern": "^(?:echo|test)(?: |$)",
+							"case_sensitive": true
+						}
+					]
+				}
+			}
+		}
+	}
+}
