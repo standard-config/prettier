@@ -37,7 +37,7 @@
 TypeScript-first Prettier config with carefully considered details.
 
 - Uses the [Oxc parser](https://oxc.rs/docs/guide/usage/parser.html) for lightning-fast TypeScript and JavaScript formatting.
-- Formats shell scripts out of the box.
+- Formats shell scripts and cleans up YAML files out of the box.
 - Formats HTML fragments in GitHub-Flavored Markdown documents.
 - Sorts all JSON files, with curated order patterns for common config files like `package.json`, `tsconfig.json`, and more.
 
