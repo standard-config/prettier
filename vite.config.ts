@@ -1,12 +1,17 @@
 import { defineOxlintConfig } from '@standard-config/oxlint';
 import { configStylisticConfigFiles } from '@standard-config/oxlint-stylistic';
-import { defineConfig } from 'vite-plus';
+import { configDefaults, defineConfig } from 'vite-plus';
 
 export default defineConfig({
 	test: {
 		coverage: {
 			exclude: ['fixtures/**'],
 		},
+		exclude: [
+			/* prettier-ignore */
+			...configDefaults.exclude,
+			'.agent-*/**',
+		],
 		typecheck: {
 			enabled: true,
 		},
