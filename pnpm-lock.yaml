@@ -17,8 +17,8 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
       prettier-plugin-expand-json:
-        specifier: ^1.1.0
-        version: 1.1.0(prettier@3.9.6)
+        specifier: ^1.2.0
+        version: 1.2.0(prettier@3.9.6)
       prettier-plugin-markdown-html:
         specifier: ^1.5.0
         version: 1.5.0(prettier@3.9.6)
@@ -1438,8 +1438,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier-plugin-expand-json@1.1.0:
-    resolution: {integrity: sha512-cn2rb0ZLkIqGkRRmYATBKcnj+96wCFKTQqQ1VkMPyqepN2KI9qhxJYG5iFMD12Q8HV+ZQEQcBfYIm0EM1r9FVw==}
+  prettier-plugin-expand-json@1.2.0:
+    resolution: {integrity: sha512-pYOobQGom5HG9HQi6N+1fR42qnLSd+huOMTXjE/lBFVJS/COi4gMHbvaZQbzaXOJCE5BWLMUz+PJI7NVY6y4GQ==}
     engines: {node: '>=20'}
     peerDependencies:
       prettier: '>=3'
@@ -2817,7 +2817,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-expand-json@1.1.0(prettier@3.9.6):
+  prettier-plugin-expand-json@1.2.0(prettier@3.9.6):
     dependencies:
       prettier: 3.9.6
 
