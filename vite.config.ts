@@ -4,14 +4,14 @@ import { configDefaults, defineConfig } from 'vite-plus';
 
 export default defineConfig({
 	test: {
-		coverage: {
-			exclude: ['fixtures/**'],
-		},
 		exclude: [
 			/* prettier-ignore */
 			...configDefaults.exclude,
 			'.agent-*/**',
 		],
+		coverage: {
+			exclude: ['fixtures/**'],
+		},
 		typecheck: {
 			enabled: true,
 		},
