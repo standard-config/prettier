@@ -32,7 +32,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@11.21.0",
+	"packageManager": "pnpm@11.22.0",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.2.2",
 		"prettier-plugin-expand-json": "^1.2.0",
@@ -67,7 +67,7 @@
 		"lint": "vp lint --fix",
 		"lint:check": "vp lint --deny-warnings --type-check",
 		"prepack": "pnpm run '/^(format:check|lint:check|test|typecheck)$/' && pnpm build",
-		"prepare": "vp config",
+		"prepare": "vp config --hooks-dir .hooks",
 		"test": "vp test",
 		"test:fixtures": "pnpm run --sequential '/^fixtures:/' && git diff --exit-code fixtures",
 		"typecheck": "tsc --noEmit"
