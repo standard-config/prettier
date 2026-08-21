@@ -301,6 +301,23 @@ function getFileNameOverrides(): StandardConfigOverrides {
 			},
 		},
 		/**
+		 * All `skills.sh.json` fields supported by `skills` are sorted,
+		 * including nested grouping fields.
+		 */
+		{
+			files: ['skills.sh.json'],
+			options: {
+				jsonSortOrder: [
+					'$schema',
+					'title',
+					'description',
+					'skills',
+					'notGrouped',
+					'groupings',
+				],
+			},
+		},
+		/**
 		 * All `tsconfig.json` fields defined by the TypeScript documentation
 		 * are sorted, including nested fields.
 		 */
