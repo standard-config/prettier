@@ -173,8 +173,8 @@ importers:
   .:
     dependencies:
       '@prettier/plugin-oxc':
-        specifier: ^0.2.2
-        version: 0.2.2
+        specifier: ^0.2.3
+        version: 0.2.3
       prettier-plugin-expand-json:
         specifier: ^1.2.1
         version: 1.2.1(prettier@3.9.7)
@@ -646,8 +646,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@prettier/plugin-oxc@0.2.2':
-    resolution: {integrity: sha512-yscDcAuDtvOfE0c8i8UVP+hjK43VIPpwfMv+73mdkpy12rZWnk5Kl6N6pUneQmaZ3PKTg611zemBHFpMjp9ZnQ==}
+  '@prettier/plugin-oxc@0.2.3':
+    resolution: {integrity: sha512-6TYRFBxthmW0IULsZjik2Gu62jc17xPILlcSIXTXfrhDH4etIcissalZ+RO5oweMWidM3jJ38QJbkD2C6J0/LA==}
     engines: {node: '>=14'}
 
   '@publint/pack@0.1.7':
@@ -2043,7 +2043,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@prettier/plugin-oxc@0.2.2':
+  '@prettier/plugin-oxc@0.2.3':
     dependencies:
       oxc-parser: 0.139.0
 
