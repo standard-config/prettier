@@ -34,7 +34,7 @@
 	},
 	"packageManager": "pnpm@12.4.0",
 	"dependencies": {
-		"@prettier/plugin-oxc": "^0.2.2",
+		"@prettier/plugin-oxc": "^0.2.3",
 		"prettier-plugin-expand-json": "^1.2.1",
 		"prettier-plugin-markdown-html": "^1.6.1",
 		"prettier-plugin-pkg": "^0.22.1",
