@@ -4,6 +4,8 @@ color: always
 
 gitChecks: false
 
+engineStrict: true
+
 minimumReleaseAgeExclude:
   - '@prettier/*'
   - '@standard-config/*'
@@ -25,7 +27,3 @@ peerDependencyRules:
 strictPeerDependencies: true
 
 trustPolicy: no-downgrade
-
-update:
-  ignoreDeps:
-    - '@types/node'
