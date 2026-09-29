@@ -449,8 +449,10 @@ exports[`generates a valid Prettier config 3`] = `
         "jsonSortOrder": [
           "$schema",
           "files",
+          "excludeFiles",
           "extends",
           "ignorePatterns",
+          "options",
           "plugins",
           "jsPlugins",
           "categories",

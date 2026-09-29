@@ -215,8 +215,10 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				jsonSortOrder: [
 					'$schema',
 					'files',
+					'excludeFiles',
 					'extends',
 					'ignorePatterns',
+					'options',
 					'plugins',
 					'jsPlugins',
 					'categories',
