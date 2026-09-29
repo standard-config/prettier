@@ -6,3 +6,11 @@ test('merges glob sets into a sorted set without duplicates', () => {
 		createGlobSet(['README', '*.md'], ['.bashrc', '*.md', 'contents.lr'])
 	).toStrictEqual(['.bashrc', '*.md', 'contents.lr', 'README']);
 });
+
+test('accepts individual patterns', () => {
+	expect(createGlobSet(['README', '*.md'], '.bashrc', '*.md')).toStrictEqual([
+		'.bashrc',
+		'*.md',
+		'README',
+	]);
+});

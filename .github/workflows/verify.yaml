@@ -39,6 +39,18 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  editorconfig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@v3.0.0
+        with:
+          cache: true
+          runtime: node@24
+      - run: pnpm test:editorconfig
+
   fixtures:
     runs-on: ubuntu-latest
     steps:

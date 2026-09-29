@@ -6,22 +6,28 @@ end_of_line = lf
 indent_size = 4
 indent_style = tab
 insert_final_newline = true
-max_line_length = 80
 trim_trailing_whitespace = true
 
-[*.{css,scss}]
-max_line_length = 100
-
-[*.{html,htm}]
-max_line_length = 100
-
-[*.{md,mdx}]
+# Markdown
+[{*.livemd,*.markdown,*.md,*.mdown,*.mdwn,*.mdx,*.mkd,*.mkdn,*.mkdown,*.ronn,*.scd,*.workbook,contents.lr,README}]
 indent_style = space
 
-[*.{sh,bash,zsh}]
+# Shell
+[{.bash_aliases,.bash_functions,.bash_history,.bash_logout,.bash_profile,.bashrc,.cshrc,.envrc,.flaskenv,.kshrc,.login,.profile,.tmux.conf,.xinitrc,.xsession,.zlogin,.zlogout,.zprofile,.zshenv,.zshrc,*.bash,*.bats,*.cgi,*.command,*.fcgi,*.ksh,*.sbatch,*.sh,*.sh.in,*.slurm,*.tmux,*.tool,*.trigger,*.zsh,*.zsh-theme,9fs,bash_aliases,bash_logout,bash_profile,bashrc,cshrc,gradlew,kshrc,login,man,mvnw,PKGBUILD,profile,tmux.conf,xinitrc,xsession,zlogin,zlogout,zprofile,zshenv,zshrc}]
 indent_size = 2
 indent_style = space
 
-[*.{yaml,yml}]
+# Shell hooks
+[{**/.hooks/*,**/.husky/*,**/.vite-hooks/*}]
+indent_size = 2
+indent_style = space
+
+# Shell properties
+[{.ackrc,.atomignore,.babelignore,.bzrignore,.coffeelintignore,.cvsignore,.dockerignore,.easignore,.eleventyignore,.env.*,.eslint-ignore,.eslintignore,.gitattributes,.gitignore,.ignore,.markdownlintignore,.node-version,.nodemonignore,.npmignore,.nvmrc,.prettierignore,.rspec,.stylelintignore,.tm_properties,.vercelignore,.vscodeignore,.yardopts,*.containerfile,*.dockerfile,*.Dockerfile,*.env,*.gitignore,*.ical,*.ics,*.node-version,*.nvmrc,*.pc,*.pc.in,*.properties,*.vcf,*.vmoptions,ackrc,CODEOWNERS,Containerfile,Dockerfile,gitignore_global,gitignore-global,hosts,jvm.options,mocha.opts}]
+indent_size = 2
+indent_style = space
+
+# YAML
+[{.clang-format,.clang-tidy,.clangd,.gemrc,.lintstagedrc,.prettierrc,.stylelintrc,*.mir,*.reek,*.rviz,*.sublime-syntax,*.syntax,*.yaml,*.yaml-tmlanguage,*.yaml.sed,*.yml,*.yml.mysql,CITATION.cff,glide.lock,pixi.lock}]
 indent_size = 2
 indent_style = space

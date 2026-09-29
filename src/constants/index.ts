@@ -1,3 +1,4 @@
+import createGlobSet from '../create-glob-set/index.ts';
 import getSupportedLanguagePatterns from '../get-supported-language-patterns/index.ts';
 
 export const GLOB_SET_CSS = getSupportedLanguagePatterns(
@@ -36,21 +37,31 @@ export const GLOB_SET_MDX = getSupportedLanguagePatterns('MDX');
 
 export const GLOB_SET_SHELL = getSupportedLanguagePatterns('Shell');
 
-export const GLOB_SET_SHELL_PROPERTIES = getSupportedLanguagePatterns(
-	'CODEOWNERS',
-	'Dockerfile',
-	'dotenv',
-	'Git Attributes',
-	'hosts',
-	'iCalendar',
-	'Ignore List',
-	'Java Properties',
-	'JvmOptions',
-	'nvmrc',
-	'Option List',
-	'pkg-config',
-	'TextMate Properties',
-	'vCard'
+export const GLOB_SET_SHELL_HOOKS = createGlobSet(
+	'**/.hooks/*',
+	'**/.husky/*',
+	'**/.vite-hooks/*'
+);
+
+export const GLOB_SET_SHELL_PROPERTIES = createGlobSet(
+	getSupportedLanguagePatterns(
+		'CODEOWNERS',
+		'Dockerfile',
+		'dotenv',
+		'Git Attributes',
+		'hosts',
+		'iCalendar',
+		'Ignore List',
+		'Java Properties',
+		'JvmOptions',
+		'nvmrc',
+		'Option List',
+		'pkg-config',
+		'TextMate Properties',
+		'vCard'
+	),
+	'.env.*',
+	'*.Dockerfile'
 );
 
 export const GLOB_SET_TYPESCRIPT = getSupportedLanguagePatterns(

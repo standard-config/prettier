@@ -200,6 +200,11 @@ exports[`exposes correct constants 1`] = `
     "zshenv",
     "zshrc",
   ],
+  "GLOB_SET_SHELL_HOOKS": [
+    "**/.hooks/*",
+    "**/.husky/*",
+    "**/.vite-hooks/*",
+  ],
   "GLOB_SET_SHELL_PROPERTIES": [
     ".ackrc",
     ".atomignore",
@@ -210,6 +215,7 @@ exports[`exposes correct constants 1`] = `
     ".dockerignore",
     ".easignore",
     ".eleventyignore",
+    ".env.*",
     ".eslint-ignore",
     ".eslintignore",
     ".gitattributes",
@@ -229,6 +235,7 @@ exports[`exposes correct constants 1`] = `
     ".yardopts",
     "*.containerfile",
     "*.dockerfile",
+    "*.Dockerfile",
     "*.env",
     "*.gitignore",
     "*.ical",
