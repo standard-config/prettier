@@ -5,6 +5,21 @@ import type {
 	StandardConfigOverrides,
 } from '../types/index.d.ts';
 import clone from '../clone/index.ts';
+import {
+	GLOB_SET_CSS,
+	GLOB_SET_GRAPHQL,
+	GLOB_SET_HTML,
+	GLOB_SET_JAVASCRIPT,
+	GLOB_SET_JAVASCRIPT_FLOW,
+	GLOB_SET_JSON,
+	GLOB_SET_JSON5,
+	GLOB_SET_MARKDOWN,
+	GLOB_SET_MDX,
+	GLOB_SET_TYPESCRIPT,
+	GLOB_SET_VUE,
+	GLOB_SET_YAML,
+} from '../constants/index.ts';
+import createGlobSet from '../create-glob-set/index.ts';
 
 /**
  * Generate the base Standard Config.
@@ -40,22 +55,18 @@ export default function generateConfig(
 		trailingComma: 'es5',
 		useTabs: shellUseTabs,
 		overrides: [
-			...getFileTypeOverrides(
-				{ tabWidth, useTabs },
-				{ tabWidth: shellTabWidth, useTabs: shellUseTabs }
-			),
+			...getFileTypeOverrides({ tabWidth, useTabs }),
 			...getFileNameOverrides(),
 		],
 	});
 }
 
 function getFileTypeOverrides(
-	baseDefaults: IndentationOptions = {},
-	shellDefaults: IndentationOptions = {}
+	baseDefaults: IndentationOptions = {}
 ): StandardConfigOverrides {
 	return [
 		{
-			files: ['*.css', '*.scss'],
+			files: GLOB_SET_CSS,
 			options: {
 				...baseDefaults,
 				printWidth: 100,
@@ -63,33 +74,39 @@ function getFileTypeOverrides(
 			},
 		},
 		{
-			files: ['*.graphql', '*.graphqls', '*.gql'],
+			files: GLOB_SET_GRAPHQL,
 			options: {
 				...baseDefaults,
 			},
 		},
 		{
-			files: ['*.html', '*.htm'],
+			files: GLOB_SET_HTML,
 			options: {
 				...baseDefaults,
 				printWidth: 100,
 			},
 		},
 		{
-			files: ['*.js', '*.jsx', '*.cjs', '*.mjs'],
+			files: GLOB_SET_JAVASCRIPT,
 			options: {
 				...baseDefaults,
 				parser: 'oxc',
 			},
 		},
 		{
-			files: ['*.json', '*.jsonc', '*.json5'],
+			files: GLOB_SET_JAVASCRIPT_FLOW,
 			options: {
 				...baseDefaults,
 			},
 		},
 		{
-			files: ['*.json', '*.jsonc', '*.json5'],
+			files: GLOB_SET_JSON,
+			options: {
+				...baseDefaults,
+			},
+		},
+		{
+			files: GLOB_SET_JSON,
 			excludeFiles: ['package.json'],
 			options: {
 				plugins: [
@@ -98,6 +115,12 @@ function getFileTypeOverrides(
 				],
 				jsonRecursiveSort: true,
 				jsonSortOrder: ['$schema'],
+			},
+		},
+		{
+			files: GLOB_SET_JSON5,
+			options: {
+				...baseDefaults,
 			},
 		},
 		/**
@@ -113,7 +136,7 @@ function getFileTypeOverrides(
 		 * are the right compromise.
 		 */
 		{
-			files: ['*.md', '*.mdx'],
+			files: createGlobSet(GLOB_SET_MARKDOWN, GLOB_SET_MDX),
 			options: {
 				...baseDefaults,
 				proseWrap: 'never',
@@ -121,27 +144,27 @@ function getFileTypeOverrides(
 			},
 		},
 		{
-			files: ['*.md'],
+			files: GLOB_SET_MARKDOWN,
 			options: {
 				htmlFragmentPrintWidth: Number.POSITIVE_INFINITY,
 				htmlFragmentSingleAttributePerLine: true,
 			},
 		},
 		{
-			files: ['*.sh', '*.bash', '*.zsh'],
-			options: {
-				...shellDefaults,
-			},
-		},
-		{
-			files: ['*.ts', '*.tsx', '*.cts', '*.mts'],
+			files: GLOB_SET_TYPESCRIPT,
 			options: {
 				...baseDefaults,
 				parser: 'oxc-ts',
 			},
 		},
 		{
-			files: ['*.yaml', '*.yml'],
+			files: GLOB_SET_VUE,
+			options: {
+				...baseDefaults,
+			},
+		},
+		{
+			files: GLOB_SET_YAML,
 			options: {
 				useTabs: false,
 				yamlCollectionStyle: 'block',
@@ -160,7 +183,12 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				'.oxfmtrc.*.jsonc',
 			],
 			options: {
-				jsonSortOrder: ['$schema', '*', 'overrides'],
+				jsonSortOrder: [
+					/* prettier-ignore */
+					'$schema',
+					'*',
+					'overrides',
+				],
 			},
 		},
 		/**
@@ -196,7 +224,10 @@ function getFileNameOverrides(): StandardConfigOverrides {
 		 * are sorted, including nested fields.
 		 */
 		{
-			files: ['block.json'],
+			files: [
+				/* prettier-ignore */
+				'block.json',
+			],
 			options: {
 				jsonSortOrder: [
 					'$schema',
@@ -349,21 +380,38 @@ function getFileNameOverrides(): StandardConfigOverrides {
 			},
 		},
 		{
-			files: ['.vscode/mcp.json'],
+			files: [
+				/* prettier-ignore */
+				'**/.vscode/mcp.json',
+			],
 			options: {
-				jsonSortOrder: ['$schema', 'command', 'args'],
-			},
-		},
-		{
-			files: ['.vscode/sessions.json'],
-			options: {
-				jsonSortOrder: ['$schema', 'name', 'commands', 'active'],
+				jsonSortOrder: [
+					/* prettier-ignore */
+					'$schema',
+					'command',
+					'args',
+				],
 			},
 		},
 		{
 			files: [
 				/* prettier-ignore */
-				'.zed/settings.json',
+				'**/.vscode/sessions.json',
+			],
+			options: {
+				jsonSortOrder: [
+					/* prettier-ignore */
+					'$schema',
+					'name',
+					'commands',
+					'active',
+				],
+			},
+		},
+		{
+			files: [
+				/* prettier-ignore */
+				'**/.zed/settings.json',
 				'**/zed/settings.json',
 			],
 			options: {
@@ -381,11 +429,16 @@ function getFileNameOverrides(): StandardConfigOverrides {
 		{
 			files: [
 				/* prettier-ignore */
-				'.zed/keymap.json',
+				'**/.zed/keymap.json',
 				'**/zed/keymap.json',
 			],
 			options: {
-				jsonSortOrder: ['$schema', 'context', 'bindings'],
+				jsonSortOrder: [
+					/* prettier-ignore */
+					'$schema',
+					'context',
+					'bindings',
+				],
 			},
 		},
 	];
