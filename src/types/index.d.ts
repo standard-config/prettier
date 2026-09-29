@@ -1,4 +1,5 @@
 import type { Options as PrettierOptions } from 'prettier';
+import type { ShPrintOptions as PluginShellOptions } from 'prettier-plugin-sh';
 
 export type EditorConfigProperties = Record<string, boolean | number | string>;
 
@@ -45,6 +46,11 @@ type DefaultOptions = {
 	 * @default false
 	 */
 	shellUseTabs?: PrettierOptions['useTabs'];
+	/**
+	 * Remove redundant syntax from shell scripts.
+	 * @default true
+	 */
+	simplify?: PluginShellOptions['simplify'];
 	/**
 	 * Use single quotes instead of double quotes.
 	 * @default true

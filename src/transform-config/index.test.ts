@@ -103,7 +103,10 @@ test('resolves `plugins` to a Prettier-compatible format', async () => {
 			{
 				files: ['*.json'],
 				options: {
-					plugins: ['prettier-plugin-bar'],
+					plugins: [
+						expect.stringContaining('prettier-plugin-sh'),
+						'prettier-plugin-bar',
+					],
 				},
 			},
 			{
@@ -112,6 +115,67 @@ test('resolves `plugins` to a Prettier-compatible format', async () => {
 			},
 		],
 	});
+});
+
+test('keeps `prettier-plugin-sh` in plugins overrides', async () => {
+	const { default: transformConfig } = await import('./index.ts');
+
+	const config = {
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					plugins: ['prettier-plugin-foo'],
+				},
+			},
+			{
+				files: ['*.sh'],
+				options: {
+					plugins: ['prettier-plugin-sh'],
+				},
+			},
+			{
+				files: ['*.md'],
+				options: {
+					proseWrap: 'never',
+				},
+			},
+		],
+	} as const satisfies StandardConfig;
+
+	expect(transformConfig(config)).toStrictEqual({
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					plugins: [
+						expect.stringContaining('prettier-plugin-sh'),
+						'prettier-plugin-foo',
+					],
+				},
+			},
+			{
+				files: ['*.sh'],
+				options: {
+					plugins: [expect.stringContaining('prettier-plugin-sh')],
+				},
+			},
+			{
+				files: ['*.md'],
+				options: {
+					proseWrap: 'never',
+				},
+			},
+		],
+	});
+
+	const result = transformConfig(config, {
+		'prettier-plugin-sh': undefined,
+	});
+
+	expect(result.overrides?.[0]?.options?.plugins).toStrictEqual([
+		'prettier-plugin-foo',
+	]);
 });
 
 test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => {

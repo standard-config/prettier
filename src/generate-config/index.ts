@@ -15,6 +15,7 @@ import {
 	GLOB_SET_JSON5,
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
+	GLOB_SET_SHELL_PROPERTIES,
 	GLOB_SET_TYPESCRIPT,
 	GLOB_SET_VUE,
 	GLOB_SET_YAML,
@@ -50,6 +51,7 @@ export default function generateConfig(
 		bracketSpacing: true,
 		printWidth: 80,
 		quoteProps: 'consistent',
+		simplify: true,
 		singleQuote: true,
 		tabWidth: shellTabWidth,
 		trailingComma: 'es5',
@@ -140,6 +142,7 @@ function getFileTypeOverrides(
 			options: {
 				...baseDefaults,
 				proseWrap: 'never',
+				simplify: false,
 				useTabs: false,
 			},
 		},
@@ -148,6 +151,12 @@ function getFileTypeOverrides(
 			options: {
 				htmlFragmentPrintWidth: Number.POSITIVE_INFINITY,
 				htmlFragmentSingleAttributePerLine: true,
+			},
+		},
+		{
+			files: createGlobSet(GLOB_SET_SHELL_PROPERTIES, '.flaskenv'),
+			options: {
+				simplify: false,
 			},
 		},
 		{

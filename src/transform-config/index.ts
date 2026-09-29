@@ -55,8 +55,21 @@ export default function transformConfig(
 
 	transform(config);
 
+	const [pluginShell] = transformPlugins(
+		['prettier-plugin-sh'],
+		pluginOverrides
+	);
+
 	for (const override of config.overrides ?? []) {
 		transform(override.options);
+
+		const { plugins } = override.options;
+
+		// Shell options are global, so overrides that replace `plugins` must
+		// keep the shell plugin for Prettier to recognize them
+		if (plugins && pluginShell && !plugins.includes(pluginShell)) {
+			plugins.unshift(pluginShell);
+		}
 	}
 
 	return config as PrettierConfig;
