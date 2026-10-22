@@ -28,6 +28,7 @@ overrides:
 peerDependencyRules:
   allowAny:
     - typescript
+    - vite
   ignoreMissing:
     - eslint
     - vitest
