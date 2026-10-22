@@ -47,7 +47,7 @@
 	},
 	"devDependencies": {
 		"@standard-config/oxlint": "^2.10.1",
-		"@standard-config/oxlint-stylistic": "^2.10.0",
+		"@standard-config/oxlint-stylistic": "^2.10.1",
 		"@standard-config/tsconfig": "^3.2.0",
 		"@types/node": "^24.19.2",
 		"@vitest/coverage-v8": "5.0.5",
