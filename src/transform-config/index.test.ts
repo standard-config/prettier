@@ -1,26 +1,90 @@
 import type { Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
-import { beforeEach, expect, expectTypeOf, test, vi } from 'vite-plus/test';
+import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
 import prioritizeKeys from '../prioritize-keys/index.ts';
+import transformConfig from './index.ts';
 
-beforeEach(() => {
-	vi.resetModules();
+const CONFIG = {
+	overrides: [
+		{
+			files: ['*.json'],
+			options: {
+				plugins: ['prettier-plugin-foo'],
+			},
+		},
+		{
+			files: ['*.sh'],
+			options: {
+				plugins: ['prettier-plugin-sh'],
+			},
+		},
+		{
+			files: ['*.md'],
+			options: {
+				proseWrap: 'never',
+			},
+		},
+	],
+} as const satisfies StandardConfig;
+
+test('returns a Prettier config', () => {
+	expectTypeOf(transformConfig).returns.toEqualTypeOf<PrettierConfig>();
 });
 
-test('doesn’t mutate the input config', async () => {
-	const { default: transformConfig } = await import('./index.ts');
+test('returns an empty config for an empty input', () => {
+	expect(transformConfig({})).toStrictEqual({});
+});
 
-	const config = {} as const satisfies StandardConfig;
+test('doesn’t mutate the input config', () => {
+	const config = {
+		jsonSortOrder: ['name', 'version'],
+		plugins: [
+			/* prettier-ignore */
+			'prettier-plugin-sort-json',
+			'prettier-plugin-foo',
+		],
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					jsonSortOrder: ['dependencies', 'devDependencies'],
+					plugins: ['prettier-plugin-bar'],
+				},
+			},
+		],
+	} as const satisfies StandardConfig;
+
+	const input = structuredClone(config);
 	const result = transformConfig(config);
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
-	expect(result).toStrictEqual({});
+	expect(result).toStrictEqual({
+		jsonSortOrder: prioritizeKeys('name', 'version'),
+		plugins: [
+			expect.stringContaining('node_modules'),
+			'prettier-plugin-foo',
+		],
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					jsonSortOrder: prioritizeKeys(
+						'dependencies',
+						'devDependencies'
+					),
+					plugins: [
+						expect.stringContaining('prettier-plugin-sh'),
+						'prettier-plugin-bar',
+					],
+				},
+			},
+		],
+	});
+
 	expect(result).not.toBe(config);
+	expect(config).toStrictEqual(input);
 });
 
-test('resolves `jsonSortOrder` to a Prettier-compatible format', async () => {
-	const { default: transformConfig } = await import('./index.ts');
-
+test('resolves `jsonSortOrder` to a Prettier-compatible format', () => {
 	const config = {
 		jsonSortOrder: prioritizeKeys('$schema'),
 		overrides: [
@@ -41,7 +105,6 @@ test('resolves `jsonSortOrder` to a Prettier-compatible format', async () => {
 
 	const result = transformConfig(config);
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toStrictEqual({
 		jsonSortOrder: expect.any(String),
 		overrides: [
@@ -61,9 +124,7 @@ test('resolves `jsonSortOrder` to a Prettier-compatible format', async () => {
 	});
 });
 
-test('resolves `plugins` to a Prettier-compatible format', async () => {
-	const { default: transformConfig } = await import('./index.ts');
-
+test('resolves `plugins` to a Prettier-compatible format', () => {
 	const config = {
 		plugins: [
 			/* prettier-ignore */
@@ -93,7 +154,6 @@ test('resolves `plugins` to a Prettier-compatible format', async () => {
 		'prettier-plugin-expand-json': undefined,
 	});
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toStrictEqual({
 		plugins: [
 			expect.stringContaining('node_modules'),
@@ -117,33 +177,8 @@ test('resolves `plugins` to a Prettier-compatible format', async () => {
 	});
 });
 
-test('keeps `prettier-plugin-sh` in plugins overrides', async () => {
-	const { default: transformConfig } = await import('./index.ts');
-
-	const config = {
-		overrides: [
-			{
-				files: ['*.json'],
-				options: {
-					plugins: ['prettier-plugin-foo'],
-				},
-			},
-			{
-				files: ['*.sh'],
-				options: {
-					plugins: ['prettier-plugin-sh'],
-				},
-			},
-			{
-				files: ['*.md'],
-				options: {
-					proseWrap: 'never',
-				},
-			},
-		],
-	} as const satisfies StandardConfig;
-
-	expect(transformConfig(config)).toStrictEqual({
+test('keeps `prettier-plugin-sh` in plugins overrides', () => {
+	expect(transformConfig(CONFIG)).toStrictEqual({
 		overrides: [
 			{
 				files: ['*.json'],
@@ -168,19 +203,44 @@ test('keeps `prettier-plugin-sh` in plugins overrides', async () => {
 			},
 		],
 	});
+});
 
-	const result = transformConfig(config, {
-		'prettier-plugin-sh': undefined,
+test('omits `prettier-plugin-sh` from plugins overrides when `pluginOverrides` sets it to `undefined`', () => {
+	expect(
+		transformConfig(CONFIG, {
+			'prettier-plugin-sh': undefined,
+		})
+	).toStrictEqual({
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					plugins: ['prettier-plugin-foo'],
+				},
+			},
+			{
+				files: ['*.sh'],
+				options: {},
+			},
+			{
+				files: ['*.md'],
+				options: {
+					proseWrap: 'never',
+				},
+			},
+		],
 	});
-
-	expect(result.overrides?.[0]?.options?.plugins).toStrictEqual([
-		'prettier-plugin-foo',
-	]);
 });
 
 test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => {
+	vi.resetModules();
 	vi.doMock('@prettier/plugin-oxc', () => {
 		throw new Error();
+	});
+
+	onTestFinished(() => {
+		vi.doUnmock('@prettier/plugin-oxc');
+		vi.resetModules();
 	});
 
 	const { default: transformConfig } = await import('./index.ts');
@@ -209,7 +269,6 @@ test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => 
 
 	const result = transformConfig(config);
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['prettier-plugin-foo'],
 		overrides: [
@@ -225,9 +284,7 @@ test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => 
 	});
 });
 
-test('normalizes `jsonSortOrder` arrays on config and overrides', async () => {
-	const { default: transformConfig } = await import('./index.ts');
-
+test('normalizes `jsonSortOrder` arrays on config and overrides', () => {
 	const config = {
 		jsonSortOrder: ['name', 'version'],
 		overrides: [
@@ -242,7 +299,6 @@ test('normalizes `jsonSortOrder` arrays on config and overrides', async () => {
 
 	const result = transformConfig(config);
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result.jsonSortOrder).toBe(prioritizeKeys('name', 'version'));
 	expect(result.overrides?.[0]?.options?.jsonSortOrder).toBe(
 		prioritizeKeys('scripts', 'dependencies')

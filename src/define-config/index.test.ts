@@ -3,8 +3,8 @@ import type { StandardConfig } from '../types/index.d.ts';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import defineConfig from './index.ts';
 
-test('returns the base config by default', () => {
-	expectTypeOf(defineConfig()).toEqualTypeOf<PrettierConfig>();
+test('returns a Prettier config', () => {
+	expectTypeOf(defineConfig).returns.toEqualTypeOf<PrettierConfig>();
 });
 
 test('merges custom config with the base config', () => {
@@ -24,7 +24,6 @@ test('merges custom config with the base config', () => {
 
 	const result = defineConfig(config);
 
-	expectTypeOf(result).toEqualTypeOf<PrettierConfig>();
 	expect(result).toHaveProperty('singleQuote', false);
 	expect(result).toHaveProperty('useTabs', true);
 

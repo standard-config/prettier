@@ -2,13 +2,16 @@ import type { StandardConfig } from '../types/index.d.ts';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import mergeConfig from './index.ts';
 
+test('returns Standard Config', () => {
+	expectTypeOf(mergeConfig).returns.toEqualTypeOf<StandardConfig>();
+});
+
+test('merges two empty configs', () => {
+	expect(mergeConfig({}, {})).toStrictEqual({});
+});
+
 test('merges two valid configs', () => {
-	let result = mergeConfig({}, {});
-
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
-	expect(result).toStrictEqual({});
-
-	result = mergeConfig(
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -19,13 +22,14 @@ test('merges two valid configs', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
 		useTabs: true,
 	});
+});
 
+test('throws a `TypeError` when a config is missing', () => {
 	/* @ts-expect-error */
 	expect(() => mergeConfig()).toThrow(TypeError);
 
@@ -48,15 +52,14 @@ test('removes config properties that resolve to `undefined`', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		singleQuote: true,
 		useTabs: true,
 	});
 });
 
-test('merges `plugins` correctly', () => {
-	let result = mergeConfig(
+test('keeps base `plugins` when the custom config omits them', () => {
+	const result = mergeConfig(
 		{
 			plugins: ['foo'],
 			printWidth: 100,
@@ -68,15 +71,16 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo'],
 		printWidth: 120,
 		singleQuote: true,
 		useTabs: true,
 	});
+});
 
-	result = mergeConfig(
+test('adds custom `plugins` when the base config omits them', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -88,15 +92,16 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo'],
 		printWidth: 120,
 		singleQuote: true,
 		useTabs: true,
 	});
+});
 
-	result = mergeConfig(
+test('appends custom `plugins` to base `plugins`', () => {
+	const result = mergeConfig(
 		{
 			plugins: ['foo'],
 			printWidth: 100,
@@ -109,15 +114,16 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo', 'bar', 'baz'],
 		printWidth: 120,
 		singleQuote: true,
 		useTabs: true,
 	});
+});
 
-	result = mergeConfig(
+test('removes `plugins` when the custom config sets them to `undefined`', () => {
+	const result = mergeConfig(
 		{
 			plugins: ['foo'],
 			printWidth: 100,
@@ -130,7 +136,6 @@ test('merges `plugins` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -138,8 +143,8 @@ test('merges `plugins` correctly', () => {
 	});
 });
 
-test('merges `overrides` correctly', () => {
-	let result = mergeConfig(
+test('keeps base `overrides` when the custom config omits them', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -158,7 +163,6 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -172,8 +176,10 @@ test('merges `overrides` correctly', () => {
 			},
 		],
 	});
+});
 
-	result = mergeConfig(
+test('adds custom `overrides` when the base config omits them', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -192,7 +198,6 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -206,8 +211,10 @@ test('merges `overrides` correctly', () => {
 			},
 		],
 	});
+});
 
-	result = mergeConfig(
+test('appends custom `overrides` to base `overrides`', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -234,7 +241,6 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -254,8 +260,10 @@ test('merges `overrides` correctly', () => {
 			},
 		],
 	});
+});
 
-	result = mergeConfig(
+test('removes `overrides` when the custom config sets them to `undefined`', () => {
+	const result = mergeConfig(
 		{
 			printWidth: 100,
 			singleQuote: true,
@@ -275,7 +283,6 @@ test('merges `overrides` correctly', () => {
 		}
 	);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		printWidth: 120,
 		singleQuote: true,
@@ -315,7 +322,6 @@ test('doesn’t mutate any of the input configs', () => {
 
 	const result = mergeConfig(baseConfig, customConfig);
 
-	expectTypeOf(result).toEqualTypeOf<StandardConfig>();
 	expect(result).toStrictEqual({
 		plugins: ['foo', 'bar', 'baz'],
 		printWidth: 120,
