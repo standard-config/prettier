@@ -18,7 +18,7 @@ try {
 }
 
 /**
- * Convert Standard Config to an exportable, Prettier-compatible format.
+ * Converts Standard Config to an exportable, Prettier-compatible format.
  */
 export default function transformConfig(
 	config: StandardConfig,

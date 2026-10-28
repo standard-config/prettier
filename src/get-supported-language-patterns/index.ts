@@ -11,7 +11,7 @@ const LANGUAGES = [
 ];
 
 /**
- * Convert the extensions and file names Prettier associates with the given
+ * Converts the extensions and file names Prettier associates with the given
  * languages into `overrides.files` patterns.
  */
 export default function getSupportedLanguagePatterns(

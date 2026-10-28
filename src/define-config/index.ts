@@ -5,7 +5,7 @@ import mergeConfig from '../merge-config/index.ts';
 import transformConfig from '../transform-config/index.ts';
 
 /**
- * Combine Standard Config with optional config overrides.
+ * Combines Standard Config with optional config overrides.
  */
 export default function defineConfig(
 	config: StandardConfig = {}

@@ -31,12 +31,13 @@ test('merges custom config with the base config', () => {
 	expect(result).toHaveProperty('overrides', expect.any(Array));
 	expect(result.overrides).toContainEqual(config.overrides[0]);
 
-	const override = result.overrides![0]!.options;
+	const { options } = result.overrides![0]!;
 
-	expect(override).toHaveProperty('useTabs', false);
+	expect(options).toHaveProperty('useTabs', false);
+
+	expect(result.plugins).not.toHaveLength(0);
 
 	for (const plugin of result.plugins!) {
-		expect(plugin).toBeDefined();
 		expect(plugin).toContain('node_modules');
 	}
 });

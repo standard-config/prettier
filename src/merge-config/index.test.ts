@@ -352,11 +352,11 @@ test('doesn’t mutate any of the input configs', () => {
 	expect(baseConfig.plugins).toStrictEqual(['foo']);
 	expect(customConfig.plugins).toStrictEqual(['bar', 'baz']);
 
-	let override = result.overrides![0]!;
+	const baseOverride = result.overrides![0]!;
 
-	override.files.push('*.tsx');
-	override.excludeFiles = ['*.d.ts'];
-	override.options.semi = false;
+	baseOverride.files.push('*.tsx');
+	baseOverride.excludeFiles = ['*.d.ts'];
+	baseOverride.options.semi = false;
 
 	expect(baseConfig.overrides[0]).toStrictEqual({
 		files: ['*.ts'],
@@ -365,11 +365,11 @@ test('doesn’t mutate any of the input configs', () => {
 		},
 	});
 
-	override = result.overrides![1]!;
+	const customOverride = result.overrides![1]!;
 
-	override.files.push('*.svg');
-	override.excludeFiles = ['build/**'];
-	override.options.printWidth = 240;
+	customOverride.files.push('*.svg');
+	customOverride.excludeFiles = ['build/**'];
+	customOverride.options.printWidth = 240;
 
 	expect(customConfig.overrides[0]).toStrictEqual({
 		files: ['*.html'],

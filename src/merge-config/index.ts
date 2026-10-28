@@ -2,7 +2,7 @@ import type { StandardConfig } from '../types/index.d.ts';
 import clone from '../clone/index.ts';
 
 /**
- * Deep-merge two Standard Config objects.
+ * Deep-merges two Standard Config objects.
  */
 export default function mergeConfig(
 	baseConfig: StandardConfig,

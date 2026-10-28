@@ -23,7 +23,7 @@ import {
 import createGlobSet from '../create-glob-set/index.ts';
 
 /**
- * Generate the base Standard Config.
+ * Generates the base Standard Config.
  *
  * Shell scripts can’t be reliably identified by name alone—they’re recognized
  * by the shebang, not the extension. As a result, shell formatting options

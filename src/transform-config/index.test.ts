@@ -106,12 +106,15 @@ test('resolves `jsonSortOrder` to a Prettier-compatible format', () => {
 	const result = transformConfig(config);
 
 	expect(result).toStrictEqual({
-		jsonSortOrder: expect.any(String),
+		jsonSortOrder: prioritizeKeys('$schema'),
 		overrides: [
 			{
 				files: ['*.json'],
 				options: {
-					jsonSortOrder: expect.any(String),
+					jsonSortOrder: prioritizeKeys(
+						'dependencies',
+						'devDependencies'
+					),
 				},
 			},
 			{
@@ -177,7 +180,7 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 	});
 });
 
-test('keeps `prettier-plugin-sh` in plugins overrides', () => {
+test('keeps `prettier-plugin-sh` in override `plugins`', () => {
 	expect(transformConfig(CONFIG)).toStrictEqual({
 		overrides: [
 			{
@@ -205,7 +208,7 @@ test('keeps `prettier-plugin-sh` in plugins overrides', () => {
 	});
 });
 
-test('omits `prettier-plugin-sh` from plugins overrides when `pluginOverrides` sets it to `undefined`', () => {
+test('omits `prettier-plugin-sh` from override `plugins` when `pluginOverrides` sets it to `undefined`', () => {
 	expect(
 		transformConfig(CONFIG, {
 			'prettier-plugin-sh': undefined,
@@ -297,10 +300,15 @@ test('normalizes `jsonSortOrder` arrays on config and overrides', () => {
 		],
 	} as const satisfies StandardConfig;
 
-	const result = transformConfig(config);
-
-	expect(result.jsonSortOrder).toBe(prioritizeKeys('name', 'version'));
-	expect(result.overrides?.[0]?.options?.jsonSortOrder).toBe(
-		prioritizeKeys('scripts', 'dependencies')
-	);
+	expect(transformConfig(config)).toStrictEqual({
+		jsonSortOrder: prioritizeKeys('name', 'version'),
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					jsonSortOrder: prioritizeKeys('scripts', 'dependencies'),
+				},
+			},
+		],
+	});
 });
