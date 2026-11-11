@@ -28,6 +28,6 @@ indent_size = 2
 indent_style = space
 
 # YAML
-[{.clang-format,.clang-tidy,.clangd,.gemrc,.lintstagedrc,.prettierrc,.stylelintrc,*.mir,*.reek,*.rviz,*.sublime-syntax,*.syntax,*.yaml,*.yaml-tmlanguage,*.yaml.sed,*.yml,*.yml.mysql,CITATION.cff,glide.lock,pixi.lock}]
+[{.clang-format,.clang-tidy,.clangd,.eslintrc,.gemrc,.lintstagedrc,.prettierrc,.releaserc,.stylelintrc,*.mir,*.reek,*.rviz,*.sublime-syntax,*.syntax,*.yaml,*.yaml-tmlanguage,*.yaml.sed,*.yml,*.yml.mysql,CITATION.cff,glide.lock,pixi.lock}]
 indent_size = 2
 indent_style = space
