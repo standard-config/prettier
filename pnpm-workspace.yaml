@@ -21,7 +21,7 @@ overrides:
   vite-plus>oxfmt: '-'
   vite-plus>oxlint: latest
   vite-plus>oxlint-tsgolint: latest
-  vite: npm:@voidzero-dev/vite-plus-core@1.5.1
+  vite: npm:@voidzero-dev/vite-plus-core@1.6.0
 
 peerDependencyRules:
   allowAny:
