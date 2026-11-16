@@ -32,7 +32,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"packageManager": "pnpm@12.18.0",
+	"packageManager": "pnpm@12.21.0",
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.2.4",
 		"prettier-plugin-expand-json": "^1.2.1",
