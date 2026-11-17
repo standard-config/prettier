@@ -31,7 +31,7 @@ export default function prioritizeKeys(...keys: ReadonlyArray<string>): string {
 function createExclusionKey(keys: ReadonlyArray<string>) {
 	const escapedGroup = keys
 		.filter((key) => key !== '*')
-		.map((key) => key.replaceAll(/[$()*+.?[\\\]^{}|]/g, String.raw`\$&`))
+		.map((key) => RegExp.escape(key))
 		.join('|');
 
 	return escapedGroup ? new RegExp(`^(?!(?:${escapedGroup})$).*$`) : /.*/;

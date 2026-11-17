@@ -82,7 +82,10 @@ export default async function moveTrailingComments(
 				comment,
 				indentation: getBodyIndentation(
 					lines[target]!,
-					lines.slice(index + 1).find((line) => line.trim() !== '')!,
+					lines
+						.values()
+						.drop(index + 1)
+						.find((line) => line.trim() !== '')!,
 					options
 				),
 				index,
@@ -117,7 +120,7 @@ export default async function moveTrailingComments(
 	// the code. Marked comments that survive printing without comments did,
 	// so those stay where they are
 	const markPrefix = createMarkPrefix(lines);
-	const probeCode = await printWithoutComments(
+	const markedCode = await printWithoutComments(
 		buildText(
 			lines,
 			moves,
@@ -127,12 +130,12 @@ export default async function moveTrailingComments(
 	);
 
 	/* v8 ignore next -- @preserve */
-	if (probeCode === undefined) {
+	if (markedCode === undefined) {
 		return text;
 	}
 
 	const safeMoves = moves.filter(
-		(_move, number) => !probeCode.includes(`${markPrefix}${number}_`)
+		(_move, number) => !markedCode.includes(`${markPrefix}${number}_`)
 	);
 
 	if (safeMoves.length === 0) {
@@ -198,20 +201,21 @@ function buildText(
 	renderComment: (move: Move, number: number) => string
 ): string {
 	const codeLines = [...lines];
-	const commentsByTarget = new Map<number, string[]>();
 
-	for (const [number, move] of moves.entries()) {
+	for (const move of moves) {
 		codeLines[move.index] = move.code;
-		commentsByTarget.set(move.target, [
-			...(commentsByTarget.get(move.target) ?? []),
-			move.indentation + renderComment(move, number),
-		]);
 	}
 
+	const movesByTarget = Map.groupBy(
+		moves.entries(),
+		([, move]) => move.target
+	);
 	const movedLines: string[] = [];
 
 	for (const [index, line] of codeLines.entries()) {
-		const comments = commentsByTarget.get(index) ?? [];
+		const comments = (movesByTarget.get(index) ?? []).map(
+			([number, move]) => move.indentation + renderComment(move, number)
+		);
 
 		for (const comment of comments) {
 			const previousLine = movedLines.at(-1);

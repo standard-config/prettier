@@ -72,33 +72,32 @@ export default async function findComments(
 	// `#` and print without comments. Marks inside heredocs and strings survive.
 	// Marking right after `#` keeps line endings intact
 	const markPrefix = createMarkPrefix(lines);
-	const probeLines = [...lines];
+	const markedLines = [...lines];
 
 	// Marking from the end keeps the columns of earlier candidates valid
 	for (const [number, { column, line }] of [
 		...candidates.entries(),
 	].toReversed()) {
-		const probeLine = probeLines[line]!;
-		probeLines[line] =
-			`${probeLine.slice(0, column + 1)}${markPrefix}${number}_${probeLine.slice(column + 1)}`;
+		const markedLine = markedLines[line]!;
+		markedLines[line] =
+			`${markedLine.slice(0, column + 1)}${markPrefix}${number}_${markedLine.slice(column + 1)}`;
 	}
 
-	const printedProbe = await printWithoutComments(
-		probeLines.join('\n'),
+	const markedCode = await printWithoutComments(
+		markedLines.join('\n'),
 		options
 	);
 
 	// A mark can change how a line parses, such as a heredoc delimiter that
 	// starts with `#`, so treat every line as code
-	if (printedProbe === undefined) {
+	if (markedCode === undefined) {
 		return foundComments;
 	}
 
 	const markedNumbers = new Set(
-		Array.from(
-			printedProbe.matchAll(new RegExp(`${markPrefix}(\\d+)_`, 'g')),
-			(match) => Number(match[1])
-		)
+		markedCode
+			.matchAll(new RegExp(`${markPrefix}(\\d+)_`, 'g'))
+			.map((match) => Number(match[1]))
 	);
 
 	const foundLines = new Set<number>();

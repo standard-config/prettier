@@ -22,7 +22,7 @@ async function sortJSON(jsonSortOrder: string) {
 test('returns a `jsonSortOrder` value that follows the spec', () => {
 	expect(prioritizeKeys()).toBe(
 		JSON.stringify({
-			[/.*/ as any]: 'lexical',
+			'/.*/': 'lexical',
 		})
 	);
 
@@ -32,8 +32,8 @@ test('returns a `jsonSortOrder` value that follows the spec', () => {
 
 	expect(prioritizeKeys('foo')).toBe(
 		JSON.stringify({
-			foo: null,
-			[/^(?!(?:foo)$).*$/ as any]: 'lexical',
+			'foo': null,
+			'/^(?!(?:\\x66oo)$).*$/': 'lexical',
 		})
 	);
 
@@ -42,16 +42,16 @@ test('returns a `jsonSortOrder` value that follows the spec', () => {
 	expect(prioritizeKeys('foo.bar')).toBe(
 		JSON.stringify({
 			'foo.bar': null,
-			[/^(?!(?:foo\.bar)$).*$/ as any]: 'lexical',
+			'/^(?!(?:\\x66oo\\.bar)$).*$/': 'lexical',
 		})
 	);
 
 	expect(prioritizeKeys('foo', 'bar', 'baz')).toBe(
 		JSON.stringify({
-			foo: null,
-			bar: null,
-			baz: null,
-			[/^(?!(?:foo|bar|baz)$).*$/ as any]: 'lexical',
+			'foo': null,
+			'bar': null,
+			'baz': null,
+			'/^(?!(?:\\x66oo|\\x62ar|\\x62az)$).*$/': 'lexical',
 		})
 	);
 
@@ -61,19 +61,19 @@ test('returns a `jsonSortOrder` value that follows the spec', () => {
 
 	expect(prioritizeKeys('foo', '*', 'bar', 'baz')).toBe(
 		JSON.stringify({
-			foo: null,
-			[/^(?!(?:foo|bar|baz)$).*$/ as any]: 'lexical',
-			bar: null,
-			baz: null,
+			'foo': null,
+			'/^(?!(?:\\x66oo|\\x62ar|\\x62az)$).*$/': 'lexical',
+			'bar': null,
+			'baz': null,
 		})
 	);
 
 	expect(prioritizeKeys('foo', 'bar', '*', 'baz')).toBe(
 		JSON.stringify({
-			foo: null,
-			bar: null,
-			[/^(?!(?:foo|bar|baz)$).*$/ as any]: 'lexical',
-			baz: null,
+			'foo': null,
+			'bar': null,
+			'/^(?!(?:\\x66oo|\\x62ar|\\x62az)$).*$/': 'lexical',
+			'baz': null,
 		})
 	);
 });

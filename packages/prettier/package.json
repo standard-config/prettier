@@ -31,7 +31,7 @@
 	"exports": "./dist/index.mjs",
 	"types": "./dist/index.d.mts",
 	"engines": {
-		"node": ">=20"
+		"node": ">=24"
 	},
 	"dependencies": {
 		"@prettier/plugin-oxc": "^0.2.4",

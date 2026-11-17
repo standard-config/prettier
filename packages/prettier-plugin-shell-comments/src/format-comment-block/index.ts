@@ -262,7 +262,7 @@ function fillWords(
 	const lines: string[] = [];
 	let line = prefix + words[0]!;
 
-	for (const word of words.slice(1)) {
+	for (const word of words.values().drop(1)) {
 		const extendedLine = `${line} ${word}`;
 
 		// Some words would read as markup at the start of a line, and a line
