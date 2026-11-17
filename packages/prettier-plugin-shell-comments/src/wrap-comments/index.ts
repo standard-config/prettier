@@ -1,6 +1,7 @@
 import type { ParserOptions } from 'prettier';
 import findCommentLines from '../find-comment-lines/index.ts';
 import formatCommentBlock from '../format-comment-block/index.ts';
+import isPropertyFile from '../is-property-file/index.ts';
 
 /**
  * Wraps comments on their own lines using the print width as a target.
@@ -22,6 +23,7 @@ export default async function wrapComments(
 		(line) => !/^\s*(?:#.*)?$/.test(line)
 	);
 	const leadingEnd = firstCodeIndex === -1 ? lines.length : firstCodeIndex;
+	const joinLines = !isPropertyFile(options.filepath);
 	const outputLines: string[] = [];
 	let index = 0;
 
@@ -49,6 +51,7 @@ export default async function wrapComments(
 		const formattedBlock = formatCommentBlock(block, {
 			indentation,
 			isLeading,
+			joinLines,
 			printWidth: options.printWidth,
 			tabWidth: options.tabWidth,
 		});

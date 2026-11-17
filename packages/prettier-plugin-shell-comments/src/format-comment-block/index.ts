@@ -10,6 +10,10 @@ export type CommentBlockOptions = {
 	 * Prettier reads pragmas.
 	 */
 	isLeading: boolean;
+	/**
+	 * Whether to join consecutive lines into paragraphs and list items.
+	 */
+	joinLines: boolean;
 	printWidth: number;
 	tabWidth: number;
 };
@@ -20,13 +24,14 @@ type BlockNode =
 	| { texts: string[]; type: 'paragraph' }
 	| { type: 'empty' };
 
-const DIRECTIVE_PATTERN = /^shellcheck(?:[ \t]|$)/;
+const DIRECTIVE_PATTERN =
+	/^(?:-\*-|bats$|bats[ \t]+file_tags=|bats[ \t]+test_tags=|dotenv-linter:|endregion(?:[ \t]|$)|region(?:[ \t]|$)|shellcheck(?:[ \t]|$)|SPDX-[A-Za-z-]+:|vi:|vim:)/;
 const EMPTY_NODE: BlockNode = { type: 'empty' };
 const IGNORE_MARKER_PATTERN = /^#+[ \t]*prettier-ignore$/;
-const LIST_MARKER_PATTERN = /^([-*]|\d+\.)(?:[ \t]+|$)/;
+const LIST_MARKER_PATTERN = /^([*+-]|\d+[).])(?:[ \t]+|$)/;
 const PRAGMA_PATTERN = /^@(?:format|prettier)/;
 const UNSAFE_LINE_START_PATTERN =
-	/^(?:#|shellcheck|(?:[-*]|\d+\.|prettier-ignore)$)/;
+	/^(?:#|-\*-|dotenv-linter:|shellcheck|SPDX-|vi:|vim:|(?:[*+-]|\d+[).]|bats|endregion|prettier-ignore|region)$)/;
 
 /**
  * Formats the lines of one comment block, given without their indentation.
@@ -45,7 +50,7 @@ export default function formatCommentBlock(
 		return [...lines];
 	}
 
-	const nodes = separateNodes(parseNodes(lines, options.isLeading));
+	const nodes = separateNodes(parseNodes(lines, options));
 
 	return nodes.flatMap((node) => printNode(node, options));
 }
@@ -55,12 +60,17 @@ export default function formatCommentBlock(
  */
 function parseNodes(
 	lines: ReadonlyArray<string>,
-	isLeading: boolean
+	{ isLeading, joinLines }: CommentBlockOptions
 ): BlockNode[] {
 	const nodes: BlockNode[] = [];
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
 
 	for (const line of lines) {
+		// Data files can hold commented-out entries, one per line
+		if (!joinLines) {
+			openNode = undefined;
+		}
+
 		const rest = line.replace(/^#+/, '');
 		const [indentation] = /^[ \t]*/.exec(rest)!;
 		const text = rest.slice(indentation.length);
@@ -255,10 +265,12 @@ function fillWords(
 		const extendedLine = `${line} ${word}`;
 
 		// Some words would read as markup at the start of a line, and a line
-		// holding only `prettier-ignore` would protect its whole block
+		// holding only a marker such as `prettier-ignore` or `bats` would also be
+		// parsed as markup
 		if (
 			fits(extendedLine) ||
 			IGNORE_MARKER_PATTERN.test(line) ||
+			DIRECTIVE_PATTERN.test(line.replace(/^#[ \t]*/, '')) ||
 			UNSAFE_LINE_START_PATTERN.test(word) ||
 			(isLeading && PRAGMA_PATTERN.test(word))
 		) {

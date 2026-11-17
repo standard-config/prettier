@@ -3,11 +3,18 @@ import formatCommentBlock from './index.ts';
 
 function formatComment(
 	input: string,
-	{ indentation = '', isLeading = false, printWidth = 80, tabWidth = 2 } = {}
+	{
+		indentation = '',
+		isLeading = false,
+		joinLines = true,
+		printWidth = 80,
+		tabWidth = 2,
+	} = {}
 ): string {
 	return formatCommentBlock(input.split('\n'), {
 		indentation,
 		isLeading,
+		joinLines,
 		printWidth,
 		tabWidth,
 	}).join('\n');
@@ -128,6 +135,18 @@ test('keeps words that would read as markup with the word before them', () => {
 	expect(formatComment('# foo bar baz prettier-ignore qux', options)).toBe(
 		'# foo bar baz prettier-ignore\n# qux'
 	);
+	expect(formatComment('# foo bar baz + qux', options)).toBe(
+		'# foo bar baz +\n# qux'
+	);
+	expect(formatComment('# foo bar baz 1) qux', options)).toBe(
+		'# foo bar baz 1)\n# qux'
+	);
+	expect(formatComment('# foo bar baz region qux', options)).toBe(
+		'# foo bar baz region\n# qux'
+	);
+	expect(
+		formatComment('# foo bar baz SPDX-License-Identifier: MIT', options)
+	).toBe('# foo bar baz SPDX-License-Identifier:\n# MIT');
 	expect(
 		formatComment('# foo bar baz @format qux', {
 			...options,
@@ -136,10 +155,13 @@ test('keeps words that would read as markup with the word before them', () => {
 	).toBe('# foo bar baz @format\n# qux');
 });
 
-test('keeps the word after a leading `prettier-ignore` on its line', () => {
+test('keeps the word after a leading marker on its line', () => {
 	expect(
 		formatComment('# prettier-ignore disables wrapping', { printWidth: 20 })
 	).toBe('# prettier-ignore disables\n# wrapping');
+	expect(formatComment('# bats foobarbazqux', { printWidth: 12 })).toBe(
+		'# bats foobarbazqux'
+	);
 });
 
 test('aligns list item continuation lines with the item text', () => {
@@ -158,6 +180,12 @@ test('starts list items at markers without text', () => {
 		formatComment('# -\n# foo bar baz qux quux', { printWidth: 20 })
 	).toBe('# - foo bar baz qux\n#   quux');
 	expect(formatComment('# 1.')).toBe('# 1.');
+});
+
+test('starts list items at `+` and `N)` markers', () => {
+	expect(
+		formatComment('# + foo bar baz qux\n# 1) quux', { printWidth: 14 })
+	).toBe('# + foo bar\n#   baz qux\n# 1) quux');
 });
 
 test('continues list items with the lines that follow them', () => {
@@ -218,6 +246,38 @@ test('treats pragmas as text outside the leading comments', () => {
 	);
 });
 
+test('treats other tool directives like `shellcheck` directives', () => {
+	expect(formatComment('# foo\n# bats test_tags=slow\n# bar')).toBe(
+		'# foo\n#\n# bats test_tags=slow\n#\n# bar'
+	);
+	expect(formatComment('# bats\n# file_tags=slow')).toBe(
+		'# bats\n#\n# file_tags=slow'
+	);
+	expect(formatComment('# foo\n# bats\tfile_tags=slow')).toBe(
+		'# foo\n#\n# bats\tfile_tags=slow'
+	);
+	expect(formatComment('# foo\n# region Helpers\n# bar\n# endregion')).toBe(
+		'# foo\n#\n# region Helpers\n#\n# bar\n#\n# endregion'
+	);
+	expect(formatComment('# foo\n# dotenv-linter:off')).toBe(
+		'# foo\n#\n# dotenv-linter:off'
+	);
+	expect(formatComment('# SPDX-License-Identifier: MIT\n# foo')).toBe(
+		'# SPDX-License-Identifier: MIT\n#\n# foo'
+	);
+	expect(formatComment('# foo\n# vim: set filetype=sh:')).toBe(
+		'# foo\n#\n# vim: set filetype=sh:'
+	);
+	expect(formatComment('# -*- mode: sh -*-\n# foo')).toBe(
+		'# -*- mode: sh -*-\n#\n# foo'
+	);
+});
+
+test('treats lines that only resemble directives as text', () => {
+	expect(formatComment('# foo\n# ex: bar')).toBe('# foo ex: bar');
+	expect(formatComment('# foo\n# bats bar')).toBe('# foo bats bar');
+});
+
 test('keeps consecutive directives together', () => {
 	const input = '# shellcheck disable=SC2034\n# shellcheck source=foo.sh';
 
@@ -244,4 +304,18 @@ test('keeps blocks that contain `#!` lines as written', () => {
 	expect(formatComment(inputWithEmptyFirstLine)).toBe(
 		inputWithEmptyFirstLine
 	);
+});
+
+test('keeps lines apart when joining is off', () => {
+	const options = { joinLines: false, printWidth: 14 };
+
+	const output = formatComment(
+		'# foo\n# bar baz qux quux\n# - corge grault garply',
+		options
+	);
+
+	expect(output).toBe(
+		'# foo\n# bar baz qux\n# quux\n# - corge\n#   grault\n#   garply'
+	);
+	expect(formatComment(output, options)).toBe(output);
 });

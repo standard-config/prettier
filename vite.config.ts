@@ -2,21 +2,32 @@ import { defineOxlintConfig } from '@standard-config/oxlint';
 import { configStylisticConfigFiles } from '@standard-config/oxlint-stylistic';
 import { defineConfig } from 'vite-plus';
 
+const IGNORE_PATTERNS = [
+	/* prettier-ignore */
+	'packages/tests/fixtures/**',
+];
+
 export default defineConfig({
 	test: {
 		coverage: {
-			exclude: ['packages/tests/fixtures/**'],
+			exclude: IGNORE_PATTERNS,
 		},
-		projects: ['packages/*/vite.config.ts'],
+		projects: [
+			/* prettier-ignore */
+			'packages/*/vite.config.ts',
+		],
 	},
 	lint: defineOxlintConfig({
-		ignorePatterns: ['packages/tests/fixtures/**'],
+		ignorePatterns: IGNORE_PATTERNS,
 		rules: {
 			'typescript/no-deprecated': 'off',
 		},
 		overrides: [
 			{
-				files: ['packages/*/src/*-config/index.ts'],
+				files: [
+					/* prettier-ignore */
+					'packages/*/src/*-config/index.ts',
+				],
 				...configStylisticConfigFiles,
 			},
 		],

@@ -101,9 +101,12 @@ test('formats comments in other files that use the `sh` parser', async () => {
 		printWidth: 20,
 	};
 
-	const output = await format('# foo bar baz qux quux corge\nfoo\n', options);
+	const output = await format(
+		'# foo bar baz qux quux corge\n# grault\nfoo\n',
+		options
+	);
 
-	expect(output).toBe('# foo bar baz qux\n# quux corge\nfoo\n');
+	expect(output).toBe('# foo bar baz qux\n# quux corge\n# grault\nfoo\n');
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
