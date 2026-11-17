@@ -1,43 +1,45 @@
 import type { Doc, Plugin } from 'prettier';
 import type { PluginOptions } from './types/index.d.ts';
-import * as pluginSh from 'prettier-plugin-sh';
+import * as pluginShell from 'prettier-plugin-sh';
 import isPropertyFile from './is-property-file/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
 
-const { parsers: shParsers, printers: shPrinters } = pluginSh;
+const { parsers: shellParsers, printers: shellPrinters } = pluginShell;
 
 /**
  * Prints shell code with `prettier-plugin-sh`, then wraps its comments as
  * `shellCommentWrap` selects.
  */
 async function printWithWrappedComments(
-	...[path, options, print, args]: Parameters<typeof shPrinters.sh.print>
+	...[path, options, print, args]: Parameters<typeof shellPrinters.sh.print>
 ): Promise<Doc> {
 	// `prettier-plugin-sh` prints asynchronously despite its `Doc` return type
-	const printed = await (shPrinters.sh.print(path, options, print, args) as
-		Doc | Promise<Doc>);
+	const printed = await (shellPrinters.sh.print(
+		path,
+		options,
+		print,
+		args
+	) as Doc | Promise<Doc>);
 
-	const commentWrap = (options as PluginOptions).shellCommentWrap ?? 'all';
+	const { shellCommentWrap } = options as PluginOptions;
 
-	if (typeof printed !== 'string' || commentWrap === 'none') {
+	if (typeof printed !== 'string' || shellCommentWrap === 'none') {
 		return printed;
 	}
 
-	const reprint = async (text: string): Promise<string> => {
-		const reprinted = await (shPrinters.sh.print(
+	// Code that printed as a string reprints as one
+	const reprint = async (text: string) =>
+		(await (shellPrinters.sh.print(
 			path,
 			{ ...options, originalText: text },
 			print,
 			args
-		) as Doc | Promise<Doc>);
-
-		return typeof reprinted === 'string' ? reprinted : text;
-	};
+		) as Doc | Promise<Doc>)) as string;
 
 	// A `#` after an entry in a data file can belong to the entry itself
 	const text =
-		commentWrap === 'all' && !isPropertyFile(options.filepath)
+		shellCommentWrap === 'all' && !isPropertyFile(options.filepath)
 			? await moveTrailingComments(printed, options, reprint)
 			: printed;
 
@@ -46,19 +48,19 @@ async function printWithWrappedComments(
 
 // Prettier prints with the printer of the plugin that supplies the parser
 export const parsers: Plugin['parsers'] = {
-	sh: shParsers.sh,
+	sh: shellParsers.sh,
 };
 
 export const printers: Plugin['printers'] = {
 	sh: {
-		...shPrinters.sh,
+		...shellPrinters.sh,
 		// Prettier awaits the root print, which `prettier-plugin-sh` relies on too
-		print: printWithWrappedComments as unknown as typeof shPrinters.sh.print,
+		print: printWithWrappedComments as unknown as typeof shellPrinters.sh.print,
 	},
 };
 
 export const options: Plugin['options'] = {
-	...pluginSh.options,
+	...pluginShell.options,
 	shellCommentWrap: {
 		category: 'Shell',
 		description: 'Control wrapping for comments.',

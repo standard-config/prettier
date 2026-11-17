@@ -17,7 +17,7 @@ type Move = {
 };
 
 const BRANCH_LINE_PATTERN = /^(?:elif[ \t].*;[ \t]*then|else)$/;
-const CLOSING_LINE_PATTERN = /^(?:[)}]|(?:done|esac|fi)\b)/;
+const CLOSING_LINE_PATTERN = /^(?:\)|(?:done|esac|fi|\})(?=$|[\t ;&|()<>]))/;
 const COMMENT_LINE_PATTERN = /^[ \t]*#/;
 const CONTINUED_LINE_PATTERN = /(?<!\\)(?:\\\\)*(?:&&|\\|\|\|?)$/;
 const MAX_REPRINTS = 3;
@@ -82,9 +82,7 @@ export default async function moveTrailingComments(
 				comment,
 				indentation: getBodyIndentation(
 					lines[target]!,
-					lines
-						.slice(index + 1)
-						.find((bodyLine) => bodyLine.trim() !== ''),
+					lines.slice(index + 1).find((line) => line.trim() !== '')!,
 					options
 				),
 				index,
@@ -102,7 +100,7 @@ export default async function moveTrailingComments(
 							line,
 							lines
 								.slice(0, index)
-								.findLast((bodyLine) => bodyLine.trim() !== ''),
+								.findLast((line) => line.trim() !== '')!,
 							options
 						)
 					: getIndentation(lines[target]!),
@@ -128,6 +126,7 @@ export default async function moveTrailingComments(
 		options
 	);
 
+	/* v8 ignore next -- @preserve */
 	if (probeCode === undefined) {
 		return text;
 	}
@@ -254,12 +253,11 @@ function countHashes(text: string): number {
  */
 function getBodyIndentation(
 	line: string,
-	bodyLine: string | undefined,
+	bodyLine: string,
 	{ tabWidth, useTabs }: ParserOptions
 ): string {
 	const indentation = getIndentation(line);
-	const bodyIndentation =
-		bodyLine === undefined ? '' : getIndentation(bodyLine);
+	const bodyIndentation = getIndentation(bodyLine);
 
 	if (bodyIndentation.length > indentation.length) {
 		return bodyIndentation;

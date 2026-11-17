@@ -1,11 +1,11 @@
 import type { Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import { format } from 'prettier';
-import * as pluginSh from 'prettier-plugin-sh';
+import * as pluginShell from 'prettier-plugin-sh';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import * as pluginShellComments from './index.ts';
 
-const TEST_SH = `#!/bin/sh
+const TEST_SHELL = `#!/bin/sh
 
 # shellcheck source=./lib/common.sh
 . "$(dirname "$0")/lib/common.sh"
@@ -59,7 +59,7 @@ test('formats shell comments', async () => {
 		plugins: [pluginShellComments],
 	};
 
-	const output = await format(TEST_SH, options);
+	const output = await format(TEST_SHELL, options);
 
 	expect(output).toMatchSnapshot();
 	await expect(format(output, options)).resolves.toBe(output);
@@ -70,7 +70,7 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 
 	const expectedOutput = await format(input, {
 		parser: 'sh',
-		plugins: [pluginSh],
+		plugins: [pluginShell],
 	});
 
 	const options = { parser: 'sh', plugins: [pluginShellComments] };
@@ -84,7 +84,7 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 test('formats comments when listed after `prettier-plugin-sh`', async () => {
 	const options = {
 		filepath: 'foo.sh',
-		plugins: [pluginSh, pluginShellComments],
+		plugins: [pluginShell, pluginShellComments],
 		printWidth: 20,
 	};
 
@@ -97,7 +97,7 @@ test('formats comments when listed after `prettier-plugin-sh`', async () => {
 test('formats comments in other files that use the `sh` parser', async () => {
 	const options = {
 		filepath: '.gitignore',
-		plugins: [pluginSh, pluginShellComments],
+		plugins: [pluginShell, pluginShellComments],
 		printWidth: 20,
 	};
 
@@ -147,7 +147,7 @@ test('respects `checkIgnorePragma`', async () => {
 	const expectedOutput = await format(input, {
 		checkIgnorePragma: true,
 		parser: 'sh',
-		plugins: [pluginSh],
+		plugins: [pluginShell],
 	});
 
 	const options = {
@@ -168,7 +168,7 @@ test('respects `insertPragma`', async () => {
 	const expectedOutput = await format(input, {
 		insertPragma: true,
 		parser: 'sh',
-		plugins: [pluginSh],
+		plugins: [pluginShell],
 	});
 
 	const options = {
@@ -228,7 +228,7 @@ test('supports `shellCommentWrap`', async () => {
 		'full-line': '# foo bar baz qux\ncorge # grault\n',
 		'none': await format(input, {
 			parser: 'sh',
-			plugins: [pluginSh],
+			plugins: [pluginShell],
 			printWidth: 20,
 		}),
 	});
@@ -247,7 +247,7 @@ test('keeps trailing comments in property files', async () => {
 	await expect(
 		format(input, {
 			filepath: '.env',
-			plugins: [pluginSh, pluginShellComments],
+			plugins: [pluginShell, pluginShellComments],
 		})
 	).resolves.toBe(input);
 });

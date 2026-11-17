@@ -37,6 +37,7 @@ test('finds comments that follow code', async () => {
 		'baz "qux #quux" # corge',
 		/* oxlint-disable-next-line eslint/no-template-curly-in-string */
 		'grault ${#garply} $# # waldo',
+		'fred # plugh # xyzzy',
 	];
 
 	await expect(findComments(input, OPTIONS)).resolves.toStrictEqual({
@@ -45,6 +46,7 @@ test('finds comments that follow code', async () => {
 			[0, 4],
 			[1, 16],
 			[2, 21],
+			[3, 5],
 		]),
 	});
 });

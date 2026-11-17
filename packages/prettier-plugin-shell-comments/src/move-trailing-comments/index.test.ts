@@ -1,14 +1,19 @@
 import type { ParserOptions } from 'prettier';
 import { format } from 'prettier';
-import * as pluginSh from 'prettier-plugin-sh';
+import * as pluginShell from 'prettier-plugin-sh';
 import { expect, test } from 'vite-plus/test';
 import moveTrailingComments from './index.ts';
 
 const OPTIONS = { tabWidth: 2, useTabs: false } as unknown as ParserOptions;
 
 async function reprint(text: string): Promise<string> {
-	const output = await format(text, { parser: 'sh', plugins: [pluginSh] });
+	const output = await format(text, { parser: 'sh', plugins: [pluginShell] });
 	return output;
+}
+
+async function reprintUnchanged(text: string): Promise<string> {
+	await Promise.resolve();
+	return text;
 }
 
 test('moves trailing comments above their lines', async () => {
@@ -36,6 +41,31 @@ test('moves comments on closing lines into the block body', async () => {
 	);
 });
 
+test('indents comments on closing lines one level deeper than the line', async () => {
+	const input = 'if foo; then\n  cat << EOF\nbar\nEOF\nfi # baz\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		'if foo; then\n  cat << EOF\nbar\nEOF\n  # baz\nfi\n'
+	);
+});
+
+test('respects `useTabs`', async () => {
+	const input = 'if foo; then\n\tcat << EOF\nbar\nEOF\nfi # baz\n';
+	const options = { tabWidth: 2, useTabs: true } as unknown as ParserOptions;
+
+	await expect(
+		moveTrailingComments(input, options, reprintUnchanged)
+	).resolves.toBe('if foo; then\n\tcat << EOF\nbar\nEOF\n\t# baz\nfi\n');
+});
+
+test('moves comments above assignments that resemble closing lines', async () => {
+	const input = 'done=false # foo\nfi-bar # baz\n}qux # quux\n';
+
+	await expect(
+		moveTrailingComments(input, OPTIONS, reprintUnchanged)
+	).resolves.toBe('# foo\ndone=false\n# baz\nfi-bar\n# quux\n}qux\n');
+});
+
 test('separates moved comments from comments above them', async () => {
 	const input = '# foo\nbar # baz\n';
 
@@ -55,6 +85,14 @@ test('keeps suppression comments at the end of their lines', async () => {
 
 test('leaves comments in place when moving them would change the code', async () => {
 	const input = 'foo="bar\nbaz" # qux\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		input
+	);
+});
+
+test('leaves comments in place when removing them would continue the line', async () => {
+	const input = 'echo foo\\  # bar\nbaz\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		input
