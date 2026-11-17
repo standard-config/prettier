@@ -3,8 +3,8 @@ import type {
 	ShellIndentationOptions,
 	StandardConfig,
 	StandardConfigOverrides,
-} from '../types/index.d.ts';
-import clone from '../clone/index.ts';
+} from '@standard-config/utilities/types';
+import clone from '@standard-config/utilities/clone';
 import {
 	GLOB_SET_CSS,
 	GLOB_SET_GRAPHQL,
@@ -19,8 +19,8 @@ import {
 	GLOB_SET_TYPESCRIPT,
 	GLOB_SET_VUE,
 	GLOB_SET_YAML,
-} from '../constants/index.ts';
-import createGlobSet from '../create-glob-set/index.ts';
+} from '@standard-config/utilities/constants';
+import createGlobSet from '@standard-config/utilities/create-glob-set';
 
 /**
  * Generates the base Standard Config.

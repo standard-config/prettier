@@ -3,4 +3,7 @@
 coverage
 dist
 node_modules
+packages/prettier/.editorconfig
+packages/prettier/LICENSE
+packages/prettier/README.md
 tsconfig.tsbuildinfo

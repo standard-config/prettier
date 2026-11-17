@@ -19,4 +19,5 @@ jobs:
       - uses: pnpm/setup@v3.2.0
         with:
           runtime: node@26
-      - run: pnpm stage publish --access=public --provenance
+      - run: pnpm prepack
+      - run: pnpm --filter @standard-config/prettier stage publish --access=public --provenance

@@ -1,0 +1,28 @@
+{
+	"name": "@standard-config/tests",
+	"version": "0.0.0",
+	"private": true,
+	"author": {
+		"name": "Dom Porada",
+		"email": "dom@dom.engineering",
+		"url": "https://dom.engineering"
+	},
+	"type": "module",
+	"sideEffects": false,
+	"devDependencies": {
+		"@standard-config/prettier": "workspace:*",
+		"@standard-config/tsconfig": "catalog:",
+		"@types/node": "catalog:",
+		"prettier": "catalog:",
+		"prettier-plugin-sh": "catalog:",
+		"prettier-plugin-sort-json": "catalog:",
+		"typescript": "catalog:",
+		"vite-plus": "catalog:"
+	},
+	"scripts": {
+		"fixtures:scramble": "prettier --config fixtures/config.mts --write fixtures",
+		"fixtures:unscramble": "pnpm prettier --config prettier.config.ts --write fixtures",
+		"test:fixtures": "pnpm run --sequential '/^fixtures:/' && git diff --exit-code -- fixtures",
+		"typecheck": "tsc --noEmit"
+	}
+}

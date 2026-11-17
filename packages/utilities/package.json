@@ -1,0 +1,29 @@
+{
+	"name": "@standard-config/utilities",
+	"version": "0.0.0",
+	"private": true,
+	"author": {
+		"name": "Dom Porada",
+		"email": "dom@dom.engineering",
+		"url": "https://dom.engineering"
+	},
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/*/index.ts",
+		"./types": "./src/types/index.d.ts"
+	},
+	"devDependencies": {
+		"@standard-config/tsconfig": "catalog:",
+		"@types/node": "catalog:",
+		"prettier": "catalog:",
+		"prettier-plugin-sh": "catalog:",
+		"prettier-plugin-sort-json": "catalog:",
+		"typescript": "catalog:",
+		"vite-plus": "catalog:"
+	},
+	"scripts": {
+		"test": "vp test",
+		"typecheck": "tsc --noEmit"
+	}
+}

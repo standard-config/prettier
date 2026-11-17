@@ -5,35 +5,26 @@ import { defineConfig } from 'vite-plus';
 export default defineConfig({
 	test: {
 		coverage: {
-			exclude: ['fixtures/**'],
+			exclude: ['packages/tests/fixtures/**'],
 		},
-		typecheck: {
-			enabled: true,
-		},
+		projects: ['packages/*/vite.config.ts'],
 	},
 	lint: defineOxlintConfig({
-		ignorePatterns: ['fixtures/**'],
+		ignorePatterns: ['packages/tests/fixtures/**'],
 		rules: {
 			'typescript/no-deprecated': 'off',
 		},
 		overrides: [
 			{
-				files: ['src/*-config/index.ts'],
+				files: ['packages/*/src/*-config/index.ts'],
 				...configStylisticConfigFiles,
 			},
 		],
 	}),
-	pack: {
-		deps: {
-			neverBundle: true,
-		},
-		entry: 'src/index.ts',
-		failOnWarn: true,
-		publint: true,
-	},
 	staged: {
 		'*': [
 			() => 'pnpm install --frozen-lockfile --ignore-scripts',
+			() => 'pnpm build',
 			'prettier --ignore-unknown --write',
 			() => 'pnpm prepack',
 		],

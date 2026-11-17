@@ -1,13 +1,13 @@
-import type { Config as PrettierConfig } from 'prettier';
 import type {
 	PrettierPlugins,
 	StandardConfig,
 	StandardConfigPluginOverrides,
 	StandardOptions,
-} from '../types/index.d.ts';
+} from '@standard-config/utilities/types';
+import type { Config as PrettierConfig } from 'prettier';
+import clone from '@standard-config/utilities/clone';
+import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
-import clone from '../clone/index.ts';
-import prioritizeKeys from '../prioritize-keys/index.ts';
 
 let disableOxcParser = false;
 

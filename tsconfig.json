@@ -10,8 +10,7 @@
 	],
 	"exclude": [
 		"coverage",
-		"dist",
-		"fixtures",
-		"node_modules"
+		"node_modules",
+		"packages"
 	]
 }

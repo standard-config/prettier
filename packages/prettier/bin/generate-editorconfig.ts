@@ -1,8 +1,7 @@
 import type {
 	EditorConfigProperties,
 	EditorConfigSection,
-} from '../src/types/index.d.ts';
-import { writeFileSync } from 'node:fs';
+} from '@standard-config/utilities/types';
 import {
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
@@ -10,8 +9,10 @@ import {
 	GLOB_SET_SHELL_HOOKS,
 	GLOB_SET_SHELL_PROPERTIES,
 	GLOB_SET_YAML,
-} from '../src/constants/index.ts';
-import createGlobSet from '../src/create-glob-set/index.ts';
+} from '@standard-config/utilities/constants';
+import createGlobSet from '@standard-config/utilities/create-glob-set';
+import assert from 'node:assert/strict';
+import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 
 /**
  * The `[*]` section mirrors the base indentation options rather than
@@ -78,10 +79,15 @@ const formattedSections = sections.map(
 		`# ${label}\n${formatSection(patterns, properties)}`
 );
 
-writeFileSync(
-	new URL('../.editorconfig', import.meta.url),
-	`${['root = true', formatSection(['*'], defaults), ...formattedSections].join('\n\n')}\n`
-);
+const content = `${['root = true', formatSection(['*'], defaults), ...formattedSections].join('\n\n')}\n`;
+const file = new URL('../../../.editorconfig', import.meta.url);
+
+if (process.argv.includes('--check')) {
+	assert.ok(lstatSync(file).isFile());
+	assert.equal(readFileSync(file, 'utf8'), content);
+} else {
+	writeFileSync(file, content);
+}
 
 function formatSection(
 	patterns: ReadonlyArray<string>,

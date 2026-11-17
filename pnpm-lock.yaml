@@ -175,6 +175,30 @@ settings:
   excludeLinksFromLockfile: false
   linkWorkspacePackages: false
 
+catalogs:
+  default:
+    '@standard-config/tsconfig':
+      specifier: ^3.2.0
+      version: 3.2.0
+    '@types/node':
+      specifier: ^26.6.6
+      version: 26.6.6
+    prettier:
+      specifier: ^3.10.1
+      version: 3.10.1
+    prettier-plugin-sh:
+      specifier: ^0.20.2
+      version: 0.20.2
+    prettier-plugin-sort-json:
+      specifier: ^4.2.0
+      version: 4.2.0
+    typescript:
+      specifier: ^6.0.3
+      version: 6.0.3
+    vite-plus:
+      specifier: ^1.6.0
+      version: 1.6.0
+
 overrides:
   vite-plus>oxfmt: '-'
   vite-plus>oxlint: latest
@@ -184,6 +208,36 @@ overrides:
 importers:
 
   .:
+    devDependencies:
+      '@standard-config/oxlint':
+        specifier: ^2.12.0
+        version: 2.12.0(@standard-config/oxlint-stylistic@2.12.0)(oxlint@1.93.0(oxlint-tsgolint@7.0.2007)(vite-plus@1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)))
+      '@standard-config/oxlint-stylistic':
+        specifier: ^2.12.0
+        version: 2.12.0(@standard-config/oxlint@2.12.0)(oxlint@1.93.0(oxlint-tsgolint@7.0.2007)(vite-plus@1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)))(typescript@6.0.3)
+      '@standard-config/prettier':
+        specifier: workspace:*
+        version: link:packages/prettier
+      '@standard-config/tsconfig':
+        specifier: 'catalog:'
+        version: 3.2.0(typescript@6.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      '@vitest/coverage-v8':
+        specifier: 5.1.0
+        version: 5.1.0(@vitest/browser@5.1.0)(vitest@5.1.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.10.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/prettier:
     dependencies:
       '@prettier/plugin-oxc':
         specifier: ^0.2.4
@@ -198,41 +252,86 @@ importers:
         specifier: ^0.22.1
         version: 0.22.1(prettier@3.10.1)
       prettier-plugin-sh:
-        specifier: ^0.20.2
+        specifier: 'catalog:'
         version: 0.20.2(prettier@3.10.1)
       prettier-plugin-sort-json:
-        specifier: ^4.2.0
+        specifier: 'catalog:'
         version: 4.2.0(prettier@3.10.1)
       prettier-plugin-yaml:
         specifier: ^1.3.2
         version: 1.3.2(prettier@3.10.1)
     devDependencies:
-      '@standard-config/oxlint':
-        specifier: ^2.12.0
-        version: 2.12.0(@standard-config/oxlint-stylistic@2.12.0)(oxlint@1.93.0(oxlint-tsgolint@7.0.2007)(vite-plus@1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)))
-      '@standard-config/oxlint-stylistic':
-        specifier: ^2.12.0
-        version: 2.12.0(@standard-config/oxlint@2.12.0)(oxlint@1.93.0(oxlint-tsgolint@7.0.2007)(vite-plus@1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)))(typescript@6.0.3)
       '@standard-config/tsconfig':
-        specifier: ^3.2.0
+        specifier: 'catalog:'
         version: 3.2.0(typescript@6.0.3)
+      '@standard-config/utilities':
+        specifier: workspace:*
+        version: link:../utilities
       '@types/node':
-        specifier: ^26.6.6
+        specifier: 'catalog:'
         version: 26.6.6
-      '@vitest/coverage-v8':
-        specifier: 5.1.0
-        version: 5.1.0(@vitest/browser@5.1.0)(vitest@5.1.0)
       prettier:
-        specifier: ^3.10.1
+        specifier: 'catalog:'
         version: 3.10.1
       publint:
         specifier: ^0.3.25
         version: 0.3.25
       typescript:
-        specifier: ^6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite-plus:
-        specifier: ^1.6.0
+        specifier: 'catalog:'
+        version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/tests:
+    devDependencies:
+      '@standard-config/prettier':
+        specifier: workspace:*
+        version: link:../prettier
+      '@standard-config/tsconfig':
+        specifier: 'catalog:'
+        version: 3.2.0(typescript@6.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      prettier:
+        specifier: 'catalog:'
+        version: 3.10.1
+      prettier-plugin-sh:
+        specifier: 'catalog:'
+        version: 0.20.2(prettier@3.10.1)
+      prettier-plugin-sort-json:
+        specifier: 'catalog:'
+        version: 4.2.0(prettier@3.10.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/utilities:
+    devDependencies:
+      '@standard-config/tsconfig':
+        specifier: 'catalog:'
+        version: 3.2.0(typescript@6.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      prettier:
+        specifier: 'catalog:'
+        version: 3.10.1
+      prettier-plugin-sh:
+        specifier: 'catalog:'
+        version: 0.20.2(prettier@3.10.1)
+      prettier-plugin-sort-json:
+        specifier: 'catalog:'
+        version: 4.2.0(prettier@3.10.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite-plus:
+        specifier: 'catalog:'
         version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
 
 packages:

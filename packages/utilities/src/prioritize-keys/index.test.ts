@@ -14,7 +14,7 @@ const TEST_JSON = `{
 async function sortJSON(jsonSortOrder: string) {
 	return format(TEST_JSON, {
 		parser: 'json',
-		plugins: ['prettier-plugin-sort-json'],
+		plugins: [import.meta.resolve('prettier-plugin-sort-json')],
 		jsonSortOrder,
 	});
 }

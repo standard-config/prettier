@@ -1,76 +1,45 @@
 {
-	"name": "@standard-config/prettier",
-	"version": "1.23.1",
-	"description": "TypeScript-first Prettier config",
+	"name": "@standard-config/prettier-packages",
+	"version": "0.0.0",
+	"private": true,
 	"license": "MIT",
 	"author": {
 		"name": "Dom Porada",
 		"email": "dom@dom.engineering",
 		"url": "https://dom.engineering"
 	},
-	"homepage": "https://sconfig.org/prettier",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/standard-config/prettier.git"
-	},
-	"keywords": [
-		"json-sorting",
-		"oxc",
-		"prettier",
-		"prettier-config",
-		"standard-config",
-		"typescript"
-	],
-	"files": [
-		".editorconfig",
-		"dist/**"
-	],
 	"type": "module",
-	"sideEffects": false,
-	"exports": "./dist/index.mjs",
-	"types": "./dist/index.d.mts",
 	"engines": {
-		"node": ">=20"
+		"node": ">=26"
 	},
 	"packageManager": "pnpm@12.21.0",
-	"dependencies": {
-		"@prettier/plugin-oxc": "^0.2.4",
-		"prettier-plugin-expand-json": "^1.2.1",
-		"prettier-plugin-markdown-html": "^1.6.2",
-		"prettier-plugin-pkg": "^0.22.1",
-		"prettier-plugin-sh": "^0.20.2",
-		"prettier-plugin-sort-json": "^4.2.0",
-		"prettier-plugin-yaml": "^1.3.2"
-	},
-	"peerDependencies": {
-		"prettier": "^3.10.0"
-	},
 	"devDependencies": {
 		"@standard-config/oxlint": "^2.12.0",
 		"@standard-config/oxlint-stylistic": "^2.12.0",
-		"@standard-config/tsconfig": "^3.2.0",
-		"@types/node": "^26.6.6",
+		"@standard-config/prettier": "workspace:*",
+		"@standard-config/tsconfig": "catalog:",
+		"@types/node": "catalog:",
 		"@vitest/coverage-v8": "5.1.0",
-		"prettier": "^3.10.1",
-		"publint": "^0.3.25",
-		"typescript": "^6.0.3",
-		"vite-plus": "^1.6.0"
+		"prettier": "catalog:",
+		"typescript": "catalog:",
+		"vite-plus": "catalog:"
 	},
 	"scripts": {
-		"build": "pnpm build:editorconfig && vp pack",
-		"build:editorconfig": "node bin/generate-editorconfig.ts",
-		"fix": "pnpm format && pnpm lint && pnpm format",
-		"fixtures:scramble": "prettier --config fixtures/config.mts --write fixtures",
-		"fixtures:unscramble": "pnpm prettier --write fixtures",
+		"build": "pnpm --filter @standard-config/prettier build",
+		"build:editorconfig": "pnpm --filter @standard-config/prettier build:editorconfig",
+		"fix": "pnpm build && pnpm format && pnpm lint && pnpm format",
+		"fixtures:scramble": "pnpm --filter @standard-config/tests fixtures:scramble",
+		"fixtures:unscramble": "pnpm --filter @standard-config/tests fixtures:unscramble",
 		"format": "prettier --ignore-unknown --log-level=warn --write .",
 		"format:check": "prettier --check --ignore-unknown .",
 		"lint": "vp lint --fix",
 		"lint:check": "vp lint --deny-warnings --type-check",
-		"prepack": "pnpm run '/^(format:check|lint:check|test|typecheck)$/' && pnpm build",
+		"prepack": "pnpm build && pnpm run '/^(format:check|lint:check|test|typecheck)$/'",
 		"prepare": "vp config --hooks-dir .hooks",
+		"postprepare": "pnpm build",
 		"test": "vp test",
-		"test:editorconfig": "pnpm run build:editorconfig && git diff --exit-code .editorconfig",
-		"test:fixtures": "pnpm run --sequential '/^fixtures:/' && git diff --exit-code fixtures",
-		"typecheck": "tsc --noEmit"
+		"test:editorconfig": "pnpm --filter @standard-config/prettier test:editorconfig",
+		"test:fixtures": "pnpm build && pnpm --filter @standard-config/tests test:fixtures",
+		"typecheck": "tsc --noEmit && pnpm --recursive typecheck"
 	}
 }
