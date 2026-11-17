@@ -230,6 +230,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.10.1
+      prettier-plugin-shell-comments:
+        specifier: workspace:*
+        version: link:packages/prettier-plugin-shell-comments
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -276,6 +279,28 @@ importers:
       publint:
         specifier: ^0.3.25
         version: 0.3.25
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/prettier-plugin-shell-comments:
+    dependencies:
+      prettier-plugin-sh:
+        specifier: 'catalog:'
+        version: 0.20.2(prettier@3.10.1)
+    devDependencies:
+      '@standard-config/tsconfig':
+        specifier: 'catalog:'
+        version: 3.2.0(typescript@6.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      prettier:
+        specifier: 'catalog:'
+        version: 3.10.1
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
