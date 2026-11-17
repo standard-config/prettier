@@ -177,6 +177,9 @@ settings:
 
 catalogs:
   default:
+    '@prettier/plugin-oxc':
+      specifier: ^0.2.4
+      version: 0.2.4
     '@standard-config/tsconfig':
       specifier: ^3.2.0
       version: 3.2.0
@@ -243,7 +246,7 @@ importers:
   packages/prettier:
     dependencies:
       '@prettier/plugin-oxc':
-        specifier: ^0.2.4
+        specifier: 'catalog:'
         version: 0.2.4
       prettier-plugin-expand-json:
         specifier: ^1.2.1
@@ -291,6 +294,28 @@ importers:
       prettier-plugin-sh:
         specifier: 'catalog:'
         version: 0.20.2(prettier@3.10.1)
+    devDependencies:
+      '@standard-config/tsconfig':
+        specifier: 'catalog:'
+        version: 3.2.0(typescript@6.0.3)
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.6.6
+      prettier:
+        specifier: 'catalog:'
+        version: 3.10.1
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 1.6.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(publint@0.3.25)(typescript@6.0.3)(yaml@2.9.1)
+
+  packages/prettier-plugin-typescript-comments:
+    dependencies:
+      '@prettier/plugin-oxc':
+        specifier: 'catalog:'
+        version: 0.2.4
     devDependencies:
       '@standard-config/tsconfig':
         specifier: 'catalog:'

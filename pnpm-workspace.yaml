@@ -3,6 +3,7 @@ autoDedupe: true
 autoInstallPeers: false
 
 catalog:
+  '@prettier/plugin-oxc': ^0.2.4
   '@standard-config/tsconfig': ^3.2.0
   '@types/node': ^26.6.6
   prettier: ^3.10.1
