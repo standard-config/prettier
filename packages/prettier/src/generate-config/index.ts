@@ -3,7 +3,7 @@ import type {
 	ShellIndentationOptions,
 	StandardConfig,
 	StandardConfigOverrides,
-} from '@standard-config/utilities/types';
+} from '../types/index.d.ts';
 import clone from '@standard-config/utilities/clone';
 import {
 	GLOB_SET_CSS,

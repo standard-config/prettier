@@ -1,5 +1,5 @@
 import type { StandardConfig } from '../types/index.d.ts';
-import clone from '../clone/index.ts';
+import clone from '@standard-config/utilities/clone';
 
 /**
  * Deep-merges two Standard Config objects.

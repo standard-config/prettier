@@ -1,5 +1,5 @@
-import type { StandardConfig } from '@standard-config/utilities/types';
 import type { Config as PrettierConfig } from 'prettier';
+import type { StandardConfig } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
 import transformConfig from './index.ts';

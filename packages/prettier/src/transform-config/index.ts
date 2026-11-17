@@ -1,10 +1,10 @@
+import type { PrettierPlugins } from '@standard-config/utilities/types';
+import type { Config as PrettierConfig } from 'prettier';
 import type {
-	PrettierPlugins,
 	StandardConfig,
 	StandardConfigPluginOverrides,
 	StandardOptions,
-} from '@standard-config/utilities/types';
-import type { Config as PrettierConfig } from 'prettier';
+} from '../types/index.d.ts';
 import clone from '@standard-config/utilities/clone';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';

@@ -1,4 +1,4 @@
-import type { StandardConfig } from '@standard-config/utilities/types';
+import type { StandardConfig } from '../types/index.d.ts';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import generateConfig from './index.ts';
 
