@@ -1,10 +1,13 @@
 export interface PluginOptions {
 	/**
-	 * Reflow comments that occupy their own lines. Uses the print width as a
-	 * target and removes redundant `#` characters and empty comment lines.
-	 * @default true
+	 * Control wrapping for comments. `all` moves trailing comments onto
+	 * their own lines, then reflows every comment. `full-line` reflows only
+	 * the comments that occupy their own lines. `none` leaves all comments as
+	 * written. Reflowing uses the print width as a target and removes redundant
+	 * `#` characters and empty comment lines.
+	 * @default 'all'
 	 */
-	shellWrapComments?: boolean | undefined;
+	shellCommentWrap?: 'all' | 'full-line' | 'none' | undefined;
 }
 
 declare module 'prettier' {

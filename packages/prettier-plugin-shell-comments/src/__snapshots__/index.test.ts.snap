@@ -28,7 +28,9 @@ compress_logs() {
     # Treat an empty method as the default, since cron jobs written before
     # \`zstd\` support pass no argument at all
     '' | gzip)
-      gzip -9 -- *.log # Overwrites existing archives, which only happens after an interrupted run
+      # Overwrites existing archives, which only happens after an interrupted
+      # run
+      gzip -9 -- *.log
       ;;
   esac
 

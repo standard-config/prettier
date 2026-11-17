@@ -1,5 +1,5 @@
 import type { ParserOptions } from 'prettier';
-import findCommentLines from '../find-comment-lines/index.ts';
+import findComments from '../find-comments/index.ts';
 import formatCommentBlock from '../format-comment-block/index.ts';
 import isPropertyFile from '../is-property-file/index.ts';
 
@@ -11,7 +11,7 @@ export default async function wrapComments(
 	options: ParserOptions
 ): Promise<string> {
 	const lines = text.split('\n');
-	const commentLines = await findCommentLines(lines, options);
+	const { fullLine: commentLines } = await findComments(lines, options);
 
 	if (commentLines.size === 0) {
 		return text;

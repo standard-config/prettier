@@ -200,21 +200,54 @@ test('respects `requirePragma`', async () => {
 	).resolves.toBe(output);
 });
 
-test('supports `shellWrapComments`', async () => {
-	const input = '# foo bar baz qux\n# quux\n';
-
-	const expectedOutput = await format(input, {
+test('supports `shellCommentWrap`', async () => {
+	const input = '# foo bar baz\n# qux\ncorge # grault\n';
+	const options = {
 		parser: 'sh',
-		plugins: [pluginSh],
-		printWidth: 12,
+		plugins: [pluginShellComments],
+		printWidth: 20,
+	};
+
+	const outputs = {
+		'all': await format(input, {
+			...options,
+			shellCommentWrap: 'all',
+		}),
+		'full-line': await format(input, {
+			...options,
+			shellCommentWrap: 'full-line',
+		}),
+		'none': await format(input, {
+			...options,
+			shellCommentWrap: 'none',
+		}),
+	};
+
+	expect(outputs).toStrictEqual({
+		'all': '# foo bar baz qux\n#\n# grault\ncorge\n',
+		'full-line': '# foo bar baz qux\ncorge # grault\n',
+		'none': await format(input, {
+			parser: 'sh',
+			plugins: [pluginSh],
+			printWidth: 20,
+		}),
 	});
+	await expect(format(outputs.all, options)).resolves.toBe(outputs.all);
+	await expect(
+		format(outputs['full-line'], {
+			...options,
+			shellCommentWrap: 'full-line',
+		})
+	).resolves.toBe(outputs['full-line']);
+});
+
+test('keeps trailing comments in property files', async () => {
+	const input = 'FOO=bar # baz\n';
 
 	await expect(
 		format(input, {
-			parser: 'sh',
-			plugins: [pluginShellComments],
-			printWidth: 12,
-			shellWrapComments: false,
+			filepath: '.env',
+			plugins: [pluginSh, pluginShellComments],
 		})
-	).resolves.toBe(expectedOutput);
+	).resolves.toBe(input);
 });

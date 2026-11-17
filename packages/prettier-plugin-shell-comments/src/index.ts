@@ -1,13 +1,15 @@
 import type { Doc, Plugin } from 'prettier';
 import type { PluginOptions } from './types/index.d.ts';
 import * as pluginSh from 'prettier-plugin-sh';
+import isPropertyFile from './is-property-file/index.ts';
+import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
 
 const { parsers: shParsers, printers: shPrinters } = pluginSh;
 
 /**
- * Prints shell code with `prettier-plugin-sh`, then wraps its comments unless
- * `shellWrapComments` is disabled.
+ * Prints shell code with `prettier-plugin-sh`, then wraps its comments as
+ * `shellCommentWrap` selects.
  */
 async function printWithWrappedComments(
 	...[path, options, print, args]: Parameters<typeof shPrinters.sh.print>
@@ -16,10 +18,30 @@ async function printWithWrappedComments(
 	const printed = await (shPrinters.sh.print(path, options, print, args) as
 		Doc | Promise<Doc>);
 
-	return typeof printed === 'string' &&
-		(options as PluginOptions).shellWrapComments !== false
-		? wrapComments(printed, options)
-		: printed;
+	const commentWrap = (options as PluginOptions).shellCommentWrap ?? 'all';
+
+	if (typeof printed !== 'string' || commentWrap === 'none') {
+		return printed;
+	}
+
+	const reprint = async (text: string): Promise<string> => {
+		const reprinted = await (shPrinters.sh.print(
+			path,
+			{ ...options, originalText: text },
+			print,
+			args
+		) as Doc | Promise<Doc>);
+
+		return typeof reprinted === 'string' ? reprinted : text;
+	};
+
+	// A `#` after an entry in a data file can belong to the entry itself
+	const text =
+		commentWrap === 'all' && !isPropertyFile(options.filepath)
+			? await moveTrailingComments(printed, options, reprint)
+			: printed;
+
+	return wrapComments(text, options);
 }
 
 // Prettier prints with the printer of the plugin that supplies the parser
@@ -37,11 +59,26 @@ export const printers: Plugin['printers'] = {
 
 export const options: Plugin['options'] = {
 	...pluginSh.options,
-	shellWrapComments: {
+	shellCommentWrap: {
 		category: 'Shell',
-		description: 'Reflow comments that occupy their own lines.',
-		type: 'boolean',
-		default: true,
+		description: 'Control wrapping for comments.',
+		type: 'choice',
+		default: 'all',
+		choices: [
+			{
+				description:
+					'Move trailing comments onto their own lines, then reflow every comment.',
+				value: 'all',
+			},
+			{
+				description: 'Reflow comments that occupy their own lines.',
+				value: 'full-line',
+			},
+			{
+				description: 'Leave all comments as written.',
+				value: 'none',
+			},
+		],
 	},
 };
 

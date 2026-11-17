@@ -1,4 +1,9 @@
 import { util } from 'prettier';
+import {
+	DIRECTIVE_PATTERN,
+	IGNORE_MARKER_PATTERN,
+	PRAGMA_PATTERN,
+} from '../constants/index.ts';
 
 export type CommentBlockOptions = {
 	/**
@@ -24,12 +29,8 @@ type BlockNode =
 	| { texts: string[]; type: 'paragraph' }
 	| { type: 'empty' };
 
-const DIRECTIVE_PATTERN =
-	/^(?:-\*-|bats$|bats[ \t]+file_tags=|bats[ \t]+test_tags=|dotenv-linter:|endregion(?:[ \t]|$)|region(?:[ \t]|$)|shellcheck(?:[ \t]|$)|SPDX-[A-Za-z-]+:|vi:|vim:)/;
 const EMPTY_NODE: BlockNode = { type: 'empty' };
-const IGNORE_MARKER_PATTERN = /^#+[ \t]*prettier-ignore$/;
 const LIST_MARKER_PATTERN = /^([*+-]|\d+[).])(?:[ \t]+|$)/;
-const PRAGMA_PATTERN = /^@(?:format|prettier)/;
 const UNSAFE_LINE_START_PATTERN =
 	/^(?:#|-\*-|dotenv-linter:|shellcheck|SPDX-|vi:|vim:|(?:[*+-]|\d+[).]|bats|endregion|prettier-ignore|region)$)/;
 

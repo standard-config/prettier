@@ -4,8 +4,8 @@ import { expectTypeOf, test } from 'vite-plus/test';
 
 test('exposes valid types', () => {
 	expectTypeOf<PluginOptions>()
-		.toHaveProperty('shellWrapComments')
-		.toEqualTypeOf<boolean | undefined>();
+		.toHaveProperty('shellCommentWrap')
+		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });
 
 test('extends Prettier’s `Options`', () => {
@@ -13,6 +13,6 @@ test('extends Prettier’s `Options`', () => {
 	expectTypeOf<PrettierOptions>().toHaveProperty('useTabs');
 
 	expectTypeOf<PrettierOptions>()
-		.toHaveProperty('shellWrapComments')
-		.toEqualTypeOf<boolean | undefined>();
+		.toHaveProperty('shellCommentWrap')
+		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });
