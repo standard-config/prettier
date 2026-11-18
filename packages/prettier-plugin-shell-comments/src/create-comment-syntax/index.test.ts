@@ -30,6 +30,18 @@ test('keeps words that would read as markup with the word before them', () => {
 	expect(formatComment('# foo bar baz prettier-ignore qux', options)).toBe(
 		'# foo bar baz prettier-ignore\n# qux'
 	);
+	expect(formatComment('# foo bar baz c8 ignore', options)).toBe(
+		'# foo bar baz c8\n# ignore'
+	);
+	expect(formatComment('# foo bar baz cspell: qux', options)).toBe(
+		'# foo bar baz cspell:\n# qux'
+	);
+	expect(formatComment('# foo bar baz nosemgrep qux', options)).toBe(
+		'# foo bar baz nosemgrep\n# qux'
+	);
+	expect(formatComment('# foo bar baz pragma: qux', options)).toBe(
+		'# foo bar baz pragma:\n# qux'
+	);
 	expect(formatComment('# foo bar baz region qux', options)).toBe(
 		'# foo bar baz region\n# qux'
 	);
@@ -50,6 +62,32 @@ test('keeps the word after a leading marker on its line', () => {
 	).toBe('# prettier-ignore disables\n# wrapping');
 	expect(formatComment('# bats foobarbazqux', { printWidth: 12 })).toBe(
 		'# bats foobarbazqux'
+	);
+});
+
+test('keeps lines from joining into a directive', () => {
+	const options = { printWidth: 20 };
+
+	expect(formatComment('# c8\n# ignore next', options)).toBe(
+		'# c8\n# ignore next'
+	);
+	expect(
+		formatComment('# pragma:\n# allowlist nextline secret', options)
+	).toBe('# pragma:\n# allowlist nextline secret');
+	expect(formatComment('# pragma:\n# allowlist\n# nextline secret')).toBe(
+		'# pragma: allowlist\n# nextline secret'
+	);
+	expect(
+		formatComment('# pragma:  allowlist\n# nextline secret', options)
+	).toBe('# pragma: allowlist\n# nextline secret');
+	expect(formatComment('# cspell:\n# disable-next-line', options)).toBe(
+		'# cspell:\n# disable-next-line'
+	);
+});
+
+test('keeps lines as written when collapsing their spaces would form a directive', () => {
+	expect(formatComment('# pragma:  allowlist nextline secret')).toBe(
+		'# pragma:  allowlist nextline secret'
 	);
 });
 
@@ -112,6 +150,26 @@ test('treats other tool directives like `shellcheck` directives', () => {
 	expect(formatComment('# -*- mode: sh -*-\n# foo')).toBe(
 		'# -*- mode: sh -*-\n#\n# foo'
 	);
+});
+
+test('keeps directives that cover the next line right above it', () => {
+	const input =
+		'# foo\n# nosemgrep: bar\n# cspell:disable-next-line\n# Bazqux';
+
+	expect(formatComment(input)).toBe(input);
+	expect(
+		formatComment('# foo\n# pragma: allowlist nextline secret\n#\n# bar')
+	).toBe('# foo\n# pragma: allowlist nextline secret\n#\n# bar');
+	expect(
+		formatComment(
+			'# cspell:disable-next-line\n# shellcheck source=./Foo.sh'
+		)
+	).toBe('# cspell:disable-next-line\n# shellcheck source=./Foo.sh');
+	expect(
+		formatComment('# nosemgrep: foo\n# bar baz qux quux\n# corge', {
+			printWidth: 12,
+		})
+	).toBe('# nosemgrep: foo\n# bar baz qux quux\n# corge');
 });
 
 test('treats lines that only resemble directives as text', () => {

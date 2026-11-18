@@ -52,10 +52,10 @@ export interface PluginOptions {
 	 * their own lines where possible, then reflows supported comments.
 	 * `full-line` reflows only the comments that occupy their own lines: `//`
 	 * comments, single-line doc comments, and multi-line block comments with a
-	 * `*` gutter. Both turn `//` directives into block comments where tools
-	 * read both. `none` leaves all comments as written. Reflowing uses the
-	 * print width as a target and removes redundant `/` characters and empty
-	 * comment lines.
+	 * `*` gutter. Both convert supported `//` directives to block comments
+	 * when their tools read them in that form. `none` leaves all comments as
+	 * written. Reflowing uses the print width as a target and removes
+	 * redundant `/` characters and empty comment lines.
 	 * @default 'all'
 	 */
 	tsCommentWrap?: 'all' | 'full-line' | 'none' | undefined;

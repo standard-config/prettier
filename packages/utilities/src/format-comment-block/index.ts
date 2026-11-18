@@ -4,7 +4,8 @@ import { util } from 'prettier';
 type BlockNode =
 	| { continuation: string; prefix: string; texts: string[]; type: 'item' }
 	| { isDirective: boolean; line: string; type: 'verbatim' }
-	| { texts: string[]; type: 'paragraph' }
+	| { line: string; type: 'kept' }
+	| { texts: string[]; type: 'paragraph'; words: string }
 	| { type: 'empty' };
 
 const EMPTY_NODE: BlockNode = { type: 'empty' };
@@ -125,7 +126,7 @@ function parseNodes(
 		}
 
 		if (syntax.isLineKept(texts, index)) {
-			nodes.push({ isDirective: false, line, type: 'verbatim' });
+			nodes.push({ line, type: 'kept' });
 			openNode = undefined;
 			continue;
 		}
@@ -164,12 +165,33 @@ function parseNodes(
 			continue;
 		}
 
-		if (openNode?.type === 'paragraph') {
-			openNode.texts.push(text);
+		const words = splitWords(text).join(' ');
+		const paragraphWords =
+			openNode?.type === 'paragraph'
+				? `${openNode.words} ${words}`
+				: words;
+
+		// Keep the line as written on its own when joining lines or collapsing
+		// spaces would turn the paragraph into a directive, as with `c8`
+		// followed by `ignore next`, or `pragma:  allowlist nextline secret`
+		if (syntax.isDirective(paragraphWords)) {
+			nodes.push({ line, type: 'kept' });
+			openNode = undefined;
 			continue;
 		}
 
-		openNode = { texts: [text], type: 'paragraph' };
+		if (openNode?.type === 'paragraph') {
+			openNode.texts.push(text);
+			openNode.words = paragraphWords;
+			continue;
+		}
+
+		if (syntax.isUnsafeParagraphStart(line)) {
+			nodes.push({ line, type: 'kept' });
+			continue;
+		}
+
+		openNode = { texts: [text], type: 'paragraph', words };
 		nodes.push(openNode);
 	}
 
@@ -177,8 +199,9 @@ function parseNodes(
 }
 
 /**
- * Surrounds directives with empty comment lines, then removes repeated empty
- * lines and those at either end of the block.
+ * Surrounds directives with empty comment lines, except next to lines the
+ * syntax keeps, then removes repeated empty lines and those at either end of
+ * the block.
  */
 function separateNodes(nodes: ReadonlyArray<BlockNode>): BlockNode[] {
 	const separatedNodes: BlockNode[] = [];
@@ -189,8 +212,9 @@ function separateNodes(nodes: ReadonlyArray<BlockNode>): BlockNode[] {
 		if (
 			previousNode &&
 			isDirective(node) !== isDirective(previousNode) &&
-			node.type !== 'empty' &&
-			previousNode.type !== 'empty'
+			![node.type, previousNode.type].some(
+				(type) => type === 'empty' || type === 'kept'
+			)
 		) {
 			separatedNodes.push(EMPTY_NODE);
 		}
@@ -245,6 +269,8 @@ function printNode(node: BlockNode, options: CommentBlockOptions): string[] {
 				`${marker} `,
 				options
 			);
+
+		case 'kept':
 
 		case 'verbatim':
 			return [node.line];

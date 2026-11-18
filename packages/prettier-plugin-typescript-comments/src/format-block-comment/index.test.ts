@@ -295,7 +295,9 @@ test('keeps TypeScript suppressions on the last line as written', () => {
 
 test.each([
 	'@jsxImportSource preact',
+	'eslint',
 	'eslint foo: 1',
+	'eslint foo:',
 	'eslint-disable',
 	'eslint-disable-next-line foo',
 	'eslint-enable',

@@ -6,10 +6,7 @@ import formatCommentBlock, {
 	fillCommentText,
 	findFencedLines,
 } from '@standard-config/utilities/format-comment-block';
-import {
-	BLOCK_DIRECTIVE_PATTERN,
-	RANGE_DIRECTIVE_PATTERN,
-} from '../constants/index.ts';
+import { BLOCK_DIRECTIVE_PATTERN } from '../constants/index.ts';
 
 type BlockCommentOptions = {
 	indentation: string;
@@ -22,10 +19,6 @@ type Section = {
 	tag?: string;
 };
 
-// ESLint reads configuration directives from block comments
-const BLOCK_ONLY_DIRECTIVE_PATTERN =
-	/^(?:eslint(?:-env)?|exported|globals?)(?=[ \t]|$)/;
-
 const DOC_SYNTAX: CommentSyntax = {
 	marker: '*',
 	isBlockKept: () => false,
@@ -35,6 +28,7 @@ const DOC_SYNTAX: CommentSyntax = {
 	// Markdown quote, heading, or rule
 	isUnsafeLineStart: (word) =>
 		/^(?:#{1,6}$|>|@|[-=]+$|\*{3,}$|_{3,}$)/.test(word),
+	isUnsafeParagraphStart: () => false,
 };
 
 // Wrapped tag text gets four extra spaces after the usual `* ` prefix,
@@ -62,6 +56,9 @@ const NAMED_TAGS = new Set([
 // these pragmas
 const PRAGMA_PATTERN =
 	/^@(?:flow|format|jest-environment|jsx(?:Frag|ImportSource|Runtime)?|noflow|noformat|noprettier|prettier|vitest-environment)\b/;
+
+// ESLint rule settings can span several lines in a block comment
+const RULE_SETTING_PATTERN = /^eslint(?=[ \t]|$)/;
 
 // A Markdown table’s body can contain rows without a `|` until an empty line
 // or another block structure ends it
@@ -110,8 +107,7 @@ export default function formatBlockComment(
 	// any of its lines
 	if (
 		BLOCK_DIRECTIVE_PATTERN.test(firstContent) ||
-		BLOCK_ONLY_DIRECTIVE_PATTERN.test(firstContent) ||
-		RANGE_DIRECTIVE_PATTERN.test(firstContent) ||
+		RULE_SETTING_PATTERN.test(firstContent) ||
 		contents.some((content) => PRAGMA_PATTERN.test(content.trimStart()))
 	) {
 		return undefined;

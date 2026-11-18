@@ -186,6 +186,26 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 );
 
 test.each(JAVASCRIPT_PARSER_NAMES)(
+	'turns ESLint and oxlint range and configuration directives into block comments with the `%s` parser',
+	async (parser) => {
+		const options = {
+			parser,
+			plugins: [pluginOxc, pluginTypeScriptComments],
+		};
+
+		const output = await format(
+			'// eslint-disable no-console\nconsole.log(foo); // eslint-enable\n// oxlint-disable\nbar(); // oxlint-enable\n// global baz\nbaz = 1; // eslint no-undef: off\n',
+			options
+		);
+
+		expect(output).toBe(
+			'/* eslint-disable no-console */\nconsole.log(foo); /* eslint-enable */\n/* oxlint-disable */\nbar(); /* oxlint-enable */\n/* global baz */\nbaz = 1; /* eslint no-undef: off */\n'
+		);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
 	'keeps trailing directives as `//` where Prettier would join their lines with the `%s` parser',
 	async (parser) => {
 		const options = {
@@ -336,7 +356,10 @@ test('keeps comments around other tools’ directives in place', async () => {
 	for (const input of [
 		'// deno-lint-ignore no-explicit-any\nconst foo: any = 1; // bar\n',
 		'foo(); // deno-lint-ignore no-explicit-any\nbar();\n',
+		'// foo\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n',
 		'// $FlowFixMe[prop-missing]\nfoo.bar(); // baz\n',
+		'// pragma: allowlist nextline secret\n// #region password=hunter2\nfoo();\n',
+		'// pragma: allowlist nextline secret\n// password=hunter2\nfoo();\n',
 		'// tslint:disable-next-line\nfoo(); // bar\n',
 	]) {
 		await expect(format(input, options)).resolves.toBe(input);
@@ -349,14 +372,6 @@ test('keeps comments around other tools’ directives in place', async () => {
 		)
 	).resolves.toBe(
 		'foo(); /* ggignore */\nbar(); /* jshint ignore:line */\nbaz(); /* tslint:disable-line */\n'
-	);
-	await expect(
-		format(
-			'// foo\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n',
-			options
-		)
-	).resolves.toBe(
-		'// foo\n//\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n'
 	);
 });
 

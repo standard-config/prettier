@@ -23,6 +23,7 @@ test('exposes valid types', () => {
 		isDirective: (text: string) => boolean;
 		isLineKept: (texts: ReadonlyArray<string>, index: number) => boolean;
 		isUnsafeLineStart: (word: string) => boolean;
+		isUnsafeParagraphStart: (line: string) => boolean;
 	}>();
 
 	expectTypeOf<EditorConfigProperties>().toBeObject();

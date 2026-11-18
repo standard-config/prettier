@@ -1,5 +1,8 @@
 import type { ParserOptions } from 'prettier';
-import { SUPPRESSION_PATTERN } from '@standard-config/utilities/constants';
+import {
+	NEXT_LINE_DIRECTIVE_PATTERN,
+	SUPPRESSION_PATTERN,
+} from '@standard-config/utilities/constants';
 import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
 import {
 	DIRECTIVE_PATTERN,
@@ -7,7 +10,9 @@ import {
 	MARK_PREFIX,
 	PRAGMA_PATTERN,
 } from '../constants/index.ts';
-import findComments from '../find-comments/index.ts';
+import findComments, {
+	isBelowNextLineDirective,
+} from '../find-comments/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
 
 type Move = {
@@ -34,7 +39,8 @@ export default async function moveTrailingComments(
 	reprint: (text: string) => Promise<string>
 ): Promise<string> {
 	const lines = text.split('\n');
-	const { fullLine, trailing } = await findComments(lines, options);
+	const found = await findComments(lines, options);
+	const { fullLine, trailing } = found;
 	const moves: Move[] = [];
 
 	// A backslash in a comment doesn’t continue a command
@@ -48,14 +54,16 @@ export default async function moveTrailingComments(
 		const comment = line.slice(column);
 		const commentText = comment.replace(/^#+[ \t]*/, '');
 
-		// A moved suppression marker could cover different code, and a moved
-		// `prettier-ignore` marker could keep a whole comment block from being
-		// reflowed. A directive or pragma could start applying to the whole
-		// file, and a `#!` comment could become a shebang
+		// A moved suppression marker or next-line directive could cover
+		// different code, and a moved `prettier-ignore` marker could keep a
+		// whole comment block from being reflowed. A directive or pragma could
+		// start applying to the whole file, and a `#!` comment could become a
+		// shebang
 		if (
 			comment.startsWith('#!') ||
 			DIRECTIVE_PATTERN.test(commentText) ||
 			IGNORE_MARKER_PATTERN.test(comment) ||
+			NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||
 			PRAGMA_PATTERN.test(commentText) ||
 			SUPPRESSION_PATTERN.test(comment)
 		) {
@@ -91,6 +99,12 @@ export default async function moveTrailingComments(
 				index,
 				target: index + 1,
 			});
+			continue;
+		}
+
+		// A comment moved below a directive that covers the next line would
+		// take that line’s place
+		if (isBelowNextLineDirective(lines, target, found)) {
 			continue;
 		}
 

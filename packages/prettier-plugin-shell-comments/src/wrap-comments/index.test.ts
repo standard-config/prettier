@@ -32,6 +32,38 @@ test('treats pragmas as directives only in the leading comments', async () => {
 	);
 });
 
+test('keeps an empty line after a directive that covers the next line', async () => {
+	const input = '# foo\n# nosemgrep: bar\n#\nbaz\n';
+
+	await expect(wrapComments(input, OPTIONS)).resolves.toBe(input);
+	await expect(wrapComments('# foo\n#\nbar\n', OPTIONS)).resolves.toBe(
+		'# foo\nbar\n'
+	);
+});
+
+test('keeps the line below a directive that covers it as written', async () => {
+	const input =
+		'foo # cspell:disable-next-line\n# bar baz qux quux\n# corge\n';
+	const inputWithEmptyLine =
+		'foo # cspell:disable-next-line\n#\n# bar baz\n# qux\n';
+
+	await expect(wrapComments(input, OPTIONS)).resolves.toBe(input);
+	await expect(wrapComments(inputWithEmptyLine, OPTIONS)).resolves.toBe(
+		'foo # cspell:disable-next-line\n#\n# bar baz qux\n'
+	);
+	await expect(
+		wrapComments('foo # cspell:disable-next-line\n#\nbar\n', OPTIONS)
+	).resolves.toBe('foo # cspell:disable-next-line\n#\nbar\n');
+	await expect(
+		wrapComments(
+			'foo # cspell:disable-next-line\n#\n# prettier-ignore\nbar\n',
+			OPTIONS
+		)
+	).resolves.toBe(
+		'foo # cspell:disable-next-line\n#\n# prettier-ignore\nbar\n'
+	);
+});
+
 test('separates comment blocks with different indentation', async () => {
 	const input = '  # foo\n# bar\n';
 

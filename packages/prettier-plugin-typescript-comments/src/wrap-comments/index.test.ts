@@ -66,6 +66,9 @@ test('turns directives into block comments', async () => {
 	await expect(
 		wrap('// foo\n//\n// @ts-expect-error\n//\n// bar\nbaz();\n')
 	).resolves.toBe('// foo\n/* @ts-expect-error */\n// bar\nbaz();\n');
+	await expect(
+		wrap('// @ts-expect-error foo,\n// bar\nbaz();\n', { printWidth: 80 })
+	).resolves.toBe('/* @ts-expect-error foo, */\n// bar\nbaz();\n');
 });
 
 test('turns the last comment before a `case` into a fall-through comment', async () => {
@@ -137,7 +140,7 @@ test('keeps directives after a TypeScript suppression as line comments', async (
 		'/*\n * @ts-expect-error */\n// prettier-ignore\nfoo();\n';
 
 	await expect(wrap(inputAfterEmptyLine, { printWidth: 80 })).resolves.toBe(
-		'/* @ts-ignore */\n\n// foo\n//\n// prettier-ignore\nbar();\n'
+		'/* @ts-ignore */\n\n// foo\n// prettier-ignore\nbar();\n'
 	);
 	await expect(
 		wrap(inputAfterBlockComment, { printWidth: 80 })
@@ -158,6 +161,29 @@ test('keeps directives after a TypeScript suppression as line comments', async (
 	).resolves.toBe('\n/* prettier-ignore */\nfoo();\n');
 });
 
+test('reflows configuration comments that stay line comments', async () => {
+	await expect(
+		wrap('// @ts-expect-error\n// foo\n// global bar\nbaz();\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe('/* @ts-expect-error */\n// foo global bar\nbaz();\n');
+	await expect(
+		wrap('// @ts-expect-error\n// global foo\n// bar\nbaz();\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe('/* @ts-expect-error */\n// global foo bar\nbaz();\n');
+	await expect(
+		wrap('/// foo\n/// global bar\nbaz();\n', { printWidth: 80 })
+	).resolves.toBe('// foo global bar\nbaz();\n');
+
+	const output = await wrap('/// global foo\n/// bar\nbaz();\n', {
+		printWidth: 80,
+	});
+
+	expect(output).toBe('/// global foo\n// bar\nbaz();\n');
+	await expect(wrap(output, { printWidth: 80 })).resolves.toBe(output);
+});
+
 test('moves directives that follow code onto lines of their own', async () => {
 	await expect(
 		wrap('const foo = [ // @ts-expect-error\n1,\n];\n', { printWidth: 80 })
@@ -166,10 +192,14 @@ test('moves directives that follow code onto lines of their own', async () => {
 
 test('keeps directives that Prettier would print within a line as line comments', async () => {
 	const input = 'const foo = {\n// eslint-disable-next-line\n};\n';
+	const inputWithRangeDirective = 'const foo = {\n// eslint-disable\n};\n';
 	const inputInTernary =
 		'foo = bar\n// eslint-disable-next-line\n? baz\n: qux;\n';
 
 	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(input);
+	await expect(
+		wrap(inputWithRangeDirective, { printWidth: 80 })
+	).resolves.toBe(inputWithRangeDirective);
 	await expect(
 		wrap(inputInTernary, { printWidth: 80, tsCommentWrap: 'full-line' })
 	).resolves.toBe(inputInTernary);
@@ -187,12 +217,188 @@ test('wraps comments in formatted code when Prettier rewrites their lines', asyn
 	).resolves.toBe('foo(a,\n  b); // c\n');
 });
 
-test('keeps directives that ESLint only reads from block comments as written', async () => {
+test('turns directives that ESLint only reads from block comments into block comments', async () => {
 	const input = '// eslint-disable no-console\n// foo\nbar();\n';
+	const inputWithConfiguration =
+		'// eslint-env node\n// global foo\n// bar\nbaz();\n';
 
 	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(
-		'// eslint-disable no-console\n//\n// foo\nbar();\n'
+		'/* eslint-disable no-console */\n// foo\nbar();\n'
 	);
+	await expect(
+		wrap(inputWithConfiguration, { printWidth: 80 })
+	).resolves.toBe(
+		'/* eslint-env node */\n/* global foo */\n// bar\nbaz();\n'
+	);
+	await expect(
+		wrap("// eslint 'no-console': off\nfoo();\n", { printWidth: 80 })
+	).resolves.toBe("/* eslint 'no-console': off */\nfoo();\n");
+	await expect(
+		wrap("// eslint quotes: ['error', '[{']\n// bar\nbaz();\n", {
+			printWidth: 80,
+		})
+	).resolves.toBe("/* eslint quotes: ['error', '[{'] */\n// bar\nbaz();\n");
+	await expect(
+		wrap(
+			'// eslint quotes: ["error", "[{", { avoidEscape: true }]\n// bar\nbaz();\n',
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		'/* eslint quotes: ["error", "[{", { avoidEscape: true }] */\n// bar\nbaz();\n'
+	);
+	await expect(
+		wrap(
+			'// eslint-disable no-console -- foo,\n// bar\nconsole.log(baz);\n',
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		'/* eslint-disable no-console -- foo, */\n// bar\nconsole.log(baz);\n'
+	);
+	await expect(
+		wrap(
+			'// eslint-disable no-console, -- foo\n// bar\nconsole.log(baz);\n',
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		'/* eslint-disable no-console, -- foo */\n// bar\nconsole.log(baz);\n'
+	);
+	await expect(
+		wrap(
+			"// eslint-disable no-console -- see [the logger's docs]\n// bar\nconsole.log(baz);\n",
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		"/* eslint-disable no-console -- see [the logger's docs] */\n// bar\nconsole.log(baz);\n"
+	);
+	await expect(
+		wrap('// eslint-disable no-console,\nconsole.log(foo);\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe('/* eslint-disable no-console, */\nconsole.log(foo);\n');
+});
+
+test('keeps directive lists that continue on the next line as written', async () => {
+	const inputWithContinuedSetting =
+		"// eslint 'no-console': off,\n//   'no-undef': off\nfoo();\n";
+	const inputWithOpenSetting =
+		'// eslint quotes: [\n//   "error",\n// ]\nfoo();\n';
+	const inputWithOpenObject =
+		'// eslint quotes: ["error", { avoidEscape: true\n// }]\nfoo();\n';
+	const inputWithClosedObject =
+		'// eslint quotes: ["error", { avoidEscape: true }\n// ]\nfoo();\n';
+	const inputWithColon = '// eslint semi: off, quotes:\n// off\nfoo();\n';
+	const inputWithContinuedGlobals =
+		'// global foo,\n// global bar,\n// baz\n// qux quux\n// corge\ngrault();\n';
+	const inputBelowTrailingSetting =
+		'foo(); // eslint no-console: off,\n// no-undef: off\n// bar\nbaz();\n';
+	const inputAfterParagraph = '// foo\n//\n// global bar,\n// baz\nqux();\n';
+	const inputBelowBlockComment =
+		'/* eslint-disable foo */\n//\n// global bar,\n// baz\nqux();\n';
+	const inputWithIndentedList =
+		'// eslint-disable\n//   no-console,\n//   no-undef\nfoo();\n';
+	const inputWithSpacedGlobals = '// global foo\n//   bar\nbaz();\n';
+	const inputBelowTrailingGlobals =
+		'foo(); // global bar\n//   baz\nqux();\n';
+	const inputBeforeCase =
+		'switch (foo) {\ncase 1:\n// bar\n// global baz,\n// falls through\ncase 2:\n}\n';
+
+	await expect(
+		wrap(inputWithContinuedSetting, { printWidth: 80 })
+	).resolves.toBe(inputWithContinuedSetting);
+	await expect(wrap(inputWithOpenSetting, { printWidth: 80 })).resolves.toBe(
+		inputWithOpenSetting
+	);
+	await expect(wrap(inputWithOpenObject, { printWidth: 80 })).resolves.toBe(
+		inputWithOpenObject
+	);
+	await expect(wrap(inputWithClosedObject, { printWidth: 80 })).resolves.toBe(
+		inputWithClosedObject
+	);
+	await expect(wrap(inputWithColon, { printWidth: 80 })).resolves.toBe(
+		inputWithColon
+	);
+	await expect(
+		wrap(inputWithContinuedGlobals, { printWidth: 80 })
+	).resolves.toBe(inputWithContinuedGlobals);
+	await expect(
+		wrap(inputBelowTrailingSetting, { printWidth: 80 })
+	).resolves.toBe(inputBelowTrailingSetting);
+	await expect(wrap(inputAfterParagraph, { printWidth: 80 })).resolves.toBe(
+		inputAfterParagraph
+	);
+	await expect(
+		wrap(inputBelowBlockComment, { printWidth: 80 })
+	).resolves.toBe(inputBelowBlockComment);
+	await expect(wrap(inputBeforeCase, { printWidth: 80 })).resolves.toBe(
+		inputBeforeCase
+	);
+	await expect(wrap(inputWithIndentedList, { printWidth: 80 })).resolves.toBe(
+		inputWithIndentedList
+	);
+	await expect(
+		wrap(inputWithSpacedGlobals, { printWidth: 80 })
+	).resolves.toBe(inputWithSpacedGlobals);
+	await expect(
+		wrap(inputBelowTrailingGlobals, { printWidth: 80 })
+	).resolves.toBe(inputBelowTrailingGlobals);
+	await expect(
+		wrap(
+			'// eslint-disable no-console\n// global foo,\n//   bar\nbaz();\n',
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		'/* eslint-disable no-console */\n// global foo,\n//   bar\nbaz();\n'
+	);
+	await expect(
+		wrap('// eslint-disable foo\n//\n// global bar,\n// baz\nqux();\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe(inputBelowBlockComment);
+	await expect(
+		wrap(
+			'// foo\n// ```\n// global bar,\n// baz\n// ```\n// qux\n// quux\ncorge();\n',
+			{ printWidth: 80 }
+		)
+	).resolves.toBe(
+		'// foo\n// ```\n// global bar,\n// baz\n// ```\n// qux quux\ncorge();\n'
+	);
+});
+
+test('formats the comments below single-line directives that end with a comma', async () => {
+	await expect(
+		wrap('foo(); // eslint-disable-line bar,\n// baz\n// qux\nquux();\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe(
+		'foo(); /* eslint-disable-line bar, */\n// baz qux\nquux();\n'
+	);
+});
+
+test('keeps unfinished rule settings as written', async () => {
+	const input = '// eslint\n// no-console: off\nfoo();\n';
+	const inputWithColon = '// eslint no-console:\n// off\nfoo();\n';
+
+	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(input);
+	await expect(wrap(inputWithColon, { printWidth: 80 })).resolves.toBe(
+		inputWithColon
+	);
+});
+
+test('reflows prose that starts with `eslint`', async () => {
+	await expect(
+		wrap('// eslint complains about this,\n// so foo\nbar();\n', {
+			printWidth: 80,
+		})
+	).resolves.toBe('// eslint complains about this, so foo\nbar();\n');
+	await expect(
+		wrap('// foo\n// eslint bar\nbaz();\n', { printWidth: 80 })
+	).resolves.toBe('// foo eslint bar\nbaz();\n');
+});
+
+test('keeps lines from joining into a directive', async () => {
+	const input = '// c8\n// ignore next\nfoo();\n';
+
+	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(input);
 });
 
 test('keeps directives in code fences as written', async () => {
@@ -226,6 +432,9 @@ test('keeps an empty line after a directive', async () => {
 			printWidth: 80,
 		})
 	).resolves.toBe('/* eslint-disable-next-line no-console */\n//\nfoo();\n');
+	await expect(
+		wrap('// v8  ignore next\n//\nfoo();\n', { printWidth: 80 })
+	).resolves.toBe('/* v8  ignore next */\n//\nfoo();\n');
 	await expect(wrap(inputAfterSuppression, { printWidth: 80 })).resolves.toBe(
 		'/* @ts-expect-error */\n// eslint-disable-next-line no-console\n//\nfoo();\n'
 	);
@@ -234,12 +443,37 @@ test('keeps an empty line after a directive', async () => {
 	);
 });
 
+test('keeps the line below a directive that covers it as written', async () => {
+	const input =
+		'// cspell:disable-next-line\n// foo bar baz qux\n// quux\ncorge();\n';
+	const inputBelowBlockComment =
+		'/* cspell:disable-next-line */\n// foo bar baz qux\n// quux\ncorge();\n';
+	const inputWithEmptyLine =
+		'// cspell:disable-next-line\n//\n// foo bar\n// baz\nqux();\n';
+	const inputBelowIgnoreMarker =
+		'/* prettier-ignore */\n// foo bar\n// baz\nqux();\n';
+
+	await expect(wrap(input)).resolves.toBe(
+		'/* cspell:disable-next-line */\n// foo bar baz qux\n// quux\ncorge();\n'
+	);
+	await expect(wrap(inputBelowBlockComment)).resolves.toBe(
+		inputBelowBlockComment
+	);
+	await expect(wrap(inputWithEmptyLine)).resolves.toBe(
+		'/* cspell:disable-next-line */\n//\n// foo bar baz\nqux();\n'
+	);
+	await expect(
+		wrap('// prettier-ignore\n// foo bar\n// baz\nqux();\n')
+	).resolves.toBe(inputBelowIgnoreMarker);
+	await expect(wrap(inputBelowIgnoreMarker)).resolves.toBe(
+		inputBelowIgnoreMarker
+	);
+});
+
 test('keeps directives that would end a block comment early', async () => {
 	await expect(
 		wrap('// foo\n// eslint-disable-next-line -- bar */\nbaz();\n')
-	).resolves.toBe(
-		'// foo\n//\n// eslint-disable-next-line -- bar */\nbaz();\n'
-	);
+	).resolves.toBe('// foo\n// eslint-disable-next-line -- bar */\nbaz();\n');
 });
 
 test('keeps groups with legal comments as written', async () => {
@@ -263,8 +497,8 @@ test('separates moved comments from the `//` comments above them', async () => {
 	await expect(wrap('if (foo) { // bar\nbaz(); // qux\n}\n')).resolves.toBe(
 		'if (foo) { // bar\n//\n// qux\nbaz();\n}\n'
 	);
-	await expect(wrap('// eslint-disable\n//\nfoo(); // bar\n')).resolves.toBe(
-		'// eslint-disable\n//\n// bar\nfoo();\n'
+	await expect(wrap('//#region\n//\nfoo(); // bar\n')).resolves.toBe(
+		'//#region\n//\n// bar\nfoo();\n'
 	);
 });
 

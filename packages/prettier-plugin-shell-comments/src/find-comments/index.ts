@@ -1,4 +1,5 @@
 import type { ParserOptions } from 'prettier';
+import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
 import { MARK_PREFIX } from '../constants/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
@@ -124,4 +125,26 @@ export default async function findComments(
 	}
 
 	return foundComments;
+}
+
+/**
+ * Returns whether the preceding line’s comment text starts with a directive
+ * that covers the given line.
+ */
+export function isBelowNextLineDirective(
+	lines: ReadonlyArray<string>,
+	index: number,
+	{ fullLine, trailing }: FoundComments
+): boolean {
+	const lineAbove = lines[index - 1] ?? '';
+	const column = fullLine.has(index - 1)
+		? lineAbove.indexOf('#')
+		: trailing.get(index - 1);
+
+	return (
+		column !== undefined &&
+		NEXT_LINE_DIRECTIVE_PATTERN.test(
+			lineAbove.slice(column).replace(/^#+[ \t]*/, '')
+		)
+	);
 }

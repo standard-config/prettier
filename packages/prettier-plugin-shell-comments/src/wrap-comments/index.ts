@@ -1,7 +1,10 @@
 import type { ParserOptions } from 'prettier';
+import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
 import createCommentSyntax from '../create-comment-syntax/index.ts';
-import findComments from '../find-comments/index.ts';
+import findComments, {
+	isBelowNextLineDirective,
+} from '../find-comments/index.ts';
 import isPropertyFile from '../is-property-file/index.ts';
 
 /**
@@ -12,7 +15,8 @@ export default async function wrapComments(
 	options: ParserOptions
 ): Promise<string> {
 	const lines = text.split('\n');
-	const { fullLine: commentLines } = await findComments(lines, options);
+	const found = await findComments(lines, options);
+	const { fullLine: commentLines } = found;
 
 	if (commentLines.size === 0) {
 		return text;
@@ -39,6 +43,7 @@ export default async function wrapComments(
 
 		const indentation = getIndentation(line);
 		const isLeading = index < leadingEnd;
+		const isBelowDirective = isBelowNextLineDirective(lines, index, found);
 		const block: string[] = [];
 
 		while (
@@ -49,13 +54,44 @@ export default async function wrapComments(
 			index += 1;
 		}
 
+		const syntax = createCommentSyntax(isLeading);
 		const formattedBlock = formatCommentBlock(block, {
 			indentation,
 			joinLines,
 			printWidth: options.printWidth,
-			syntax: createCommentSyntax(isLeading),
+			// Keep the block’s first line as written when a directive on the line
+			// above covers it
+			syntax: isBelowDirective
+				? {
+						...syntax,
+						isLineKept: (texts, lineIndex) =>
+							lineIndex === 0 ||
+							syntax.isLineKept(texts, lineIndex),
+					}
+				: syntax,
 			tabWidth: options.tabWidth,
 		});
+
+		// An empty `#` line that the directive covers keeps it from covering
+		// the comment below
+		if (
+			isBelowDirective &&
+			/^#+[ \t]*$/.test(block[0]!) &&
+			!/^#+[ \t]*$/.test(formattedBlock[0]!)
+		) {
+			formattedBlock.unshift('#');
+		}
+
+		// Keep an empty `#` line after a directive that covers the next line,
+		// so the directive doesn’t start covering the code below
+		if (
+			/^#+[ \t]*$/.test(block.at(-1)!) &&
+			NEXT_LINE_DIRECTIVE_PATTERN.test(
+				formattedBlock.at(-1)!.replace(/^#+[ \t]*/, '')
+			)
+		) {
+			formattedBlock.push('#');
+		}
 
 		outputLines.push(
 			...formattedBlock.map((commentLine) => indentation + commentLine)

@@ -1,5 +1,6 @@
+import type { CommentSyntax } from '@standard-config/utilities/types';
 import type { ParserOptions } from 'prettier';
-import type { FoundComment } from '../find-comments/index.ts';
+import type { FoundComment, FoundComments } from '../find-comments/index.ts';
 import type {
 	CommentEdit,
 	Conversion,
@@ -7,6 +8,7 @@ import type {
 	PluginOptions,
 	TextEdit,
 } from '../types/index.d.ts';
+import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock, {
 	findFencedLines,
 } from '@standard-config/utilities/format-comment-block';
@@ -19,10 +21,14 @@ import {
 import findComments, { formatCode } from '../find-comments/index.ts';
 import formatBlockComment from '../format-block-comment/index.ts';
 import mapCursor from '../map-cursor/index.ts';
-import moveTrailingComments from '../move-trailing-comments/index.ts';
+import moveTrailingComments, {
+	findDirectiveAbove,
+	getCommentText,
+	isContinuedList,
+} from '../move-trailing-comments/index.ts';
 
 type GroupContext = {
-	fallThroughOffsets: ReadonlySet<number>;
+	found: FoundComments;
 	/**
 	 * Offsets of comments that stay `//` comments.
 	 */
@@ -31,11 +37,19 @@ type GroupContext = {
 
 const EMPTY_LINE_PATTERN = /^\/+[ \t]*$/;
 
+// Keep the block’s first line as written when a directive on the line above
+// covers it
+const FIRST_LINE_KEPT_SYNTAX: CommentSyntax = {
+	...COMMENT_SYNTAX,
+	isLineKept: (texts, index) =>
+		index === 0 || COMMENT_SYNTAX.isLineKept(texts, index),
+};
+
 /**
  * Reflows comments on lines of their own, using the print width as a target.
  * When `tsCommentWrap` is `all`, also moves eligible trailing `//` comments
- * onto their own lines. Converts `//` directives to block comments when
- * tools accept either form.
+ * onto their own lines. Converts supported `//` directives to block comments
+ * when their tools read them in that form.
  */
 export default async function wrapComments(
 	originalText: string,
@@ -63,7 +77,7 @@ export default async function wrapComments(
 		found = await findComments(text, name, options);
 	}
 
-	const { comments, fallThroughOffsets } = found;
+	const { comments } = found;
 	const ownLineComments = comments.filter(({ isTrailing }) => !isTrailing);
 	const groups = groupComments(
 		text,
@@ -86,7 +100,7 @@ export default async function wrapComments(
 						keptStarts,
 					}),
 			options,
-			{ fallThroughOffsets, keptStarts }
+			{ found, keptStarts }
 		);
 	let edits = createAllEdits();
 
@@ -383,7 +397,7 @@ function formatGroup(
 	text: string,
 	group: ReadonlyArray<FoundComment>,
 	options: ParserOptions,
-	{ fallThroughOffsets, keptStarts }: GroupContext
+	{ found, keptStarts }: GroupContext
 ): { conversions: Conversion[]; text: string } {
 	const lines = group.map(({ end, start }) =>
 		text.slice(start, end).trimEnd()
@@ -405,6 +419,40 @@ function formatGroup(
 	const lineStart = text.lastIndexOf('\n', group[0]!.start - 1) + 1;
 	const isAfterCode = text.slice(lineStart, group[0]!.start).trim() !== '';
 
+	// Converting part of a directive’s list that continues on the next line
+	// would apply only part of the setting, and reflowing could merge its
+	// entries into the prose around them, so the list and the lines after it
+	// stay as written
+	let keptIndex = isBelowContinuedDirective(text, lineStart, lines[0]!, found)
+		? 0
+		: lines.findIndex(
+				(line, index) =>
+					index < lines.length - 1 &&
+					!fencedLines.has(index) &&
+					isContinuedDirective(line, lines[index + 1]!)
+			);
+
+	// The empty lines before the list stay with it
+	while (keptIndex > 0 && EMPTY_LINE_PATTERN.test(lines[keptIndex - 1]!)) {
+		keptIndex -= 1;
+	}
+
+	if (keptIndex === 0) {
+		return {
+			conversions,
+			text: text.slice(group[0]!.start, group.at(-1)!.end),
+		};
+	}
+
+	// A directive that covers the next line can sit above the group, or a
+	// conversion can leave it outside the block that follows
+	const directiveAbove = findDirectiveAbove(text, lineStart, found);
+	let isBelowDirective =
+		directiveAbove !== undefined &&
+		NEXT_LINE_DIRECTIVE_PATTERN.test(
+			getCommentText(text.slice(directiveAbove.start, directiveAbove.end))
+		);
+
 	const convert = (commentText: string, start: number) => {
 		// Prettier keeps a block comment on the line of the code it follows, so
 		// a converted directive after code starts a line of its own
@@ -418,16 +466,25 @@ function formatGroup(
 			start,
 		});
 		formattedLines.push(`/* ${commentText} */`);
+		isBelowDirective = NEXT_LINE_DIRECTIVE_PATTERN.test(commentText);
 	};
 
 	const flushBlock = () => {
 		if (block.some((line) => !EMPTY_LINE_PATTERN.test(line))) {
+			// An empty `//` line that the directive covers keeps it from
+			// covering the comment below
+			if (isBelowDirective && EMPTY_LINE_PATTERN.test(block[0]!)) {
+				formattedLines.push('//');
+			}
+
 			formattedLines.push(
 				...formatCommentBlock(block, {
 					indentation,
 					joinLines: true,
 					printWidth: options.printWidth,
-					syntax: COMMENT_SYNTAX,
+					syntax: isBelowDirective
+						? FIRST_LINE_KEPT_SYNTAX
+						: COMMENT_SYNTAX,
 					tabWidth: options.tabWidth,
 				})
 			);
@@ -449,6 +506,7 @@ function formatGroup(
 		}
 
 		block = [];
+		isBelowDirective = false;
 	};
 
 	// ESLint’s `no-fallthrough` rule only recognizes a fall-through comment when
@@ -456,7 +514,7 @@ function formatGroup(
 	// block that forms a clause’s whole body
 	const nextCodePattern = /\S/g;
 	nextCodePattern.lastIndex = group.at(-1)!.end;
-	const isAtFallThroughPosition = fallThroughOffsets.has(
+	const isAtFallThroughPosition = found.fallThroughOffsets.has(
 		nextCodePattern.exec(text)?.index ?? -1
 	);
 
@@ -464,7 +522,9 @@ function formatGroup(
 	// and the code it covers, so keep later comments in the group as `//`
 	let isAfterSuppression = isBelowSuppression(text, group[0]!.start);
 
-	for (const [index, line] of lines.entries()) {
+	for (const [index, line] of lines
+		.slice(0, keptIndex === -1 ? undefined : keptIndex)
+		.entries()) {
 		const commentText = line.replace(/^\/+[ \t]*/, '');
 		const isFallThrough =
 			isAtFallThroughPosition &&
@@ -491,12 +551,16 @@ function formatGroup(
 	}
 
 	flushBlock();
+	formattedLines.push(
+		...lines.slice(keptIndex === -1 ? lines.length : keptIndex)
+	);
 
 	// Joining lines can turn the last one into a fall-through comment
 	const lastLine = formattedLines.at(-1) ?? '';
 	const lastText = lastLine.replace(/^\/\/[ \t]*/, '');
 
 	if (
+		keptIndex === -1 &&
 		isAtFallThroughPosition &&
 		!isAfterSuppression &&
 		!fencedLines.has(lines.length - 1) &&
@@ -514,6 +578,37 @@ function formatGroup(
 		// Removing every line would leave a blank line in place of the comments
 		text: (formattedLines.length > 0 ? formattedLines : ['//']).join('\n'),
 	};
+}
+
+/**
+ * Returns whether a `//` comment holds a directive whose list continues on the
+ * `//` line after it.
+ */
+function isContinuedDirective(comment: string, nextLine: string): boolean {
+	return (
+		comment.startsWith('//') &&
+		isContinuedList(comment.replace(/^\/\/[ \t]*/, ''), nextLine)
+	);
+}
+
+/**
+ * Returns whether a `//` comment that ends on the previous line holds a
+ * directive whose list continues on a `//` line that starts at an offset.
+ */
+function isBelowContinuedDirective(
+	text: string,
+	lineStart: number,
+	line: string,
+	{ comments }: FoundComments
+): boolean {
+	const previousLineStart = text.lastIndexOf('\n', lineStart - 2) + 1;
+
+	return comments.some(
+		({ end, start }) =>
+			end >= previousLineStart &&
+			end < lineStart &&
+			isContinuedDirective(text.slice(start, end).trimEnd(), line)
+	);
 }
 
 /**

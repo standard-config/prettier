@@ -7,11 +7,12 @@ import formatCommentBlock, {
 
 const TEST_SYNTAX: CommentSyntax = {
 	isBlockKept: (line) => line.startsWith('#!') || /^#[ \t]*kept$/.test(line),
-	isDirective: (text) => /^(?:directive|marker$)/.test(text),
+	isDirective: (text) => /^(?:directive|marker$|split line\b)/.test(text),
 	isLineKept: (texts, index) =>
 		texts[index]!.startsWith('| ') ||
 		texts.slice(0, index).includes('| kept'),
 	isUnsafeLineStart: (word) => word === 'directive' || word === 'marker',
+	isUnsafeParagraphStart: (line) => /^##[ \t]*opener/.test(line),
 	marker: '#',
 };
 
@@ -231,6 +232,7 @@ test('keeps lines that the syntax keeps as written on lines of their own', () =>
 		'# foo\n# | bar   baz |\n# qux',
 		'# - foo\n# | bar |',
 		'# | kept\n# foo   bar',
+		'# directive foo\n# | bar |\n# directive baz',
 	]) {
 		expect(formatComment(input)).toBe(input);
 	}
@@ -240,10 +242,41 @@ test('keeps lines that the syntax keeps as written on lines of their own', () =>
 	);
 });
 
+test('keeps lines that the syntax can’t start a paragraph with as written', () => {
+	for (const input of [
+		'## opener   foo\n# bar',
+		'# foo\n#\n## opener   bar\n# baz',
+		'#   foo\n## opener   bar\n# baz',
+	]) {
+		expect(formatComment(input)).toBe(input);
+	}
+
+	expect(formatComment('# opener   foo\n# bar')).toBe('# opener foo bar');
+	expect(formatComment('# foo\n## opener   bar\n# baz')).toBe(
+		'# foo opener bar baz'
+	);
+	expect(formatComment('# - foo\n## opener   bar')).toBe(
+		'# - foo opener bar'
+	);
+});
+
 test('keeps directives as written', () => {
 	const input = '# directive foo   bar baz qux quux';
 
 	expect(formatComment(input, { printWidth: 20 })).toBe(input);
+});
+
+test('keeps lines from joining into a directive', () => {
+	expect(formatComment('# split\n# line   foo\n# bar   baz')).toBe(
+		'# split\n# line   foo\n# bar baz'
+	);
+	expect(formatComment('# split \n# line')).toBe('# split\n# line');
+	expect(formatComment('# not split\n# line')).toBe('# not split line');
+	expect(formatComment('# split\n# foo\n# line')).toBe('# split foo line');
+});
+
+test('keeps lines as written when collapsing their spaces would form a directive', () => {
+	expect(formatComment('# split   line')).toBe('# split   line');
 });
 
 test('separates directives from the rest of the block', () => {

@@ -65,6 +65,35 @@ test('formats shell comments', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
+test('keeps directives that cover the next line next to their code', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShellComments],
+	};
+
+	const input = '# foo\n# nosemgrep: bar\neval "$baz" # qux\n';
+
+	await expect(format(input, options)).resolves.toBe(input);
+});
+
+test('keeps wrapped comments from starting lines with directives that cover the next line', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShellComments],
+		printWidth: 40,
+	};
+
+	const output = await format(
+		'# foo bar baz qux quux corge grault pragma: allowlist nextline secret\nfoo=bar\n',
+		options
+	);
+
+	expect(output).toBe(
+		'# foo bar baz qux quux corge grault pragma:\n# allowlist nextline secret\nfoo=bar\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
 test('leaves code formatting to `prettier-plugin-sh`', async () => {
 	const input = 'if [ -n "$foo" ]\nthen\n    # bar\n    baz    qux\nfi\n';
 

@@ -188,6 +188,35 @@ test('turns directives and suppressions into block comments in place', async () 
 	).resolves.toBe(
 		'switch (foo) {\ncase 1:\nbar(); /* falls through */\ncase 2:\n}\n'
 	);
+	await expect(
+		move('foo(); // eslint-disable\nbar(); // oxlint-enable\n')
+	).resolves.toBe(
+		'foo(); /* eslint-disable */\nbar(); /* oxlint-enable */\n'
+	);
+	await expect(move('foo = bar; // global bar\n')).resolves.toBe(
+		'foo = bar; /* global bar */\n'
+	);
+	await expect(move("foo(); // eslint 'no-console': off\n")).resolves.toBe(
+		"foo(); /* eslint 'no-console': off */\n"
+	);
+	await expect(move('foo = bar; // global bar,\n')).resolves.toBe(
+		'foo = bar; /* global bar, */\n'
+	);
+	await expect(move('// foo\nbar = baz; // global baz,')).resolves.toBe(
+		'// foo\nbar = baz; /* global baz, */'
+	);
+	await expect(move('foo(); // eslint no-console:\n')).resolves.toBe(
+		'foo(); // eslint no-console:\n'
+	);
+	await expect(move('foo(); // @ts-ignore foo,\n// bar\n')).resolves.toBe(
+		'foo(); /* @ts-ignore foo, */\n// bar\n'
+	);
+	await expect(
+		move('foo(); // eslint quotes: [\n// "error",\n')
+	).resolves.toBe('foo(); // eslint quotes: [\n// "error",\n');
+	await expect(move('foo = bar; // global bar,\n// baz\n')).resolves.toBe(
+		'foo = bar; // global bar,\n// baz\n'
+	);
 	await expect(move('foo(); // eslint-disable-line -- */\n')).resolves.toBe(
 		'foo(); // eslint-disable-line -- */\n'
 	);
@@ -222,7 +251,6 @@ test('moves comments above clauses that follow other comments', async () => {
 
 test('keeps comments that would change meaning in place', async () => {
 	const inputWithDirective = 'foo(); //#region\n';
-	const inputWithRangeDirective = 'foo(); // eslint-disable\n';
 	const inputWithLegalComment = 'foo(); //! bar\n';
 	const inputInTemplate = 'const foo = `bar\nbaz`; // qux\n';
 	const inputAfterTemplate = 'const foo = `bar\n`; // baz\n';
@@ -250,9 +278,6 @@ test('keeps comments that would change meaning in place', async () => {
 		'const foo = `bar\nbaz`; // eslint-disable-line\n';
 
 	await expect(move(inputWithDirective)).resolves.toBe(inputWithDirective);
-	await expect(move(inputWithRangeDirective)).resolves.toBe(
-		inputWithRangeDirective
-	);
 	await expect(move(inputWithLegalComment)).resolves.toBe(
 		inputWithLegalComment
 	);

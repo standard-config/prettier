@@ -110,9 +110,44 @@ test('moves the other comments when one has to stay', async () => {
 test('keeps directives, pragmas, and `prettier-ignore` markers at the end of their lines', async () => {
 	const input =
 		'foo # shellcheck disable=SC2086\nbar # @format\nbaz # prettier-ignore\n';
+	const inputWithNextLineDirective = 'foo # cspell:disable-next-line\nbar\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		input
+	);
+	await expect(
+		moveTrailingComments(inputWithNextLineDirective, OPTIONS, reprint)
+	).resolves.toBe(inputWithNextLineDirective);
+});
+
+test('keeps comments below directives that cover the next line in place', async () => {
+	const input = '# nosemgrep: foo\neval "$bar" # baz\n';
+	const inputBelowTrailingDirective =
+		'foo=bar # pragma: allowlist nextline secret\nbaz=qux # quux\n';
+	const inputOnContinuedCommand =
+		'# cspell:disable-next-line\nfoo \\\n  bar # baz\n';
+	const inputBelowIgnoreMarker = '# prettier-ignore\nfoo # bar\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		input
+	);
+	await expect(
+		moveTrailingComments(inputBelowTrailingDirective, OPTIONS, reprint)
+	).resolves.toBe(inputBelowTrailingDirective);
+	await expect(
+		moveTrailingComments(inputOnContinuedCommand, OPTIONS, reprint)
+	).resolves.toBe(inputOnContinuedCommand);
+	await expect(
+		moveTrailingComments(inputBelowIgnoreMarker, OPTIONS, reprint)
+	).resolves.toBe(inputBelowIgnoreMarker);
+});
+
+test('moves comments on branch lines below directives that cover the next line', async () => {
+	const input =
+		'if foo; then\n  bar\n# cspell:disable-next-line\nelif baz; then # qux\n  quux\nfi\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		'if foo; then\n  bar\n# cspell:disable-next-line\nelif baz; then\n  # qux\n  quux\nfi\n'
 	);
 });
 

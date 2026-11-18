@@ -1,17 +1,22 @@
 import type { ParserOptions } from 'prettier';
 import type { FoundComment, FoundComments } from '../find-comments/index.ts';
 import type { CommentEdit, TextRange } from '../types/index.d.ts';
-import { SUPPRESSION_PATTERN } from '@standard-config/utilities/constants';
+import {
+	NEXT_LINE_DIRECTIVE_PATTERN,
+	SUPPRESSION_PATTERN,
+} from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
 import {
 	BLOCK_DIRECTIVE_PATTERN,
 	COMMENT_SYNTAX,
+	CONTINUED_DIRECTIVE_PATTERN,
 	FALL_THROUGH_PATTERN,
+	INDENTED_LINE_PATTERN,
 	LINE_DIRECTIVE_PATTERN,
-	NEXT_LINE_DIRECTIVE_PATTERN,
-	RANGE_DIRECTIVE_PATTERN,
+	LIST_DIRECTIVE_PATTERN,
 	TYPESCRIPT_DIRECTIVE_PATTERN,
 	TYPESCRIPT_SUPPRESSION_PATTERN,
+	UNFINISHED_SETTING_PATTERN,
 } from '../constants/index.ts';
 
 type MoveContext = {
@@ -77,9 +82,21 @@ export default function moveTrailingComments(
 			isFallThrough ||
 			SUPPRESSION_PATTERN.test(directive)
 		) {
+			// A list continues only if a `//` comment follows on the next line.
+			// Converting only this line would apply part of the setting
+			const nextCommentPattern = /[ \t]*\n[ \t]*(\/\/.*)/y;
+			nextCommentPattern.lastIndex = comment.end;
+			const [, nextLine] = nextCommentPattern.exec(text) ?? [];
+			const continuesBelow =
+				nextLine !== undefined && isContinuedList(directive, nextLine);
+
 			// Only directives after exactly two slashes are eligible for
 			// conversion
-			if (/^\/\/(?!\/)/.test(commentText) && !directive.includes('*/')) {
+			if (
+				/^\/\/(?!\/)/.test(commentText) &&
+				!continuesBelow &&
+				!directive.includes('*/')
+			) {
 				edits.push({
 					conversions: [
 						{ isTrailing: true, line: 0, start: comment.start },
@@ -93,12 +110,15 @@ export default function moveTrailingComments(
 			continue;
 		}
 
+		// Empty comments and directives that only work in `//` comments or cover
+		// the next line stay in place, as do unfinished rule settings, which could
+		// continue below
 		if (
 			directive === '' ||
 			LINE_DIRECTIVE_PATTERN.test(directive) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(directive) ||
-			RANGE_DIRECTIVE_PATTERN.test(directive) ||
-			TYPESCRIPT_DIRECTIVE_PATTERN.test(directive)
+			TYPESCRIPT_DIRECTIVE_PATTERN.test(directive) ||
+			UNFINISHED_SETTING_PATTERN.test(directive)
 		) {
 			continue;
 		}
@@ -264,6 +284,56 @@ function findRange(
 }
 
 /**
+ * Returns whether a directive without a `--` description continues its list
+ * on the next `//` line by ending with a comma or colon, leaving a bracket
+ * unclosed, or being followed by text indented past one space after the
+ * slashes.
+ */
+export function isContinuedList(text: string, nextLine: string): boolean {
+	return (
+		BLOCK_DIRECTIVE_PATTERN.test(text) &&
+		LIST_DIRECTIVE_PATTERN.test(text) &&
+		// ESLint ends the list where a `--` description starts
+		!/\s-{2,}\s/.test(text) &&
+		(CONTINUED_DIRECTIVE_PATTERN.test(text) ||
+			hasOpenBracket(text) ||
+			INDENTED_LINE_PATTERN.test(nextLine))
+	);
+}
+
+/**
+ * Returns whether text opens more brackets than it closes, outside quotes.
+ */
+function hasOpenBracket(text: string): boolean {
+	let depth = 0;
+	let quote: string | undefined;
+
+	for (const character of text) {
+		if (quote) {
+			quote = character === quote ? undefined : quote;
+		} else if (character === '"' || character === "'") {
+			quote = character;
+		} else if (character === '[' || character === '{') {
+			depth += 1;
+		} else if (character === ']' || character === '}') {
+			depth -= 1;
+		}
+	}
+
+	return depth > 0;
+}
+
+/**
+ * Returns a comment’s text without its markers.
+ */
+export function getCommentText(comment: string): string {
+	return comment
+		.trim()
+		.replace(/^\/\*+\s*|^\/+[ \t]*/, '')
+		.replace(/\s*\*\/$/, '');
+}
+
+/**
  * Returns the ranges of all comments, including block comments that share
  * lines with code.
  */
@@ -290,7 +360,7 @@ function getPreviousLineStart(text: string, lineStart: number): number {
  * Returns a comment ending on the previous line that holds a directive covering
  * the line below it, which a moved comment could separate from its code.
  */
-function findDirectiveAbove(
+export function findDirectiveAbove(
 	text: string,
 	lineStart: number,
 	found: FoundComments
@@ -352,10 +422,7 @@ function isAfterFallThrough(
  * Returns whether a comment holds a directive that covers the line below it.
  */
 function isNextLineDirective(comment: string): boolean {
-	const commentText = comment
-		.trim()
-		.replace(/^\/\*+\s*|^\/+[ \t]*/, '')
-		.replace(/\s*\*\/$/, '');
+	const commentText = getCommentText(comment);
 
 	return (
 		FALL_THROUGH_PATTERN.test(commentText) ||

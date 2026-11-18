@@ -43,6 +43,12 @@ export type CommentSyntax = {
 	 * formatter checks list markers and code fence markers separately.
 	 */
 	isUnsafeLineStart: (word: string) => boolean;
+	/**
+	 * Returns whether a line would change meaning at the start of a reflowed
+	 * paragraph, so it stays as written there. It can still join the paragraph
+	 * above.
+	 */
+	isUnsafeParagraphStart: (line: string) => boolean;
 };
 
 export type EditorConfigProperties = Record<string, boolean | number | string>;
