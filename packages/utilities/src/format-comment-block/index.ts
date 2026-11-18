@@ -1,27 +1,5 @@
+import type { CommentBlockOptions } from '../types/index.d.ts';
 import { util } from 'prettier';
-import {
-	DIRECTIVE_PATTERN,
-	IGNORE_MARKER_PATTERN,
-	PRAGMA_PATTERN,
-} from '../constants/index.ts';
-
-export type CommentBlockOptions = {
-	/**
-	 * Spaces and tabs before each comment line.
-	 */
-	indentation: string;
-	/**
-	 * Whether the block is part of the comments that start the file, where
-	 * Prettier reads pragmas.
-	 */
-	isLeading: boolean;
-	/**
-	 * Whether to join consecutive lines into paragraphs and list items.
-	 */
-	joinLines: boolean;
-	printWidth: number;
-	tabWidth: number;
-};
 
 type BlockNode =
 	| { continuation: string; prefix: string; texts: string[]; type: 'item' }
@@ -31,8 +9,6 @@ type BlockNode =
 
 const EMPTY_NODE: BlockNode = { type: 'empty' };
 const LIST_MARKER_PATTERN = /^([*+-]|\d+[).])(?:[ \t]+|$)/;
-const UNSAFE_LINE_START_PATTERN =
-	/^(?:#|-\*-|dotenv-linter:|shellcheck|SPDX-|vi:|vim:|(?:[*+-]|\d+[).]|bats|endregion|prettier-ignore|region)$)/;
 
 /**
  * Formats the lines of one comment block, given without their indentation.
@@ -41,13 +17,7 @@ export default function formatCommentBlock(
 	lines: ReadonlyArray<string>,
 	options: CommentBlockOptions
 ): string[] {
-	// Keep blocks with a `#!` line as written in case they hold license text,
-	// as with JavaScript’s `/*! */` comments
-	if (
-		lines.some(
-			(line) => line.startsWith('#!') || IGNORE_MARKER_PATTERN.test(line)
-		)
-	) {
+	if (lines.some((line) => options.syntax.isBlockKept(line))) {
 		return [...lines];
 	}
 
@@ -61,8 +31,10 @@ export default function formatCommentBlock(
  */
 function parseNodes(
 	lines: ReadonlyArray<string>,
-	{ isLeading, joinLines }: CommentBlockOptions
+	{ joinLines, syntax }: CommentBlockOptions
 ): BlockNode[] {
+	const { marker } = syntax;
+	const markerPattern = getMarkerPattern(marker);
 	const nodes: BlockNode[] = [];
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
 
@@ -72,7 +44,7 @@ function parseNodes(
 			openNode = undefined;
 		}
 
-		const rest = line.replace(/^#+/, '');
+		const rest = line.replace(markerPattern, '');
 		const [indentation] = /^[ \t]*/.exec(rest)!;
 		const text = rest.slice(indentation.length);
 
@@ -82,14 +54,14 @@ function parseNodes(
 			continue;
 		}
 
-		const marker = LIST_MARKER_PATTERN.exec(text);
+		const listMarker = LIST_MARKER_PATTERN.exec(text);
 
-		if (marker) {
+		if (listMarker) {
 			const itemIndentation = indentation || ' ';
 			openNode = {
-				continuation: `#${itemIndentation}${' '.repeat(marker[1]!.length + 1)}`,
-				prefix: `#${itemIndentation}${marker[1]!} `,
-				texts: [text.slice(marker[0].length)],
+				continuation: `${marker}${itemIndentation}${' '.repeat(listMarker[1]!.length + 1)}`,
+				prefix: `${marker}${itemIndentation}${listMarker[1]!} `,
+				texts: [text.slice(listMarker[0].length)],
 				type: 'item',
 			};
 			nodes.push(openNode);
@@ -98,10 +70,7 @@ function parseNodes(
 
 		const isIndented = indentation.length > 1 || indentation === '\t';
 
-		if (
-			DIRECTIVE_PATTERN.test(text) ||
-			(isLeading && PRAGMA_PATTERN.test(text))
-		) {
+		if (syntax.isDirective(text)) {
 			nodes.push({ isDirective: true, line, type: 'verbatim' });
 			openNode = undefined;
 			continue;
@@ -163,13 +132,13 @@ function separateNodes(nodes: ReadonlyArray<BlockNode>): BlockNode[] {
 		separatedNodes.pop();
 	}
 
-	// Removing every line would leave a stray blank line that the shell
-	// printer collapses on the next run
+	// Removing every line can leave a stray blank line that a later formatting
+	// pass collapses
 	return separatedNodes.length > 0 ? separatedNodes : [EMPTY_NODE];
 }
 
 /**
- * Checks whether a node is a ShellCheck directive or a Prettier pragma.
+ * Checks whether a node is a directive.
  */
 function isDirective(node: BlockNode): boolean {
 	return node.type === 'verbatim' && node.isDirective;
@@ -179,9 +148,11 @@ function isDirective(node: BlockNode): boolean {
  * Prints a node as comment lines.
  */
 function printNode(node: BlockNode, options: CommentBlockOptions): string[] {
+	const { marker } = options.syntax;
+
 	switch (node.type) {
 		case 'empty':
-			return ['#'];
+			return [marker];
 
 		case 'item':
 			return fillWords(
@@ -194,8 +165,8 @@ function printNode(node: BlockNode, options: CommentBlockOptions): string[] {
 		case 'paragraph':
 			return fillWords(
 				splitWords(node.texts.join(' ')),
-				'# ',
-				'# ',
+				`${marker} `,
+				`${marker} `,
 				options
 			);
 
@@ -250,8 +221,9 @@ function fillWords(
 	words: ReadonlyArray<string>,
 	prefix: string,
 	continuation: string,
-	{ indentation, isLeading, printWidth, tabWidth }: CommentBlockOptions
+	{ indentation, printWidth, syntax, tabWidth }: CommentBlockOptions
 ): string[] {
+	const markerPattern = getMarkerPattern(syntax.marker);
 	const fits = (line: string) =>
 		getLineWidth(indentation + line, tabWidth) <= printWidth;
 
@@ -266,14 +238,16 @@ function fillWords(
 		const extendedLine = `${line} ${word}`;
 
 		// Some words would read as markup at the start of a line, and a line
-		// holding only a marker such as `prettier-ignore` or `bats` would also be
-		// parsed as markup
+		// holding only a marker such as `prettier-ignore` would also be parsed
+		// as markup
 		if (
 			fits(extendedLine) ||
-			IGNORE_MARKER_PATTERN.test(line) ||
-			DIRECTIVE_PATTERN.test(line.replace(/^#[ \t]*/, '')) ||
-			UNSAFE_LINE_START_PATTERN.test(word) ||
-			(isLeading && PRAGMA_PATTERN.test(word))
+			syntax.isBlockKept(line) ||
+			syntax.isDirective(
+				line.replace(markerPattern, '').replace(/^[ \t]*/, '')
+			) ||
+			LIST_MARKER_PATTERN.test(word) ||
+			syntax.isUnsafeLineStart(word)
 		) {
 			line = extendedLine;
 		} else {
@@ -284,6 +258,16 @@ function fillWords(
 
 	lines.push(line);
 	return lines;
+}
+
+/**
+ * Returns a pattern for the marker that starts a comment line. Repeating its
+ * last character, as in `##` or `///`, still reads as one marker.
+ */
+function getMarkerPattern(marker: string): RegExp {
+	return new RegExp(
+		`^${RegExp.escape(marker)}${RegExp.escape(marker.at(-1)!)}*`
+	);
 }
 
 /**

@@ -1,5 +1,6 @@
 import type { ParserOptions } from 'prettier';
-import createMarkPrefix from '../create-mark-prefix/index.ts';
+import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
+import { MARK_PREFIX } from '../constants/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
 
 export type FoundComments = {
@@ -71,7 +72,7 @@ export default async function findComments(
 	// The shell parser doesn’t expose nested comments, so mark each candidate
 	// `#` and print without comments. Marks inside heredocs and strings survive.
 	// Marking right after `#` keeps line endings intact
-	const markPrefix = createMarkPrefix(lines);
+	const markPrefix = createMarkPrefix(lines.join('\n'), MARK_PREFIX);
 	const markedLines = [...lines];
 
 	// Marking from the end keeps the columns of earlier candidates valid

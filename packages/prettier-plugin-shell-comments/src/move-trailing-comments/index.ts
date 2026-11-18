@@ -1,10 +1,11 @@
 import type { ParserOptions } from 'prettier';
+import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
 import {
 	DIRECTIVE_PATTERN,
 	IGNORE_MARKER_PATTERN,
+	MARK_PREFIX,
 	PRAGMA_PATTERN,
 } from '../constants/index.ts';
-import createMarkPrefix from '../create-mark-prefix/index.ts';
 import findComments from '../find-comments/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
 
@@ -119,7 +120,7 @@ export default async function moveTrailingComments(
 	// A moved comment can land inside a string or heredoc and become part of
 	// the code. Marked comments that survive printing without comments did,
 	// so those stay where they are
-	const markPrefix = createMarkPrefix(lines);
+	const markPrefix = createMarkPrefix(lines.join('\n'), MARK_PREFIX);
 	const markedCode = await printWithoutComments(
 		buildText(
 			lines,

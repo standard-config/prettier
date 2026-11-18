@@ -1,6 +1,7 @@
 import type { ParserOptions } from 'prettier';
+import formatCommentBlock from '@standard-config/utilities/format-comment-block';
+import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments from '../find-comments/index.ts';
-import formatCommentBlock from '../format-comment-block/index.ts';
 import isPropertyFile from '../is-property-file/index.ts';
 
 /**
@@ -50,9 +51,9 @@ export default async function wrapComments(
 
 		const formattedBlock = formatCommentBlock(block, {
 			indentation,
-			isLeading,
 			joinLines,
 			printWidth: options.printWidth,
+			syntax: createCommentSyntax(isLeading),
 			tabWidth: options.tabWidth,
 		});
 
