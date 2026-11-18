@@ -1,6 +1,6 @@
 import type { CommentSyntax } from '../types/index.d.ts';
 import { expect, test } from 'vite-plus/test';
-import formatCommentBlock from './index.ts';
+import formatCommentBlock, { findFencedLines } from './index.ts';
 
 const TEST_SYNTAX: CommentSyntax = {
 	isBlockKept: (line) => line.startsWith('#!') || /^#[ \t]*kept$/.test(line),
@@ -241,6 +241,61 @@ test('keeps blocks as written when the syntax requires it', () => {
 	expect(formatComment(input)).toBe(input);
 });
 
+test('keeps code fences as written', () => {
+	const input =
+		'# foo:\n#\n# ```sh\n# bar  baz\n#\n#\n# qux\n# ```\n# quux\n# corge';
+
+	expect(formatComment(input)).toBe(
+		'# foo:\n#\n# ```sh\n# bar  baz\n#\n#\n# qux\n# ```\n# quux corge'
+	);
+});
+
+test('ends code fences at a closing marker at least as long', () => {
+	expect(formatComment('# ~~~~\n# ~~~\n# foo\n# ~~~~~\n# bar\n# baz')).toBe(
+		'# ~~~~\n# ~~~\n# foo\n# ~~~~~\n# bar baz'
+	);
+});
+
+test('ends code fences only at the marker character that opened them', () => {
+	expect(formatComment('# ~~~\n# ```\n# foo\n# ~~~\n# bar\n# baz')).toBe(
+		'# ~~~\n# ```\n# foo\n# ~~~\n# bar baz'
+	);
+});
+
+test('keeps code fences open past lines with text after a marker', () => {
+	const input = '# ```\n# ``` foo\n# bar\n# baz';
+
+	expect(formatComment(input)).toBe(input);
+});
+
+test('keeps code fences that open list items as written', () => {
+	expect(
+		formatComment('# - ```sh\n#   foo  bar\n#   ```\n# baz\n# qux')
+	).toBe('# - ```sh\n#   foo  bar\n#   ```\n# baz qux');
+	expect(
+		formatComment('# - - ```sh\n#     foo  bar\n#     ```\n# baz\n# qux')
+	).toBe('# - - ```sh\n#     foo  bar\n#     ```\n# baz qux');
+});
+
+test('ends code fences only at a closing marker without a list marker', () => {
+	expect(
+		formatComment('# ```md\n# - ```\n# foo  bar\n# ```\n# baz\n# qux')
+	).toBe('# ```md\n# - ```\n# foo  bar\n# ```\n# baz qux');
+});
+
+test('treats lines that start with inline code as text', () => {
+	expect(formatComment('# ```foo``` bar\n# baz')).toBe('# ```foo``` bar baz');
+});
+
+test('keeps words that would open a code fence with the word before them', () => {
+	expect(formatComment('# foo bar baz ```qux', { printWidth: 13 })).toBe(
+		'# foo bar baz ```qux'
+	);
+	expect(formatComment('# foo bar baz ~~~qux', { printWidth: 13 })).toBe(
+		'# foo bar baz ~~~qux'
+	);
+});
+
 test('keeps lines apart when joining is off', () => {
 	const options = { joinLines: false, printWidth: 14 };
 
@@ -253,4 +308,10 @@ test('keeps lines apart when joining is off', () => {
 		'# foo\n# bar baz qux\n# quux\n# - corge\n#   grault\n#   garply'
 	);
 	expect(formatComment(output, options)).toBe(output);
+});
+
+test('finds the lines of code fences', () => {
+	expect(
+		findFencedLines(['# foo', '# ```', '# bar', '# ```', '# baz'], '#')
+	).toStrictEqual(new Set([1, 2, 3]));
 });

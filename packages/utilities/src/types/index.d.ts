@@ -33,7 +33,7 @@ export type CommentSyntax = {
 	isDirective: (text: string) => boolean;
 	/**
 	 * Returns whether a word would read as markup at the start of a line. The
-	 * formatter checks list markers separately.
+	 * formatter checks list markers and code fence markers separately.
 	 */
 	isUnsafeLineStart: (word: string) => boolean;
 };

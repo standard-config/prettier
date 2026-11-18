@@ -177,6 +177,20 @@ test('keeps directives that ESLint only reads from block comments as written', a
 	);
 });
 
+test('keeps directives in code fences as written', async () => {
+	const input =
+		'switch (foo) {\ncase 1:\n// ```js\n// eslint-disable-next-line\n// bar  baz\n// falls through\n// ```\ncase 2:\n}\n';
+
+	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(input);
+
+	const inputInUnclosedFence =
+		'switch (foo) {\ncase 1:\n// ```\n// bar  baz\n// falls through\ncase 2:\n}\n';
+
+	await expect(wrap(inputInUnclosedFence, { printWidth: 80 })).resolves.toBe(
+		inputInUnclosedFence
+	);
+});
+
 test('keeps directives after more than two slashes as written', async () => {
 	const input = '//// @ts-expect-error\nfoo();\n';
 

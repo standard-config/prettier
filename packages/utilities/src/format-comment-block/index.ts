@@ -8,7 +8,10 @@ type BlockNode =
 	| { type: 'empty' };
 
 const EMPTY_NODE: BlockNode = { type: 'empty' };
+// An opening backtick fence can’t hold a backtick after its marker
+const FENCE_PATTERN = /^(?:`{3,}(?!.*`)|~{3,})/;
 const LIST_MARKER_PATTERN = /^([*+-]|\d+[).])(?:[ \t]+|$)/;
+const LIST_MARKERS_PATTERN = /^(?:(?:[*+-]|\d+[).])[ \t]+)+/;
 
 /**
  * Formats the lines of one comment block, given without their indentation.
@@ -27,7 +30,48 @@ export default function formatCommentBlock(
 }
 
 /**
- * Reads comment lines into paragraphs, list items, and lines kept as written.
+ * Returns the indexes of the lines that belong to code fences, including the
+ * lines that open and close them.
+ */
+export function findFencedLines(
+	lines: ReadonlyArray<string>,
+	marker: string
+): Set<number> {
+	const markerPattern = getMarkerPattern(marker);
+	const fencedLines = new Set<number>();
+	let closingFencePattern: RegExp | undefined;
+
+	for (const [index, line] of lines.entries()) {
+		const text = line.replace(markerPattern, '').replace(/^[ \t]*/, '');
+
+		if (closingFencePattern) {
+			fencedLines.add(index);
+
+			if (closingFencePattern.test(text)) {
+				closingFencePattern = undefined;
+			}
+
+			continue;
+		}
+
+		// A fence can open a list item, even a nested one
+		const [fence] =
+			FENCE_PATTERN.exec(text.replace(LIST_MARKERS_PATTERN, '')) ?? [];
+
+		if (fence) {
+			fencedLines.add(index);
+			closingFencePattern = new RegExp(
+				`^${fence[0]!}{${fence.length},}[ \\t]*$`
+			);
+		}
+	}
+
+	return fencedLines;
+}
+
+/**
+ * Reads comment lines into paragraphs, list items, and lines kept as written,
+ * such as those in code fences.
  */
 function parseNodes(
 	lines: ReadonlyArray<string>,
@@ -36,9 +80,10 @@ function parseNodes(
 	const { marker } = syntax;
 	const markerPattern = getMarkerPattern(marker);
 	const nodes: BlockNode[] = [];
+	const fencedLines = findFencedLines(lines, marker);
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
 
-	for (const line of lines) {
+	for (const [index, line] of lines.entries()) {
 		// Data files can hold commented-out entries, one per line
 		if (!joinLines) {
 			openNode = undefined;
@@ -47,6 +92,13 @@ function parseNodes(
 		const rest = line.replace(markerPattern, '');
 		const [indentation] = /^[ \t]*/.exec(rest)!;
 		const text = rest.slice(indentation.length);
+
+		// Code fences keep their content as written, including empty lines
+		if (fencedLines.has(index)) {
+			nodes.push({ isDirective: false, line, type: 'verbatim' });
+			openNode = undefined;
+			continue;
+		}
 
 		if (text === '') {
 			nodes.push(EMPTY_NODE);
@@ -246,6 +298,7 @@ function fillWords(
 			syntax.isDirective(
 				line.replace(markerPattern, '').replace(/^[ \t]*/, '')
 			) ||
+			FENCE_PATTERN.test(word) ||
 			LIST_MARKER_PATTERN.test(word) ||
 			syntax.isUnsafeLineStart(word)
 		) {

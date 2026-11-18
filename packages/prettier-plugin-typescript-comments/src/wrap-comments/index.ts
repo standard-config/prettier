@@ -1,7 +1,9 @@
 import type { ParserOptions } from 'prettier';
 import type { FoundComment } from '../find-comments/index.ts';
 import type { ParserName, TextEdit } from '../types/index.d.ts';
-import formatCommentBlock from '@standard-config/utilities/format-comment-block';
+import formatCommentBlock, {
+	findFencedLines,
+} from '@standard-config/utilities/format-comment-block';
 import {
 	BLOCK_DIRECTIVE_PATTERN,
 	COMMENT_SYNTAX,
@@ -216,6 +218,7 @@ function formatGroup(
 		};
 	}
 
+	const fencedLines = findFencedLines(lines, COMMENT_SYNTAX.marker);
 	const formattedLines: string[] = [];
 	let block: string[] = [];
 
@@ -284,9 +287,11 @@ function formatGroup(
 			index === lines.length - 1 &&
 			FALL_THROUGH_PATTERN.test(commentText);
 
-		// Only directives after exactly two slashes are eligible for conversion
+		// Only directives after exactly two slashes and outside code fences are
+		// eligible for conversion
 		if (
 			!isAfterSuppression &&
+			!fencedLines.has(index) &&
 			!keptStarts.has(group[index]!.start) &&
 			/^\/\/(?!\/)/.test(line) &&
 			(BLOCK_DIRECTIVE_PATTERN.test(commentText) || isFallThrough) &&
@@ -310,6 +315,7 @@ function formatGroup(
 	if (
 		isAtFallThroughPosition &&
 		!isAfterSuppression &&
+		!fencedLines.has(lines.length - 1) &&
 		!keptStarts.has(group.at(-1)!.start) &&
 		/^\/\/(?!\/)/.test(lastLine) &&
 		FALL_THROUGH_PATTERN.test(lastText) &&

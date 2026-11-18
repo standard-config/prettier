@@ -110,6 +110,24 @@ test('formats comments in other files that use the `sh` parser', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
+test('keeps code fences in comments as written', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShellComments],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'# foo:\n#\n# ```sh\n# bar  baz\n# ```\n# qux quux corge grault\nfoo\n',
+		options
+	);
+
+	expect(output).toBe(
+		'# foo:\n#\n# ```sh\n# bar  baz\n# ```\n# qux quux corge\n# grault\nfoo\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
 test('respects `printWidth`', async () => {
 	const options = {
 		parser: 'sh',
