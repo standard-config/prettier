@@ -1,0 +1,376 @@
+import type { ParserOptions } from 'prettier';
+import type { FoundComment, FoundComments } from '../find-comments/index.ts';
+import type { CommentEdit, TextRange } from '../types/index.d.ts';
+import { SUPPRESSION_PATTERN } from '@standard-config/utilities/constants';
+import formatCommentBlock from '@standard-config/utilities/format-comment-block';
+import {
+	BLOCK_DIRECTIVE_PATTERN,
+	COMMENT_SYNTAX,
+	FALL_THROUGH_PATTERN,
+	LINE_DIRECTIVE_PATTERN,
+	NEXT_LINE_DIRECTIVE_PATTERN,
+	RANGE_DIRECTIVE_PATTERN,
+	TYPESCRIPT_DIRECTIVE_PATTERN,
+	TYPESCRIPT_SUPPRESSION_PATTERN,
+} from '../constants/index.ts';
+
+type MoveContext = {
+	/**
+	 * Indentation at which comments that move to another line print, by the
+	 * offsets of the original comments.
+	 */
+	indentations: ReadonlyMap<number, string>;
+	/**
+	 * Offsets of trailing directives that stay `//` comments.
+	 */
+	keptStarts: ReadonlySet<number>;
+};
+
+/**
+ * Moves eligible trailing `//` comments above the code they follow.
+ * Converts supported suppressions and directives to block comments on the
+ * same line, except those whose offsets are kept. Comments that move to
+ * another line use the indentation measured for them, if any.
+ */
+export default function moveTrailingComments(
+	text: string,
+	found: FoundComments,
+	options: ParserOptions,
+	{ indentations, keptStarts }: MoveContext
+): CommentEdit[] {
+	const { comments, fallThroughOffsets, textRanges } = found;
+	const edits: CommentEdit[] = [];
+
+	const movedTargets = new Set<number>();
+
+	for (const comment of comments) {
+		const lineStart = text.lastIndexOf('\n', comment.start - 1) + 1;
+		const code = text.slice(lineStart, comment.start);
+		const codeStart = lineStart + /^[ \t]*/.exec(code)![0].length;
+		const commentText = text.slice(comment.start, comment.end).trimEnd();
+		const directive = commentText.replace(/^\/+[ \t]*/, '');
+
+		if (
+			!comment.isTrailing ||
+			code.trim() === '' ||
+			!commentText.startsWith('//') ||
+			keptStarts.has(comment.start) ||
+			COMMENT_SYNTAX.isBlockKept(commentText) ||
+			isInsideText(codeStart, textRanges)
+		) {
+			continue;
+		}
+
+		// ESLint’s `no-fallthrough` rule recognizes a fall-through comment only
+		// when it’s the last comment before a `case` or `default`, or at the
+		// end of a block that forms a clause’s whole body
+		const nextCodePattern = /\S/g;
+		nextCodePattern.lastIndex = comment.end;
+		const isFallThrough =
+			FALL_THROUGH_PATTERN.test(directive) &&
+			fallThroughOffsets.has(nextCodePattern.exec(text)?.index ?? -1);
+
+		// A moved suppression could cover different code, and a moved directive
+		// could start applying to the code around it
+		if (
+			BLOCK_DIRECTIVE_PATTERN.test(directive) ||
+			isFallThrough ||
+			SUPPRESSION_PATTERN.test(directive)
+		) {
+			// Only directives after exactly two slashes are eligible for
+			// conversion
+			if (/^\/\/(?!\/)/.test(commentText) && !directive.includes('*/')) {
+				edits.push({
+					conversions: [
+						{ isTrailing: true, line: 0, start: comment.start },
+					],
+					end: comment.end,
+					start: comment.start,
+					text: `/* ${directive} */`,
+				});
+			}
+
+			continue;
+		}
+
+		if (
+			directive === '' ||
+			LINE_DIRECTIVE_PATTERN.test(directive) ||
+			NEXT_LINE_DIRECTIVE_PATTERN.test(directive) ||
+			RANGE_DIRECTIVE_PATTERN.test(directive) ||
+			TYPESCRIPT_DIRECTIVE_PATTERN.test(directive)
+		) {
+			continue;
+		}
+
+		let [targetLineStart, targetCodeStart] = findTargetLine(
+			text,
+			codeStart,
+			found
+		);
+
+		const isRelocated = targetLineStart !== lineStart;
+
+		// Prettier can rewrite the lines around a comment that moves to
+		// another line, so the comment goes above a directive covering that
+		// line instead of staying in place, and above the comments grouped
+		// with the directive
+		let commentAbove = isRelocated
+			? findDirectiveAbove(text, targetLineStart, found)
+			: undefined;
+
+		while (commentAbove) {
+			const lineAboveStart =
+				text.lastIndexOf('\n', commentAbove.start - 1) + 1;
+
+			// The line above can continue JSX text too
+			[targetLineStart, targetCodeStart] = findTargetLine(
+				text,
+				lineAboveStart +
+					/^[ \t]*/.exec(text.slice(lineAboveStart))![0].length,
+				found
+			);
+			commentAbove =
+				findDirectiveAbove(text, targetLineStart, found) ??
+				findOwnLineCommentAbove(text, targetLineStart, found);
+		}
+
+		// ESLint’s `no-fallthrough` rule reads only the last comment before a
+		// `case` or `default`, or before the closing brace of a block that
+		// forms a clause’s whole body. Moving a fall-through comment there
+		// would silence the rule, and moving another comment there could hide
+		// one already present
+		if (
+			isInsideText(targetCodeStart, textRanges) ||
+			findDirectiveAbove(text, targetLineStart, found) !== undefined ||
+			(fallThroughOffsets.has(targetCodeStart) &&
+				(FALL_THROUGH_PATTERN.test(directive) ||
+					isAfterFallThrough(text, targetCodeStart, found)))
+		) {
+			continue;
+		}
+
+		// Reflow uses the indentation measured where the comment prints, if
+		// any. Otherwise, use a different target line’s source indentation, or
+		// add an indent before a closing delimiter on the original line
+		const measuredIndentation = indentations.get(comment.start);
+		let indentation = measuredIndentation ?? comment.indentation;
+
+		if (measuredIndentation === undefined && isRelocated) {
+			indentation = text.slice(targetLineStart, targetCodeStart);
+		} else if (
+			measuredIndentation === undefined &&
+			/^[)\]}]/.test(text.slice(targetCodeStart))
+		) {
+			indentation += options.useTabs
+				? '\t'
+				: ' '.repeat(options.tabWidth);
+		}
+
+		const movedLines = formatCommentBlock([commentText], {
+			indentation,
+			joinLines: true,
+			printWidth: options.printWidth,
+			syntax: COMMENT_SYNTAX,
+			tabWidth: options.tabWidth,
+		});
+
+		// An empty `//` line keeps a moved comment apart from the one moved
+		// above the same line before it
+		const isAfterComment = movedTargets.has(targetCodeStart);
+
+		if (isAfterComment) {
+			movedLines.unshift('//');
+		}
+
+		movedTargets.add(targetCodeStart);
+
+		const linePrefix = text.slice(targetLineStart, targetCodeStart);
+
+		edits.push(
+			{
+				conversions: [],
+				end: targetCodeStart,
+				movedLine: isAfterComment ? 1 : 0,
+				source: { end: comment.end, start: comment.start },
+				start: targetCodeStart,
+				text: `${movedLines.join(`\n${linePrefix}`)}\n${linePrefix}`,
+			},
+			{
+				conversions: [],
+				end: comment.end,
+				start: lineStart + code.trimEnd().length,
+				text: '',
+			}
+		);
+	}
+
+	return edits;
+}
+
+/**
+ * Returns the start of the line that a moved comment goes above, and the
+ * offset of the code on that line. Prettier can join or split JSX text,
+ * so a line starting inside or at the end of that text targets the
+ * innermost containing element or fragment. This repeats while the new
+ * line also starts inside or at the end of JSX text, so the inserted
+ * `//` comment doesn’t become text.
+ */
+function findTargetLine(
+	text: string,
+	codeStart: number,
+	{ jsxElementRanges, jsxTextRanges }: FoundComments
+): [number, number] {
+	let lineStart = text.lastIndexOf('\n', codeStart - 1) + 1;
+	let targetStart = codeStart;
+	let textRange = findRange(targetStart, jsxTextRanges);
+
+	while (textRange) {
+		const element = findJsxElement(textRange, jsxElementRanges);
+
+		lineStart = text.lastIndexOf('\n', element.start - 1) + 1;
+		targetStart =
+			lineStart + /^[ \t]*/.exec(text.slice(lineStart))![0].length;
+		textRange = findRange(targetStart, jsxTextRanges);
+	}
+
+	return [lineStart, targetStart];
+}
+
+/**
+ * Returns the innermost JSX element or fragment that holds a range of JSX
+ * text.
+ */
+function findJsxElement(
+	range: TextRange,
+	elements: ReadonlyArray<TextRange>
+): TextRange {
+	// JSX text always sits inside an element or a fragment
+	return elements
+		.filter(
+			(element) => element.start < range.start && range.end <= element.end
+		)
+		.toSorted((a, b) => b.start - a.start)[0]!;
+}
+
+/**
+ * Returns the range that an offset falls inside or at the end of.
+ */
+function findRange(
+	offset: number,
+	ranges: ReadonlyArray<TextRange>
+): TextRange | undefined {
+	return ranges.find(({ end, start }) => start < offset && offset <= end);
+}
+
+/**
+ * Returns the ranges of all comments, including block comments that share
+ * lines with code.
+ */
+function getAllComments(
+	text: string,
+	{ comments, textRanges }: FoundComments
+): TextRange[] {
+	return [
+		...comments,
+		...textRanges.filter(({ start }) => text.startsWith('/*', start)),
+	];
+}
+
+/**
+ * Returns the previous line’s starting offset, or `0` on the first line.
+ */
+function getPreviousLineStart(text: string, lineStart: number): number {
+	// `lastIndexOf` treats a negative position as `0`, so it would find the
+	// newline at offset `0` again
+	return lineStart > 1 ? text.lastIndexOf('\n', lineStart - 2) + 1 : 0;
+}
+
+/**
+ * Returns a comment ending on the previous line that holds a directive covering
+ * the line below it, which a moved comment could separate from its code.
+ */
+function findDirectiveAbove(
+	text: string,
+	lineStart: number,
+	found: FoundComments
+): TextRange | undefined {
+	const previousLineStart = getPreviousLineStart(text, lineStart);
+
+	return getAllComments(text, found).find(
+		({ end, start }) =>
+			end >= previousLineStart &&
+			end < lineStart &&
+			isNextLineDirective(text.slice(start, end))
+	);
+}
+
+/**
+ * Returns a `//` comment that Prettier prints on a line of its own and that
+ * ends on the line before the one that starts at an offset.
+ */
+function findOwnLineCommentAbove(
+	text: string,
+	lineStart: number,
+	{ comments }: FoundComments
+): FoundComment | undefined {
+	const previousLineStart = getPreviousLineStart(text, lineStart);
+
+	return comments.find(
+		({ end, isTrailing, start }) =>
+			!isTrailing &&
+			text.startsWith('//', start) &&
+			end >= previousLineStart &&
+			end < lineStart
+	);
+}
+
+/**
+ * Returns whether a fall-through comment comes right before an offset, with
+ * only whitespace in between.
+ */
+function isAfterFallThrough(
+	text: string,
+	offset: number,
+	found: FoundComments
+): boolean {
+	let index = offset;
+
+	while (index > 0 && /\s/.test(text[index - 1]!)) {
+		index -= 1;
+	}
+
+	return getAllComments(text, found).some(
+		({ end, start }) =>
+			start < index &&
+			index <= end &&
+			FALL_THROUGH_PATTERN.test(text.slice(start, end))
+	);
+}
+
+/**
+ * Returns whether a comment holds a directive that covers the line below it.
+ */
+function isNextLineDirective(comment: string): boolean {
+	const commentText = comment
+		.trim()
+		.replace(/^\/\*+\s*|^\/+[ \t]*/, '')
+		.replace(/\s*\*\/$/, '');
+
+	return (
+		FALL_THROUGH_PATTERN.test(commentText) ||
+		NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||
+		TYPESCRIPT_SUPPRESSION_PATTERN.test(commentText)
+	);
+}
+
+/**
+ * Returns whether an offset falls inside or at the end of a string, template
+ * text, or block comment.
+ */
+function isInsideText(
+	offset: number,
+	ranges: ReadonlyArray<TextRange>
+): boolean {
+	return findRange(offset, ranges) !== undefined;
+}

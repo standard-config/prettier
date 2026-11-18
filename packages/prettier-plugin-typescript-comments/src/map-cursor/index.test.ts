@@ -29,6 +29,21 @@ test('keeps a cursor inside an edit after the same character', () => {
 	expect(applyEdit('//// fo|o', 0, 8, '// foo')).toBe('// fo|o');
 });
 
+test('moves a cursor inside moved text with that text', () => {
+	const text = 'foo(); // bar';
+	const edits = [
+		{ end: 0, source: { end: 13, start: 7 }, start: 0, text: '// bar\n' },
+		{ end: 13, start: 6, text: '' },
+	];
+
+	expect(mapCursor(text, edits, 11)).toBe(4);
+	expect(mapCursor(text, edits, 13)).toBe(6);
+});
+
+test('moves a cursor inside removed text to where the text was', () => {
+	expect(applyEdit('foo(); // b|ar', 6, 13, '')).toBe('foo();|');
+});
+
 test('keeps a cursor between slashes and asterisks of the comment text', () => {
 	expect(
 		applyEdit('// foo\n// https:/|/bar', 0, 21, '// foo https://bar')
@@ -58,6 +73,10 @@ test('keeps a cursor inside a block comment after the same character', () => {
 
 test('moves a cursor after the comment text to the end of an edit', () => {
 	expect(applyEdit('// foo\n/|/', 0, 9, '// foo')).toBe('// foo|');
+});
+
+test('moves a cursor where text is inserted past the inserted text', () => {
+	expect(applyEdit('|foo();', 0, 0, '// bar\n')).toBe('// bar\n|foo();');
 });
 
 test('leaves a missing cursor missing', () => {

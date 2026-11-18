@@ -100,6 +100,23 @@ export class InvoiceQueue {
 }
 
 /* Webhooks are verified before parsing, since the signature covers the raw body and any re-serialization would break it */
+
+// The provider recommends at most three attempts within its rate limit window
+const retries = config.retries ?? 3;
+const token = "sk_test_51H8x"; /* gitleaks:allow */
+
+switch (invoice.status) {
+  // Drafts have no number yet
+  case "draft":
+    schedule(invoice); /* falls through */
+  case "sent":
+    send(invoice);
+}
+
+if (invoice.isPaid) {
+  archive(invoice);
+  // Reminders are capped at three per invoice
+}
 export const cast = /** @type {Invoice} */ draft;
 "
 `;

@@ -1,6 +1,12 @@
 import type { ParserOptions } from 'prettier';
 import type { FoundComment } from '../find-comments/index.ts';
-import type { ParserName, TextEdit } from '../types/index.d.ts';
+import type {
+	CommentEdit,
+	Conversion,
+	ParserName,
+	PluginOptions,
+	TextEdit,
+} from '../types/index.d.ts';
 import formatCommentBlock, {
 	findFencedLines,
 } from '@standard-config/utilities/format-comment-block';
@@ -10,20 +16,10 @@ import {
 	FALL_THROUGH_PATTERN,
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 } from '../constants/index.ts';
-import findComments from '../find-comments/index.ts';
+import findComments, { formatCode } from '../find-comments/index.ts';
 import formatBlockComment from '../format-block-comment/index.ts';
 import mapCursor from '../map-cursor/index.ts';
-
-type Conversion = {
-	/**
-	 * Index of the converted line in the formatted group.
-	 */
-	line: number;
-	/**
-	 * Offset of the original comment.
-	 */
-	start: number;
-};
+import moveTrailingComments from '../move-trailing-comments/index.ts';
 
 type GroupContext = {
 	fallThroughOffsets: ReadonlySet<number>;
@@ -33,66 +29,105 @@ type GroupContext = {
 	keptStarts: ReadonlySet<number>;
 };
 
-type GroupEdit = TextEdit & { conversions: Conversion[] };
-
 const EMPTY_LINE_PATTERN = /^\/+[ \t]*$/;
 
 /**
- * Reflows comments that occupy lines of their own, using the print width as a
- * target. Converts `//` directives to block comments when tools accept either
- * form.
+ * Reflows comments on lines of their own, using the print width as a target.
+ * When `tsCommentWrap` is `all`, also moves eligible trailing `//` comments
+ * onto their own lines. Converts `//` directives to block comments when
+ * tools accept either form.
  */
 export default async function wrapComments(
-	text: string,
+	originalText: string,
 	name: ParserName,
 	options: ParserOptions
 ): Promise<string> {
-	if (!/\/[*/]/.test(text)) {
-		return text;
+	if (!/\/[*/]/.test(originalText)) {
+		return originalText;
 	}
 
-	const { comments, fallThroughOffsets } = await findComments(
-		text,
-		name,
-		options
-	);
+	let text = originalText;
+	let found = await findComments(text, name, options);
+
+	// Prettier can move code onto or off a trailing comment’s line. Format
+	// first so every edit uses the lines Prettier prints
+	if (
+		(options as PluginOptions).tsCommentWrap !== 'full-line' &&
+		found.hasRewrittenLines
+	) {
+		({ cursorOffset: options.cursorOffset, text } = await formatCode(
+			text,
+			name,
+			options
+		));
+		found = await findComments(text, name, options);
+	}
+
+	const { comments, fallThroughOffsets } = found;
+	const ownLineComments = comments.filter(({ isTrailing }) => !isTrailing);
 	const groups = groupComments(
 		text,
-		comments.filter(({ start }) => text.startsWith('//', start))
+		ownLineComments.filter(({ start }) => text.startsWith('//', start))
 	);
-	const blockComments = comments.filter(({ start }) =>
+	const blockComments = ownLineComments.filter(({ start }) =>
 		text.startsWith('/*', start)
 	);
+	const indentations = new Map<number, string>();
 	const keptStarts = new Set<number>();
-	let edits = createEdits(text, groups, blockComments, options, {
-		fallThroughOffsets,
-		keptStarts,
-	});
+	const createAllEdits = () =>
+		createEdits(
+			text,
+			groups,
+			blockComments,
+			(options as PluginOptions).tsCommentWrap === 'full-line'
+				? []
+				: moveTrailingComments(text, found, options, {
+						indentations,
+						keptStarts,
+					}),
+			options,
+			{ fallThroughOffsets, keptStarts }
+		);
+	let edits = createAllEdits();
 
 	// Prettier can print a block comment inline in an otherwise empty object,
-	// which may change the code a directive covers. Format the edited code again
-	// and keep directives as `//` if they wouldn’t stay on lines of their own
-	const conversions = findConvertedOffsets(edits);
+	// or join the lines around one that follows code, which may change the code
+	// a directive covers. Format the edited code again and keep directives as
+	// `//` if they wouldn’t stay where they were. Moved comments reflow at the
+	// indentation where they print, or stay in place if Prettier would print
+	// them after code again
+	const { conversions, moves } = findEditedOffsets(edits);
 
-	if (conversions.length > 0) {
-		const { comments: editedComments } = await findComments(
+	if (conversions.length > 0 || moves.length > 0) {
+		const { comments: editedComments, lineEndStarts } = await findComments(
 			applyEdits(text, edits),
 			name,
 			options
 		);
-		const ownLineStarts = new Set(editedComments.map(({ start }) => start));
+		const ownLineComments = new Map(
+			editedComments
+				.filter(({ isTrailing }) => !isTrailing)
+				.map((comment) => [comment.start, comment])
+		);
 
-		for (const { offset, start } of conversions) {
-			if (!ownLineStarts.has(offset)) {
+		for (const { isTrailing, offset, start } of conversions) {
+			if (!(isTrailing ? lineEndStarts : ownLineComments).has(offset)) {
 				keptStarts.add(start);
 			}
 		}
 
-		if (keptStarts.size > 0) {
-			edits = createEdits(text, groups, blockComments, options, {
-				fallThroughOffsets,
-				keptStarts,
-			});
+		for (const { offset, start } of moves) {
+			const movedComment = ownLineComments.get(offset);
+
+			if (movedComment) {
+				indentations.set(start, movedComment.indentation);
+			} else {
+				keptStarts.add(start);
+			}
+		}
+
+		if (keptStarts.size > 0 || indentations.size > 0) {
+			edits = createAllEdits();
 		}
 	}
 
@@ -121,21 +156,35 @@ function applyEdits(text: string, edits: ReadonlyArray<TextEdit>): string {
 }
 
 /**
- * Collects comment formatting changes in source order.
+ * Collects comment formatting changes in source order, including the edits
+ * that move trailing comments.
  */
 function createEdits(
 	text: string,
 	groups: ReadonlyArray<ReadonlyArray<FoundComment>>,
 	blockComments: ReadonlyArray<FoundComment>,
+	moves: ReadonlyArray<CommentEdit>,
 	options: ParserOptions,
 	context: GroupContext
-): GroupEdit[] {
-	return [
-		...groups.map((group) => ({
-			end: group.at(-1)!.end,
-			start: group[0]!.start,
-			...formatGroup(text, group, options, context),
-		})),
+): CommentEdit[] {
+	const movedStarts = new Set(
+		moves.filter(({ source }) => source).map(({ start }) => start)
+	);
+	const separatedStarts = new Set<number>();
+	const edits: CommentEdit[] = [
+		...moves,
+		...groups.map((group) =>
+			formatGroupAboveMoves(
+				text,
+				{
+					end: group.at(-1)!.end,
+					start: group[0]!.start,
+					...formatGroup(text, group, options, context),
+				},
+				movedStarts,
+				separatedStarts
+			)
+		),
 		...blockComments.map(({ end, indentation, start }) => ({
 			conversions: [],
 			end,
@@ -150,16 +199,115 @@ function createEdits(
 	]
 		.filter((edit) => edit.text !== text.slice(edit.start, edit.end))
 		.toSorted((a, b) => a.start - b.start);
+
+	// Only the first comment moved above a line can need an empty `//` line
+	// before it to separate it from existing comments, and only the last can
+	// need one after it
+	const movedEdits = edits.filter(({ source }) => source);
+	const firstMoves = new Map(
+		movedEdits.toReversed().map((edit) => [edit.start, edit])
+	);
+	const lastMoves = new Map(movedEdits.map((edit) => [edit.start, edit]));
+
+	return edits.map((edit) => {
+		let result = edit;
+
+		if (
+			firstMoves.get(edit.start) === edit &&
+			separatedStarts.has(edit.start)
+		) {
+			const linePrefix = edit.text.slice(edit.text.lastIndexOf('\n') + 1);
+
+			result = {
+				...result,
+				movedLine: 1,
+				text: `//\n${linePrefix}${result.text}`,
+			};
+		}
+
+		return lastMoves.get(edit.start) === edit
+			? separateMovedComments(text, result, edits)
+			: result;
+	});
 }
 
 /**
- * Returns where each converted comment starts once the edits are applied,
- * along with the offset of the original comment.
+ * Prepares the group of `//` comments directly above moved comments to match
+ * the next run’s formatting. Removes empty `//` lines that would start their
+ * joined group and records the target line when the group above ends with a
+ * non-empty `//` line, so a separator can be added before the first moved
+ * comment.
  */
-function findConvertedOffsets(
-	edits: ReadonlyArray<GroupEdit>
-): Array<{ offset: number; start: number }> {
-	const offsets: Array<{ offset: number; start: number }> = [];
+function formatGroupAboveMoves(
+	text: string,
+	edit: CommentEdit,
+	movedStarts: ReadonlySet<number>,
+	separatedStarts: Set<number>
+): CommentEdit {
+	const nextLinePattern = /[ \t]*\n?[ \t]*/y;
+	nextLinePattern.lastIndex = edit.end;
+	const codeStart = edit.end + nextLinePattern.exec(text)![0].length;
+
+	if (!movedStarts.has(codeStart)) {
+		return edit;
+	}
+
+	const lines = edit.text.split('\n');
+	const lastIndex = lines.findLastIndex(
+		(line) => !EMPTY_LINE_PATTERN.test(line)
+	);
+
+	if (lastIndex === -1) {
+		return { conversions: [], end: codeStart, start: edit.start, text: '' };
+	}
+
+	if (!lines[lastIndex]!.startsWith('//')) {
+		return { ...edit, text: lines.slice(0, lastIndex + 1).join('\n') };
+	}
+
+	if (lastIndex === lines.length - 1) {
+		separatedStarts.add(codeStart);
+	}
+
+	return edit;
+}
+
+/**
+ * Adds an empty `//` line after the comments moved above a `//` comment that
+ * stays `//` once its group is formatted, which would otherwise join the two
+ * on the next run.
+ */
+function separateMovedComments(
+	text: string,
+	edit: CommentEdit,
+	edits: ReadonlyArray<CommentEdit>
+): CommentEdit {
+	// The group edit, if any, starts where the moved comments are inserted
+	const groupEdit = edits.find(
+		({ source, start }) => start === edit.start && !source
+	);
+
+	if (!(groupEdit?.text ?? text.slice(edit.start)).startsWith('//')) {
+		return edit;
+	}
+
+	const linePrefix = edit.text.slice(edit.text.lastIndexOf('\n') + 1);
+
+	return { ...edit, text: `${edit.text}//\n${linePrefix}` };
+}
+
+/**
+ * Returns where each converted comment and each comment that moves to another
+ * line starts once the edits are applied, along with the offset of the
+ * original comment.
+ */
+function findEditedOffsets(edits: ReadonlyArray<CommentEdit>): {
+	conversions: Array<Omit<Conversion, 'line'> & { offset: number }>;
+	moves: Array<{ offset: number; start: number }>;
+} {
+	const conversions: Array<Omit<Conversion, 'line'> & { offset: number }> =
+		[];
+	const moves: Array<{ offset: number; start: number }> = [];
 	let shift = 0;
 
 	for (const edit of edits) {
@@ -173,17 +321,31 @@ function findConvertedOffsets(
 			lineStarts.push(index + 1);
 		}
 
-		for (const { line, start } of edit.conversions) {
-			offsets.push({
+		for (const { isTrailing, line, start } of edit.conversions) {
+			conversions.push({
+				isTrailing,
 				offset: edit.start + shift + lineStarts[line]!,
 				start,
+			});
+		}
+
+		if (edit.movedLine !== undefined) {
+			const lineStart = lineStarts[edit.movedLine]!;
+
+			moves.push({
+				offset:
+					edit.start +
+					shift +
+					lineStart +
+					/^[ \t]*/.exec(edit.text.slice(lineStart))![0].length,
+				start: edit.source!.start,
 			});
 		}
 
 		shift += edit.text.length - (edit.end - edit.start);
 	}
 
-	return offsets;
+	return { conversions, moves };
 }
 
 /**
@@ -250,7 +412,11 @@ function formatGroup(
 			formattedLines.push('');
 		}
 
-		conversions.push({ line: formattedLines.length, start });
+		conversions.push({
+			isTrailing: false,
+			line: formattedLines.length,
+			start,
+		});
 		formattedLines.push(`/* ${commentText} */`);
 	};
 

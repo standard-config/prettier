@@ -1,7 +1,7 @@
 import type { Options, ParserOptions, Printer } from 'prettier';
-import type { ParserName } from '../types/index.d.ts';
+import type { ParserName, TextRange } from '../types/index.d.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { format, getSupportInfo } from 'prettier';
+import { format, formatWithCursor, getSupportInfo } from 'prettier';
 
 export type FoundComment = {
 	/**
@@ -9,9 +9,13 @@ export type FoundComment = {
 	 */
 	end: number;
 	/**
-	 * Spaces and tabs before the comment once the code is formatted.
+	 * Spaces and tabs at the start of the comment’s line after formatting.
 	 */
 	indentation: string;
+	/**
+	 * Whether code precedes the comment on its line after formatting.
+	 */
+	isTrailing: boolean;
 	/**
 	 * Offset of the first character of the comment.
 	 */
@@ -26,6 +30,29 @@ export type FoundComments = {
 	 * clause’s whole body.
 	 */
 	fallThroughOffsets: Set<number>;
+	/**
+	 * Whether the code before a trailing `//` comment differs between its
+	 * source and printed lines, ignoring whitespace.
+	 */
+	hasRewrittenLines: boolean;
+	/**
+	 * Ranges of JSX elements and fragments.
+	 */
+	jsxElementRanges: TextRange[];
+	/**
+	 * Ranges of JSX text, whose lines Prettier can join or split.
+	 */
+	jsxTextRanges: TextRange[];
+	/**
+	 * Offsets of single-line comments that Prettier prints at the end of a
+	 * line.
+	 */
+	lineEndStarts: Set<number>;
+	/**
+	 * Ranges of strings, template text, and block comments, where inserted text
+	 * would become part of them.
+	 */
+	textRanges: TextRange[];
 };
 
 type SwitchCase = {
@@ -47,15 +74,18 @@ const EXCLUDED_OPTIONS = new Set([
 // Prettier counts control characters as zero columns wide, so marks made of
 // them leave the layout unchanged
 /* oxlint-disable-next-line no-control-regex */
-const MARK_PATTERN = /^([ \t]*)\u0001([\u0010-\u0019]+)\u0002/gm;
+const MARK_PATTERN = /\u0001([\u0010-\u0019]+)\u0002/g;
 
 const findingComments = new AsyncLocalStorage<true>();
 
 /**
- * Finds the comments that Prettier prints on lines of their own, along with
- * the indentation it gives them. Comments that Prettier prints as written,
- * such as those in code after a `prettier-ignore` comment, aren’t included.
- * Also returns offsets used to check fall-through comment placement.
+ * Finds the comments that Prettier prints on lines of their own and the `//`
+ * comments that follow code, along with the indentation of their lines.
+ * Comments that Prettier prints as written, such as those in code after a
+ * `prettier-ignore` comment, aren’t included. Also returns offsets used to
+ * check fall-through comment placement, the offsets of single-line comments
+ * printed at the end of a line, and the ranges of JSX elements, JSX text,
+ * strings, template text, and block comments.
  */
 export default async function findComments(
 	text: string,
@@ -63,12 +93,23 @@ export default async function findComments(
 	options: ParserOptions
 ): Promise<FoundComments> {
 	const printer = options.printer as Printer;
-	const markedComments: Array<Omit<FoundComment, 'indentation'>> = [];
+	const markedComments: Array<Pick<FoundComment, 'end' | 'start'>> = [];
 	let fallThroughOffsets = new Set<number>();
+	let jsxElementRanges: TextRange[] = [];
+	let jsxTextRanges: TextRange[] = [];
+	let textRanges: TextRange[] = [];
 
 	// Code that holds a mark character can’t be marked reliably
 	if (text.includes('\u0001')) {
-		return { comments: [], fallThroughOffsets };
+		return {
+			comments: [],
+			fallThroughOffsets,
+			hasRewrittenLines: false,
+			jsxElementRanges,
+			jsxTextRanges,
+			lineEndStarts: new Set(),
+			textRanges,
+		};
 	}
 
 	// Mark each comment as Prettier prints it, which leaves the code it parses
@@ -77,7 +118,12 @@ export default async function findComments(
 		...printer,
 		preprocess(ast: unknown, printOptions) {
 			if (printOptions.originalText === text) {
-				fallThroughOffsets = findFallThroughOffsets(ast, printOptions);
+				({
+					fallThroughOffsets,
+					jsxElementRanges,
+					jsxTextRanges,
+					textRanges,
+				} = collectNodes(ast, printOptions));
 			}
 
 			return printer.preprocess
@@ -125,31 +171,107 @@ export default async function findComments(
 		);
 	} catch {
 		// Prettier reports errors in the code when it parses the code itself
-		return { comments: [], fallThroughOffsets };
+		return {
+			comments: [],
+			fallThroughOffsets,
+			hasRewrittenLines: false,
+			jsxElementRanges,
+			jsxTextRanges,
+			lineEndStarts: new Set(),
+			textRanges,
+		};
 	}
 
 	const comments = new Map<number, FoundComment>();
+	const lineEndStarts = new Set<number>();
+	let hasRewrittenLines = false;
 
 	for (const match of markedCode.matchAll(MARK_PATTERN)) {
-		const index = match[2]!
+		const index = match[1]!
 			.split('')
 			.map((digit) => digit.codePointAt(0)! - 0x10)
 			.join('');
 		const comment = markedComments[Number(index)]!;
+		const lineStart = markedCode.lastIndexOf('\n', match.index - 1) + 1;
 
-		// A block comment can start a line that code follows
+		// A line can hold several comments, each with its own mark
+		const linePrefix = markedCode
+			.slice(lineStart, match.index)
+			.replaceAll(MARK_PATTERN, '');
+		const [indentation] = /^[ \t]*/.exec(linePrefix)!;
+		const isTrailing = linePrefix.trim() !== '';
+		// Prettier prints `//` comments without trailing whitespace
+		const commentText = text.slice(comment.start, comment.end).trimEnd();
+		const printedEnd = match.index + match[0].length + commentText.length;
+
+		if (
+			!commentText.includes('\n') &&
+			/^[ \t]*(?:\n|$)/.test(markedCode.slice(printedEnd))
+		) {
+			lineEndStarts.add(comment.start);
+		}
+
+		const sourcePrefix = text.slice(
+			text.lastIndexOf('\n', comment.start - 1) + 1,
+			comment.start
+		);
+
+		if (
+			isTrailing &&
+			text.startsWith('//', comment.start) &&
+			sourcePrefix.replaceAll(/\s/g, '') !==
+				linePrefix.replaceAll(/\s/g, '')
+		) {
+			hasRewrittenLines = true;
+		}
+
+		// A block comment can share a line with code on either side, so leave
+		// it as written unless it occupies its own lines
 		if (
 			text.startsWith('//', comment.start) ||
-			isOnOwnLine(text, comment.start, comment.end)
+			(!isTrailing && isOnOwnLine(text, comment.start, comment.end))
 		) {
-			comments.set(comment.start, { ...comment, indentation: match[1]! });
+			comments.set(comment.start, {
+				...comment,
+				indentation,
+				isTrailing,
+			});
 		}
 	}
 
 	return {
 		comments: [...comments.values()].toSorted((a, b) => a.start - b.start),
 		fallThroughOffsets,
+		hasRewrittenLines,
+		jsxElementRanges,
+		jsxTextRanges,
+		lineEndStarts,
+		textRanges,
 	};
+}
+
+/**
+ * Formats code with Prettier and its plugins, with this plugin’s changes
+ * disabled. Returns the formatted text and its cursor offset.
+ */
+export async function formatCode(
+	text: string,
+	name: ParserName,
+	options: ParserOptions
+): Promise<{ cursorOffset: number; text: string }> {
+	const { cursorOffset, formatted } = await findingComments.run(
+		true,
+		async () =>
+			formatWithCursor(text, {
+				...(await getFormatOptions(options)),
+				cursorOffset: options.cursorOffset as number,
+				endOfLine: 'lf',
+				parser: name,
+				plugins: options.plugins,
+			})
+	);
+
+	return { cursorOffset, text: formatted };
 }
 
 /**
@@ -172,13 +294,17 @@ function createMark(index: number): string {
 
 /**
  * Collects clause starts and closing braces used to check fall-through comment
- * placement.
+ * placement, and the ranges of JSX elements, JSX text, strings, template text,
+ * and block comments.
  */
-function findFallThroughOffsets(
+function collectNodes(
 	ast: unknown,
 	options: ParserOptions
-): Set<number> {
-	const offsets = new Set<number>();
+): Omit<FoundComments, 'comments' | 'hasRewrittenLines' | 'lineEndStarts'> {
+	const fallThroughOffsets = new Set<number>();
+	const jsxElementRanges: TextRange[] = [];
+	const jsxTextRanges: TextRange[] = [];
+	const textRanges: TextRange[] = [];
 	const visited = new Set<unknown>();
 	const nodes = [ast];
 
@@ -191,8 +317,38 @@ function findFallThroughOffsets(
 
 		visited.add(node);
 
-		if ((node as { type?: unknown }).type === 'SwitchCase') {
-			addFallThroughOffsets(node as SwitchCase, offsets, options);
+		const { type, value } = node as { type?: unknown; value?: unknown };
+
+		if (type === 'SwitchCase') {
+			addFallThroughOffsets(
+				node as SwitchCase,
+				fallThroughOffsets,
+				options
+			);
+		}
+
+		// Parsers can require their location functions to receive nodes, so the
+		// walk measures only the nodes it records
+		if (type === 'JSXElement' || type === 'JSXFragment') {
+			jsxElementRanges.push({
+				end: options.locEnd(node),
+				start: options.locStart(node),
+			});
+		} else if (type === 'JSXText') {
+			jsxTextRanges.push({
+				end: options.locEnd(node),
+				start: options.locStart(node),
+			});
+		} else if (
+			type === 'Block' ||
+			type === 'CommentBlock' ||
+			type === 'TemplateElement' ||
+			(typeof value === 'string' && String(type).endsWith('Literal'))
+		) {
+			textRanges.push({
+				end: options.locEnd(node),
+				start: options.locStart(node),
+			});
 		}
 
 		// Prettier links comments to the nodes around them, so the walk skips
@@ -203,7 +359,7 @@ function findFallThroughOffsets(
 		}
 	}
 
-	return offsets;
+	return { fallThroughOffsets, jsxElementRanges, jsxTextRanges, textRanges };
 }
 
 /**

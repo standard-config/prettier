@@ -1,5 +1,7 @@
 import type { ParserOptions, Options as PrettierOptions } from 'prettier';
 import type {
+	CommentEdit,
+	Conversion,
 	ParserDelegation,
 	ParserHookName,
 	ParserInitializer,
@@ -9,10 +11,21 @@ import type {
 	PluginWithParsers,
 	ResolvedPriorParser,
 	TextEdit,
+	TextRange,
 } from './index.d.ts';
 import { expectTypeOf, test } from 'vite-plus/test';
 
 test('exposes valid types', () => {
+	expectTypeOf<CommentEdit>().toEqualTypeOf<
+		TextEdit & { conversions: Conversion[]; movedLine?: number }
+	>();
+
+	expectTypeOf<Conversion>().toEqualTypeOf<{
+		isTrailing: boolean;
+		line: number;
+		start: number;
+	}>();
+
 	expectTypeOf<ParserDelegation>().toEqualTypeOf<{
 		hook: ParserHookName;
 		parserName: ParserName;
@@ -31,7 +44,7 @@ test('exposes valid types', () => {
 
 	expectTypeOf<PluginOptions>()
 		.toHaveProperty('tsCommentWrap')
-		.toEqualTypeOf<'full-line' | 'none' | undefined>();
+		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 
 	expectTypeOf<PluginWithParsers>().toBeObject();
 	expectTypeOf<PluginWithParsers>().toHaveProperty('parsers');
@@ -49,9 +62,12 @@ test('exposes valid types', () => {
 
 	expectTypeOf<TextEdit>().toEqualTypeOf<{
 		end: number;
+		source?: TextRange;
 		start: number;
 		text: string;
 	}>();
+
+	expectTypeOf<TextRange>().toEqualTypeOf<{ end: number; start: number }>();
 });
 
 test('extends Prettier’s `Options`', () => {
@@ -60,5 +76,5 @@ test('extends Prettier’s `Options`', () => {
 
 	expectTypeOf<PrettierOptions>()
 		.toHaveProperty('tsCommentWrap')
-		.toEqualTypeOf<'full-line' | 'none' | undefined>();
+		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });

@@ -26,12 +26,16 @@ async function getParserOptions(
 	return parserOptions!;
 }
 
-async function wrap(text: string, options: Options = {}): Promise<string> {
-	return wrapComments(
-		text,
-		'babel',
-		await getParserOptions(text, { printWidth: 14, ...options })
-	);
+async function wrap(
+	text: string,
+	{ tsCommentWrap, ...options }: Options = {}
+): Promise<string> {
+	const parserOptions = await getParserOptions(text, {
+		printWidth: 14,
+		...options,
+	});
+
+	return wrapComments(text, 'babel', { ...parserOptions, tsCommentWrap });
 }
 
 test('leaves text without comments unchanged', async () => {
@@ -140,7 +144,9 @@ test('keeps directives after a TypeScript suppression as line comments', async (
 	).resolves.toBe('/* baz */\n/* prettier-ignore */\nqux();\n');
 	await expect(
 		wrap(inputAfterTrailingSuppression, { printWidth: 80 })
-	).resolves.toBe(inputAfterTrailingSuppression);
+	).resolves.toBe(
+		'foo(); /* @ts-expect-error */\n// prettier-ignore\nbar();\n'
+	);
 	await expect(
 		wrap(inputAfterBlockSuppression, { printWidth: 80 })
 	).resolves.toBe(inputAfterBlockSuppression);
@@ -164,9 +170,21 @@ test('keeps directives that Prettier would print within a line as line comments'
 		'foo = bar\n// eslint-disable-next-line\n? baz\n: qux;\n';
 
 	await expect(wrap(input, { printWidth: 80 })).resolves.toBe(input);
-	await expect(wrap(inputInTernary, { printWidth: 80 })).resolves.toBe(
-		inputInTernary
-	);
+	await expect(
+		wrap(inputInTernary, { printWidth: 80, tsCommentWrap: 'full-line' })
+	).resolves.toBe(inputInTernary);
+});
+
+test('wraps comments in formatted code when Prettier rewrites their lines', async () => {
+	await expect(
+		wrap('foo(a,\n  b); // c\n', { printWidth: 80 })
+	).resolves.toBe('// c\nfoo(a, b);\n');
+	await expect(
+		wrap('foo(a,\n  b); // c\n', {
+			printWidth: 80,
+			tsCommentWrap: 'full-line',
+		})
+	).resolves.toBe('foo(a,\n  b); // c\n');
 });
 
 test('keeps directives that ESLint only reads from block comments as written', async () => {
@@ -235,6 +253,28 @@ test('keeps groups with legal comments as written', async () => {
 test('keeps one empty comment line for a group without text', async () => {
 	await expect(wrap('foo();\n//\n//\nbar();\n')).resolves.toBe(
 		'foo();\n//\nbar();\n'
+	);
+});
+
+test('separates moved comments from the `//` comments above them', async () => {
+	await expect(wrap('// foo\nbar(); // baz\n')).resolves.toBe(
+		'// foo\n//\n// baz\nbar();\n'
+	);
+	await expect(wrap('if (foo) { // bar\nbaz(); // qux\n}\n')).resolves.toBe(
+		'if (foo) { // bar\n//\n// qux\nbaz();\n}\n'
+	);
+	await expect(wrap('// eslint-disable\n//\nfoo(); // bar\n')).resolves.toBe(
+		'// eslint-disable\n//\n// bar\nfoo();\n'
+	);
+});
+
+test('joins moved comments with the empty comment lines above them', async () => {
+	await expect(wrap('//\nfoo(); // bar\n')).resolves.toBe('// bar\nfoo();\n');
+	await expect(wrap('// @jsx h\nfoo(); // bar\n')).resolves.toBe(
+		'/* @jsx h */\n// bar\nfoo();\n'
+	);
+	await expect(wrap('// @jsx h\n//\nfoo(); // bar\n')).resolves.toBe(
+		'/* @jsx h */\n// bar\nfoo();\n'
 	);
 });
 

@@ -33,9 +33,10 @@ async function findCommentTexts(text: string, options: Options = {}) {
 		await getParserOptions(text, options)
 	);
 
-	return comments.map(({ end, indentation, start }) => [
+	return comments.map(({ end, indentation, isTrailing, start }) => [
 		indentation,
 		text.slice(start, end),
+		isTrailing,
 	]);
 }
 
@@ -46,35 +47,107 @@ test('finds comments on lines of their own with their indentation', async () => 
 			{ useTabs: true }
 		)
 	).resolves.toStrictEqual([
-		['', '// foo'],
-		['\t', '// baz'],
-		['\t\t', '// quux'],
+		['', '// foo', false],
+		['\t', '// baz', false],
+		['\t\t', '// quux', false],
 	]);
 });
 
 test('finds comments that Prettier moves onto lines of their own', async () => {
 	await expect(
 		findCommentTexts('const foo = { // bar\n  baz: 1 };\n')
-	).resolves.toStrictEqual([['  ', '// bar']]);
+	).resolves.toStrictEqual([['  ', '// bar', false]]);
 });
 
 test('finds block comments on lines of their own', async () => {
 	await expect(
 		findCommentTexts('/* foo */\nfunction bar() {\n/**\n * baz\n */\n}\n')
 	).resolves.toStrictEqual([
-		['', '/* foo */'],
-		['  ', '/**\n * baz\n */'],
+		['', '/* foo */', false],
+		['  ', '/**\n * baz\n */', false],
 	]);
 	await expect(findCommentTexts('foo();\n/* bar */')).resolves.toStrictEqual([
-		['', '/* bar */'],
+		['', '/* bar */', false],
 	]);
 });
 
-test('leaves out comments that share a line with code', async () => {
+test('reports whether Prettier rewrites the lines of trailing comments', async () => {
+	for (const [text, hasRewrittenLines] of [
+		['foo(a, b); // c\n', false],
+		['foo(a,\n  b); // c\n', true],
+		['foo(\n  // a\n);\n', false],
+	] as const) {
+		await expect(
+			findComments(text, 'babel', await getParserOptions(text))
+		).resolves.toHaveProperty('hasRewrittenLines', hasRewrittenLines);
+	}
+});
+
+test('finds `//` comments that follow code', async () => {
 	await expect(
-		findCommentTexts(
-			'foo(); // bar\nbaz(/* qux */);\n/** @type {T} */ (quux);\n'
-		)
+		findCommentTexts('if (foo) {\n  bar(); // baz\n}\n', { useTabs: true })
+	).resolves.toStrictEqual([['\t', '// baz', true]]);
+	await expect(
+		findCommentTexts('foo(/* bar */); // baz\n')
+	).resolves.toStrictEqual([['', '// baz', true]]);
+});
+
+test('finds the ranges of JSX elements, JSX text, strings, template text, and block comments', async () => {
+	/* oxlint-disable-next-line no-template-curly-in-string */
+	const text = "foo('bar', `baz${qux}`, <a>quux</a>);\n/* corge */\n";
+	const { jsxElementRanges, jsxTextRanges, textRanges } = await findComments(
+		text,
+		'babel',
+		await getParserOptions(text)
+	);
+
+	expect(
+		jsxElementRanges.map(({ end, start }) => text.slice(start, end))
+	).toStrictEqual(['<a>quux</a>']);
+	expect(
+		jsxTextRanges.map(({ end, start }) => text.slice(start, end))
+	).toStrictEqual(['quux']);
+	expect(
+		textRanges.map(({ end, start }) => text.slice(start, end)).toSorted()
+	).toStrictEqual(['', "'bar'", '/* corge */', 'baz']);
+});
+
+test('locates only the nodes whose ranges it records', async () => {
+	const { locEnd, locStart } = babelParsers.babel;
+
+	const requireNode =
+		(locate: (node: unknown) => number) => (node: { type?: unknown }) => {
+			if (typeof node.type !== 'string') {
+				throw new TypeError('Expected a node');
+			}
+
+			return locate(node);
+		};
+
+	const plugin: Plugin = {
+		parsers: {
+			babel: {
+				...babelParsers.babel,
+				locEnd: requireNode(locEnd),
+				locStart: requireNode(locStart),
+			},
+		},
+	};
+	const text = "foo('bar'); // baz\n";
+	const options = await getParserOptions(text);
+	const { comments } = await findComments(text, 'babel', {
+		...options,
+		plugins: [plugin],
+	});
+
+	expect(
+		comments.map(({ end, start }) => text.slice(start, end))
+	).toStrictEqual(['// baz']);
+});
+
+test('leaves out block comments that share a line with code', async () => {
+	await expect(
+		findCommentTexts('baz(/* qux */);\n/** @type {T} */ (quux);\n')
 	).resolves.toStrictEqual([]);
 });
 
@@ -97,7 +170,7 @@ test('finds the code that fall-through comments can precede', async () => {
 test('leaves out comments in code that Prettier prints as written', async () => {
 	await expect(
 		findCommentTexts('// prettier-ignore\nconst foo = [\n// bar\n  1];\n')
-	).resolves.toStrictEqual([['', '// prettier-ignore']]);
+	).resolves.toStrictEqual([['', '// prettier-ignore', false]]);
 });
 
 test('leaves out comments in code embedded in the code', async () => {
@@ -105,7 +178,7 @@ test('leaves out comments in code embedded in the code', async () => {
 		findCommentTexts(
 			'// foo\nconst bar = html`<script>// baz\nqux();</script>`;\n'
 		)
-	).resolves.toStrictEqual([['', '// foo']]);
+	).resolves.toStrictEqual([['', '// foo', false]]);
 });
 
 test('finds no comments in code that holds a mark character', async () => {
@@ -143,7 +216,15 @@ test('finds no comments in code that fails to parse', async () => {
 
 	await expect(
 		findComments('// foo\nbar(\n', 'babel', options)
-	).resolves.toStrictEqual({ comments: [], fallThroughOffsets: new Set() });
+	).resolves.toStrictEqual({
+		comments: [],
+		fallThroughOffsets: new Set(),
+		hasRewrittenLines: false,
+		jsxElementRanges: [],
+		jsxTextRanges: [],
+		lineEndStarts: new Set(),
+		textRanges: [],
+	});
 });
 
 test('reports whether it’s formatting code to find comments', async () => {

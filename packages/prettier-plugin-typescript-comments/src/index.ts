@@ -12,8 +12,13 @@ export const options: Plugin['options'] = {
 		category: 'JavaScript',
 		description: 'Control wrapping for comments.',
 		type: 'choice',
-		default: 'full-line',
+		default: 'all',
 		choices: [
+			{
+				description:
+					'Move trailing `//` comments onto their own lines where possible, then reflow supported comments.',
+				value: 'all',
+			},
 			{
 				description: 'Reflow comments that occupy their own lines.',
 				value: 'full-line',

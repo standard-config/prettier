@@ -1,4 +1,5 @@
 import type { ParserOptions } from 'prettier';
+import { SUPPRESSION_PATTERN } from '@standard-config/utilities/constants';
 import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
 import {
 	DIRECTIVE_PATTERN,
@@ -22,8 +23,6 @@ const CLOSING_LINE_PATTERN = /^(?:\)|(?:done|esac|fi|\})(?=$|[\t ;&|()<>]))/;
 const COMMENT_LINE_PATTERN = /^[ \t]*#/;
 const CONTINUED_LINE_PATTERN = /(?<!\\)(?:\\\\)*(?:&&|\\|\|\|?)$/;
 const MAX_REPRINTS = 3;
-const SUPPRESSION_PATTERN =
-	/\b(?:codespell:ignore|cspell:disable-line|gitleaks:allow|nosemgrep|NOSONAR|pragma: allowlist secret|trufflehog:ignore)\b/;
 
 /**
  * Moves trailing comments onto their own lines, leaving the code itself

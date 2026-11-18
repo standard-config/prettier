@@ -121,6 +121,20 @@ export class InvoiceQueue {
 }
 
 /* Webhooks are verified before parsing, since the signature covers the raw body and any re-serialization would break it */
+
+const retries = config.retries ?? 3; // The provider recommends at most three attempts within its rate limit window
+const token = 'sk_test_51H8x'; // gitleaks:allow
+
+switch (invoice.status) {
+	case 'draft': // Drafts have no number yet
+		schedule(invoice); // falls through
+	case 'sent':
+		send(invoice);
+}
+
+if (invoice.isPaid) {
+	archive(invoice);
+} // Reminders are capped at three per invoice
 export const cast = /** @type {Invoice} */ (draft);
 `;
 
@@ -165,11 +179,186 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 		);
 
 		expect(output).toBe(
-			'// foo bar baz qux\n// quux corge\nfoo(); // grault garply waldo fred\n/* prettier-ignore */\nbar(  );\n'
+			'// foo bar baz qux\n// quux corge\n//\n// grault garply\n// waldo fred\nfoo();\n/* prettier-ignore */\nbar(  );\n'
 		);
 		await expect(format(output, options)).resolves.toBe(output);
 	}
 );
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps trailing directives as `//` where Prettier would join their lines with the `%s` parser',
+	async (parser) => {
+		const options = {
+			parser,
+			plugins: [pluginOxc, pluginTypeScriptComments],
+		};
+
+		const output = await format(
+			"foo(\n  'a', // @ts-expect-error\n  1,\n);\nbar(); // eslint-disable-line\n",
+			options
+		);
+
+		expect(output).toBe(
+			'foo(\n  "a", // @ts-expect-error\n  1,\n);\nbar(); /* eslint-disable-line */\n'
+		);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps comments right below a directive in place with the `%s` parser',
+	async (parser) => {
+		const options = {
+			parser,
+			plugins: [pluginOxc, pluginTypeScriptComments],
+		};
+		const input =
+			'/* eslint-disable-next-line\n  no-console */\nconsole.log(foo); // bar\n';
+		const inputAfterTrailingDirective =
+			'foo(); /* eslint-disable-next-line\n  no-console */\nconsole.log(bar); // baz\n';
+		const inputInBlockComment = '/* foo\nbar */ baz(); // qux\n';
+
+		await expect(format(input, options)).resolves.toBe(input);
+		await expect(
+			format(inputAfterTrailingDirective, options)
+		).resolves.toBe(inputAfterTrailingDirective);
+		await expect(format(inputInBlockComment, options)).resolves.toBe(
+			inputInBlockComment
+		);
+	}
+);
+
+test('moves comments after JSX text above the element that holds the text', async () => {
+	const options = {
+		parser: 'oxc',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 41,
+	};
+
+	const output = await format(
+		'const foo = [\n  <div>\n    bar baz qux quux corge grault garply waldo fred\n  </div>, // plugh xyzzy thud foo bar baz qux quux\n];\n',
+		options
+	);
+
+	expect(output).toBe(
+		'const foo = [\n  // plugh xyzzy thud foo bar baz qux\n  // quux\n  <div>\n    bar baz qux quux corge grault garply\n    waldo fred\n  </div>,\n];\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('moves comments after JSX text above directives and the comments with them', async () => {
+	const options = {
+		parser: 'oxc',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 41,
+	};
+
+	const output = await format(
+		'const foo = [\n  // bar\n  // eslint-disable-next-line\n  <div>\n    baz qux quux corge grault garply waldo\n  </div>, // fred\n];\n',
+		options
+	);
+	const outputBelowSuppression = await format(
+		'const foo = [\n  /* @ts-expect-error */\n\n  // eslint-disable-next-line\n  <div>\n    bar baz qux quux corge grault garply\n  </div>, // waldo\n];\n',
+		options
+	);
+	const outputAboveDirective = await format(
+		'const foo = [\n  // eslint-disable-next-line\n  <div>\n    bar baz qux quux corge grault garply\n  </div>, // waldo\n];\n',
+		options
+	);
+
+	expect(output).toBe(
+		'const foo = [\n  // fred\n  //\n  // bar\n  /* eslint-disable-next-line */\n  <div>\n    baz qux quux corge grault garply\n    waldo\n  </div>,\n];\n'
+	);
+	expect(outputBelowSuppression).toBe(
+		'const foo = [\n  /* @ts-expect-error */\n\n  // waldo\n  //\n  // eslint-disable-next-line\n  <div>\n    bar baz qux quux corge grault garply\n  </div>,\n];\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+	await expect(format(outputBelowSuppression, options)).resolves.toBe(
+		outputBelowSuppression
+	);
+	expect(outputAboveDirective).toBe(
+		'const foo = [\n  // waldo\n  /* eslint-disable-next-line */\n  <div>\n    bar baz qux quux corge grault garply\n  </div>,\n];\n'
+	);
+	await expect(format(outputAboveDirective, options)).resolves.toBe(
+		outputAboveDirective
+	);
+});
+
+test('moves comments above their lines as Prettier prints them', async () => {
+	const options = {
+		parser: 'oxc',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+	};
+
+	await expect(format('foo(a,\n  b); // bar\n', options)).resolves.toBe(
+		'// bar\nfoo(a, b);\n'
+	);
+	await expect(
+		format('const foo = bar\n  ? baz\n  : qux; // quux\n', options)
+	).resolves.toBe('// quux\nconst foo = bar ? baz : qux;\n');
+	await expect(
+		format('const foo = <div>\nbar</div>; // baz\n', options)
+	).resolves.toBe('// baz\nconst foo = <div>bar</div>;\n');
+	await expect(
+		format(
+			'// eslint-disable-next-line\nfoo(); console.log(bar); // baz\n',
+			options
+		)
+	).resolves.toBe(
+		'/* eslint-disable-next-line */\nfoo();\n// baz\nconsole.log(bar);\n'
+	);
+
+	const input = 'foo(a,\n  b); // ba|r\n';
+	const result = await formatWithCursor(input.replace('|', ''), {
+		...options,
+		cursorOffset: input.indexOf('|'),
+	});
+
+	expect(result.formatted.slice(result.cursorOffset)).toBe('r\nfoo(a, b);\n');
+});
+
+test('keeps comments that Prettier would print after code again in place', async () => {
+	const options = {
+		parser: 'oxc',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+	};
+	const input = 'const foo = bar\n  ? baz // qux\n  : quux;\n';
+
+	await expect(format(input, options)).resolves.toBe(input);
+});
+
+test('keeps comments around other tools’ directives in place', async () => {
+	const options = {
+		parser: 'oxc-ts',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+	};
+
+	for (const input of [
+		'// deno-lint-ignore no-explicit-any\nconst foo: any = 1; // bar\n',
+		'foo(); // deno-lint-ignore no-explicit-any\nbar();\n',
+		'// $FlowFixMe[prop-missing]\nfoo.bar(); // baz\n',
+		'// tslint:disable-next-line\nfoo(); // bar\n',
+	]) {
+		await expect(format(input, options)).resolves.toBe(input);
+	}
+
+	await expect(
+		format(
+			'foo(); // ggignore\nbar(); // jshint ignore:line\nbaz(); // tslint:disable-line\n',
+			options
+		)
+	).resolves.toBe(
+		'foo(); /* ggignore */\nbar(); /* jshint ignore:line */\nbaz(); /* tslint:disable-line */\n'
+	);
+	await expect(
+		format(
+			'// foo\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n',
+			options
+		)
+	).resolves.toBe(
+		'// foo\n//\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n'
+	);
+});
 
 test('formats comments in JSX', async () => {
 	const options = {
@@ -340,6 +529,23 @@ test('respects `cursorOffset`', async () => {
 	expect(
 		resultWithComment.formatted.slice(resultWithComment.cursorOffset)
 	).toBe('r\nbaz();\n');
+
+	const inputWithTrailingComment = 'foo(); // b|ar\n';
+
+	const resultWithTrailingComment = await formatWithCursor(
+		inputWithTrailingComment.replace('|', ''),
+		{
+			cursorOffset: inputWithTrailingComment.indexOf('|'),
+			parser: 'oxc-ts',
+			plugins: [pluginOxc, pluginTypeScriptComments],
+		}
+	);
+
+	expect(
+		resultWithTrailingComment.formatted.slice(
+			resultWithTrailingComment.cursorOffset
+		)
+	).toBe('ar\nfoo();\n');
 });
 
 test.each(['cr', 'crlf'] as const)(
@@ -533,6 +739,10 @@ test('supports `tsCommentWrap`', async () => {
 	};
 
 	const outputs = {
+		'all': await format(input, {
+			...options,
+			tsCommentWrap: 'all',
+		}),
 		'full-line': await format(input, {
 			...options,
 			tsCommentWrap: 'full-line',
@@ -544,6 +754,7 @@ test('supports `tsCommentWrap`', async () => {
 	};
 
 	expect(outputs).toStrictEqual({
+		'all': '/*\n * foo bar\n */\n// foo bar baz qux\n//\n// grault\ncorge();\n',
 		'full-line':
 			'/*\n * foo bar\n */\n// foo bar baz qux\ncorge(); // grault\n',
 		'none': await format(input, {
@@ -552,6 +763,7 @@ test('supports `tsCommentWrap`', async () => {
 			printWidth: 20,
 		}),
 	});
+	await expect(format(outputs.all, options)).resolves.toBe(outputs.all);
 	await expect(
 		format(outputs['full-line'], {
 			...options,

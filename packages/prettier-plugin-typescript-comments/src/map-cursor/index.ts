@@ -13,7 +13,30 @@ export default function mapCursor(
 	let shift = 0;
 
 	for (const edit of edits) {
-		if (cursorOffset <= edit.start) {
+		const { source } = edit;
+
+		// A cursor in text that an edit moves follows that text
+		if (
+			source &&
+			cursorOffset >= source.start &&
+			cursorOffset <= source.end
+		) {
+			return (
+				edit.start +
+				shift +
+				findOffset(
+					text.slice(source.start, source.end),
+					edit.text,
+					cursorOffset - source.start
+				)
+			);
+		}
+
+		// A cursor where text is inserted stays after the inserted text
+		if (
+			cursorOffset < edit.start ||
+			(cursorOffset === edit.start && edit.end > edit.start)
+		) {
 			break;
 		}
 
@@ -38,8 +61,8 @@ export default function mapCursor(
 /**
  * Finds the offset in the edited text that matches an offset in the original
  * text. After a character of the comment text, it stays after the same
- * character. Elsewhere, it moves before the next one, or to the end of the
- * edited text if none remains.
+ * character. Elsewhere, or when the edited text lacks that character, it moves
+ * before the next one, or to the end of the edited text if none remains.
  */
 function findOffset(
 	originalText: string,
@@ -50,8 +73,13 @@ function findOffset(
 	const editedOffsets = getTextOffsets(editedText);
 	const count = originalOffsets.filter((index) => index < offset).length;
 
-	if (count > 0 && originalOffsets[count - 1] === offset - 1) {
-		return editedOffsets[count - 1]! + 1;
+	const editedOffset = editedOffsets[count - 1];
+
+	if (
+		editedOffset !== undefined &&
+		originalOffsets[count - 1] === offset - 1
+	) {
+		return editedOffset + 1;
 	}
 
 	return editedOffsets[count] ?? editedText.length;

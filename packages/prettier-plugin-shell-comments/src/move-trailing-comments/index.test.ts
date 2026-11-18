@@ -76,7 +76,7 @@ test('separates moved comments from comments above them', async () => {
 
 test('keeps suppression comments at the end of their lines', async () => {
 	const input =
-		'foo=bar # gitleaks:allow\nbaz=qux # pragma: allowlist secret\nquux # nosemgrep\ncorge # codespell:ignore\ngrault # cspell:disable-line\ngarply # NOSONAR\nwaldo=fred # trufflehog:ignore\n';
+		'foo=bar # gitleaks:allow\nbaz=qux # pragma: allowlist secret\nquux # nosemgrep\ncorge # codespell:ignore\ngrault # cspell:disable-line\ngarply # NOSONAR\nwaldo=fred # trufflehog:ignore\nplugh=xyzzy # ggignore\nthud # pragma: allowlist nextline secret\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		input
