@@ -19,6 +19,18 @@ export type ParseWithCompatibility = (
 	optionsForCompatibility: ParserOptions
 ) => unknown;
 
+export interface PluginOptions {
+	/**
+	 * Control wrapping for comments. `full-line` reflows the `//` comments that
+	 * occupy their own lines and turns their directives into block comments
+	 * where tools read both. `none` leaves all comments as written. Reflowing
+	 * uses the print width as a target and removes redundant `/` characters and
+	 * empty comment lines.
+	 * @default 'full-line'
+	 */
+	tsCommentWrap?: 'full-line' | 'none' | undefined;
+}
+
 export type PluginWithParsers = Omit<Plugin, 'parsers'> & {
 	parsers: Record<string, Parser | ParserInitializer>;
 };
@@ -32,3 +44,13 @@ export type ResolvedPriorParser = {
 	parser: Parser;
 	plugins: ParserOptions['plugins'];
 };
+
+export type TextEdit = {
+	end: number;
+	start: number;
+	text: string;
+};
+
+declare module 'prettier' {
+	interface Options extends PluginOptions {}
+}

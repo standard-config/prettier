@@ -1,5 +1,6 @@
 import type { Parser, ParserOptions, Printer } from 'prettier';
-import type { ParserName } from '../types/index.d.ts';
+import type { ParserName, PluginOptions } from '../types/index.d.ts';
+import { isFindingComments } from '../find-comments/index.ts';
 import {
 	callParserWithCompatibility,
 	createPriorParserResolver,
@@ -8,10 +9,11 @@ import {
 	withPriorParserOptions,
 } from '../plugin-hooks/index.ts';
 import separateShebang from '../separate-shebang/index.ts';
+import wrapComments from '../wrap-comments/index.ts';
 
 /**
- * Wraps a parser to separate a shebang from what follows after earlier
- * `preprocess` hooks run and before `parse` runs.
+ * Wraps a parser to reflow comments and separate a shebang from what follows
+ * after earlier `preprocess` hooks run and before `parse` runs.
  */
 export default function createParser(
 	name: ParserName,
@@ -49,6 +51,11 @@ export default function createParser(
 		text: string,
 		options: ParserOptions
 	) => {
+		// This plugin formats code that it has preprocessed to find its comments
+		if (isFindingComments()) {
+			return text;
+		}
+
 		const isPassThrough =
 			getParserDelegation(options, 'preprocess', name) !== undefined ||
 			isPartialFormat(text, options);
@@ -75,9 +82,16 @@ export default function createParser(
 					)
 				: text;
 
-		return isPassThrough
-			? preprocessedText
-			: separateShebangLine(preprocessedText, options);
+		if (isPassThrough) {
+			return preprocessedText;
+		}
+
+		const wrappedText =
+			(options as PluginOptions).tsCommentWrap === 'none'
+				? preprocessedText
+				: await wrapComments(preprocessedText, name, options);
+
+		return separateShebangLine(wrappedText, options);
 	};
 
 	const parser: Parser = {
@@ -130,8 +144,8 @@ function isPartialFormat(text: string, options: ParserOptions): boolean {
 /**
  * Returns whether Prettier inserted a pragma into the code after measuring
  * it, which leaves the code longer than its range. A pragma that Prettier
- * merges into an existing docblock isn’t recognized, so the empty line after
- * a shebang appears only on the next run.
+ * merges into an existing docblock isn’t recognized, so this plugin’s changes
+ * appear only on the next run.
  */
 function hasInsertedPragma(text: string, options: ParserOptions): boolean {
 	if (!options.insertPragma || options.requirePragma) {

@@ -1,12 +1,14 @@
-import type { ParserOptions } from 'prettier';
+import type { ParserOptions, Options as PrettierOptions } from 'prettier';
 import type {
 	ParserDelegation,
 	ParserHookName,
 	ParserInitializer,
 	ParserName,
 	ParseWithCompatibility,
+	PluginOptions,
 	PluginWithParsers,
 	ResolvedPriorParser,
+	TextEdit,
 } from './index.d.ts';
 import { expectTypeOf, test } from 'vite-plus/test';
 
@@ -27,6 +29,10 @@ test('exposes valid types', () => {
 
 	expectTypeOf<ParseWithCompatibility>().toBeFunction();
 
+	expectTypeOf<PluginOptions>()
+		.toHaveProperty('tsCommentWrap')
+		.toEqualTypeOf<'full-line' | 'none' | undefined>();
+
 	expectTypeOf<PluginWithParsers>().toBeObject();
 	expectTypeOf<PluginWithParsers>().toHaveProperty('parsers');
 
@@ -40,4 +46,19 @@ test('exposes valid types', () => {
 	expectTypeOf<ResolvedPriorParser>().toHaveProperty('lifecycleState');
 	expectTypeOf<ResolvedPriorParser>().toHaveProperty('parser');
 	expectTypeOf<ResolvedPriorParser>().toHaveProperty('plugins');
+
+	expectTypeOf<TextEdit>().toEqualTypeOf<{
+		end: number;
+		start: number;
+		text: string;
+	}>();
+});
+
+test('extends Prettier’s `Options`', () => {
+	expectTypeOf<PrettierOptions>().toBeObject();
+	expectTypeOf<PrettierOptions>().toHaveProperty('useTabs');
+
+	expectTypeOf<PrettierOptions>()
+		.toHaveProperty('tsCommentWrap')
+		.toEqualTypeOf<'full-line' | 'none' | undefined>();
 });

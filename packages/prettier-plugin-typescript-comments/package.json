@@ -11,7 +11,8 @@
 	"sideEffects": false,
 	"exports": "./src/index.ts",
 	"dependencies": {
-		"@prettier/plugin-oxc": "catalog:"
+		"@prettier/plugin-oxc": "catalog:",
+		"@standard-config/utilities": "workspace:*"
 	},
 	"peerDependencies": {
 		"prettier": "*"

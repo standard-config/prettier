@@ -319,6 +319,9 @@ importers:
       '@prettier/plugin-oxc':
         specifier: 'catalog:'
         version: 0.2.4
+      '@standard-config/utilities':
+        specifier: workspace:*
+        version: link:../utilities
     devDependencies:
       '@standard-config/tsconfig':
         specifier: 'catalog:'

@@ -1,4 +1,5 @@
 import type { Parser, Plugin } from 'prettier';
+import type { PluginOptions } from './index.ts';
 import * as pluginOxc from '@prettier/plugin-oxc';
 import { format, formatWithCursor } from 'prettier';
 import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
@@ -27,15 +28,136 @@ const Card = styled.div\`
 \`;
 `;
 
+const TEST_TYPESCRIPT = `/// <reference types="vite/client" />
+
+// Resolves the invoice currency from the customer’s billing country, falling back to the account default when the country has no configured currency
+export function resolveCurrency(customer: Customer): Currency {
+	for (const chunk of customer.chunks) {
+		if (chunk.status === 'failed') {
+			// Reset the offset rather than resuming, since the storage provider discards partial chunks after a failed request
+			chunk.offset = 0;
+		}
+	}
+
+	return customer.currency;
+}
+
+// Keep the cache keyed by tenant,
+// since two tenants can share
+// an invoice number
+const cache = new Map<string, Invoice>();
+
+//
+// Applies the pending migrations in order. Each migration runs in its own transaction, so a failure leaves earlier ones applied
+//
+//
+// Migrations that already ran are skipped, based on the checksum stored in the migrations table
+//
+export async function migrate(db: Database): Promise<void> {}
+
+// Supports the following strategies:
+// - \`eager\`, which loads every locale at startup and keeps it in memory for the lifetime of the process
+// - \`lazy\`, which loads a locale
+//   the first time it’s requested
+// - \`none\`, which only
+// serves the default locale
+export function loadLocales(strategy: Strategy): void {}
+
+// Builds the cache key from the route and its parameters, for example:
+//
+//     buildKey('/invoices/:id', { id: '42' }) === 'invoices:42'
+//
+export function buildKey(route: string, params: Params): string {
+	return route;
+}
+
+//// Deprecated, use \`formatMoney\` instead
+//Formats an amount given in minor units as a localized string
+export function formatAmount(amount: number): string {
+	return String(amount);
+}
+
+// The generated client marks \`metadata\` as required, but the API omits it for drafts, so the type is wrong until the next SDK release
+// @ts-expect-error -- \`metadata\` is missing on drafts even though the generated type requires it
+const draft: Draft = await client.drafts.get(id);
+
+// prettier-ignore
+const IDENTITY = [
+	// Keeps the matrix layout, so this comment stays as written even past the print width
+	1, 0,
+	0, 1,
+];
+
+//#region Validation
+export function validate(invoice: Invoice): void {}
+//#endregion
+
+//! Generated   from the billing schema, which keeps this comment as written past the print width
+`;
+
 test('exposes correct public API', () => {
 	expectTypeOf(pluginTypeScriptComments).toExtend<Plugin>();
 
+	expect(pluginTypeScriptComments).toHaveProperty('options');
 	expect(pluginTypeScriptComments).toHaveProperty('parsers');
 
 	expect(pluginTypeScriptComments.parsers).toHaveProperty('babel');
 	expect(pluginTypeScriptComments.parsers).toHaveProperty('oxc');
 	expect(pluginTypeScriptComments.parsers).toHaveProperty('oxc-ts');
 	expect(pluginTypeScriptComments.parsers).toHaveProperty('typescript');
+
+	expectTypeOf<PluginOptions>().toBeObject();
+});
+
+test('formats TypeScript comments', async () => {
+	const options = {
+		parser: 'oxc-ts',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+	};
+
+	const output = await format(TEST_TYPESCRIPT, options);
+
+	expect(output).toMatchSnapshot();
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'formats comments with the `%s` parser',
+	async (parser) => {
+		const options = {
+			parser,
+			plugins: [pluginOxc, pluginTypeScriptComments],
+			printWidth: 20,
+		};
+
+		const output = await format(
+			'// foo bar baz qux quux corge\nfoo(); // grault garply waldo fred\n// prettier-ignore\nbar(  );\n',
+			options
+		);
+
+		expect(output).toBe(
+			'// foo bar baz qux\n// quux corge\nfoo(); // grault garply waldo fred\n/* prettier-ignore */\nbar(  );\n'
+		);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('formats comments in JSX', async () => {
+	const options = {
+		parser: 'oxc',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'<Foo\n  // bar baz qux quux corge\n  grault\n>\n  {\n    // garply waldo fred\n  }\n</Foo>;\n',
+		options
+	);
+
+	expect(output).toBe(
+		'<Foo\n  // bar baz qux\n  // quux corge\n  grault\n>\n  {\n    // garply waldo\n    // fred\n  }\n</Foo>;\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
 });
 
 test.each(JAVASCRIPT_PARSER_NAMES)(
@@ -113,6 +235,57 @@ test('formats code blocks in Markdown', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
+test('formats comments in code blocks in Markdown', async () => {
+	const options = {
+		parser: 'markdown',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'```js\n// foo bar baz qux quux corge\nfoo();\n```\n',
+		options
+	);
+
+	expect(output).toBe(
+		'```js\n// foo bar baz qux\n// quux corge\nfoo();\n```\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('respects `printWidth`', async () => {
+	const options = {
+		parser: 'oxc-ts',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 12,
+	};
+
+	const output = await format('// foo bar baz qux\n', options);
+
+	expect(output).toBe('// foo bar\n// baz qux\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('respects `useTabs`', async () => {
+	const options = {
+		parser: 'oxc-ts',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 16,
+		tabWidth: 4,
+		useTabs: true,
+	};
+
+	const output = await format(
+		'function foo() {\n  // bar baz qux\n  quux();\n}\n',
+		options
+	);
+
+	expect(output).toBe(
+		'function foo() {\n\t// bar baz\n\t// qux\n\tquux();\n}\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
 test('respects `cursorOffset`', async () => {
 	const input = '#!/usr/bin/env node\nfoo(  |bar  )\n';
 
@@ -123,6 +296,21 @@ test('respects `cursorOffset`', async () => {
 	});
 
 	expect(result.formatted.slice(result.cursorOffset)).toBe('bar);\n');
+
+	const inputWithComment = '// foo\n// ba|r\nbaz(  );\n';
+
+	const resultWithComment = await formatWithCursor(
+		inputWithComment.replace('|', ''),
+		{
+			cursorOffset: inputWithComment.indexOf('|'),
+			parser: 'oxc-ts',
+			plugins: [pluginOxc, pluginTypeScriptComments],
+		}
+	);
+
+	expect(
+		resultWithComment.formatted.slice(resultWithComment.cursorOffset)
+	).toBe('r\nbaz();\n');
 });
 
 test.each(['cr', 'crlf'] as const)(
@@ -135,12 +323,12 @@ test.each(['cr', 'crlf'] as const)(
 		};
 
 		const output = await format(
-			'#!/usr/bin/env node\nfoo(`\nbar\n`)\n',
+			'#!/usr/bin/env node\n// foo\n// bar\nbaz(`\nqux\n`)\n',
 			options
 		);
 
 		expect(output).toBe(
-			'#!/usr/bin/env node\n\nfoo(`\nbar\n`);\n'.replaceAll(
+			'#!/usr/bin/env node\n\n// foo bar\nbaz(`\nqux\n`);\n'.replaceAll(
 				'\n',
 				endOfLine === 'cr' ? '\r' : '\r\n'
 			)
@@ -304,4 +492,39 @@ test('formats output from other plugins’ parser hooks', async () => {
 		foo(bar);
 		"
 	`);
+});
+
+test('supports `tsCommentWrap`', async () => {
+	const input = '// foo bar baz\n// qux\ncorge(); // grault\n';
+	const options = {
+		parser: 'oxc-ts',
+		plugins: [pluginOxc, pluginTypeScriptComments],
+		printWidth: 20,
+	};
+
+	const outputs = {
+		'full-line': await format(input, {
+			...options,
+			tsCommentWrap: 'full-line',
+		}),
+		'none': await format(input, {
+			...options,
+			tsCommentWrap: 'none',
+		}),
+	};
+
+	expect(outputs).toStrictEqual({
+		'full-line': '// foo bar baz qux\ncorge(); // grault\n',
+		'none': await format(input, {
+			parser: 'oxc-ts',
+			plugins: [pluginOxc],
+			printWidth: 20,
+		}),
+	});
+	await expect(
+		format(outputs['full-line'], {
+			...options,
+			tsCommentWrap: 'full-line',
+		})
+	).resolves.toBe(outputs['full-line']);
 });

@@ -1,10 +1,31 @@
 import type { Plugin } from 'prettier';
+import type { PluginOptions } from './types/index.d.ts';
 import { parsers as babelParsers } from 'prettier/plugins/babel';
 import { parsers as typescriptParsers } from 'prettier/plugins/typescript';
 import createParser from './create-parser/index.ts';
 import loadOxcPlugin from './load-oxc-plugin/index.ts';
 
 const pluginOxc = await loadOxcPlugin();
+
+export const options: Plugin['options'] = {
+	tsCommentWrap: {
+		category: 'JavaScript',
+		description: 'Control wrapping for comments.',
+		type: 'choice',
+		default: 'full-line',
+		choices: [
+			{
+				description:
+					'Reflow `//` comments that Prettier prints on lines of their own.',
+				value: 'full-line',
+			},
+			{
+				description: 'Leave all comments as written.',
+				value: 'none',
+			},
+		],
+	},
+};
 
 // Prettier uses the parser from the last plugin that defines it, so this
 // plugin has to come after `@prettier/plugin-oxc` in the plugin list
@@ -16,3 +37,5 @@ export const parsers: Plugin['parsers'] = {
 	}),
 	typescript: createParser('typescript', typescriptParsers.typescript),
 };
+
+export type { PluginOptions };

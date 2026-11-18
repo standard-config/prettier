@@ -1,0 +1,68 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formats TypeScript comments 1`] = `
+"/// <reference types="vite/client" />
+
+// Resolves the invoice currency from the customer’s billing country, falling
+// back to the account default when the country has no configured currency
+export function resolveCurrency(customer: Customer): Currency {
+  for (const chunk of customer.chunks) {
+    if (chunk.status === "failed") {
+      // Reset the offset rather than resuming, since the storage provider
+      // discards partial chunks after a failed request
+      chunk.offset = 0;
+    }
+  }
+
+  return customer.currency;
+}
+
+// Keep the cache keyed by tenant, since two tenants can share an invoice number
+const cache = new Map<string, Invoice>();
+
+// Applies the pending migrations in order. Each migration runs in its own
+// transaction, so a failure leaves earlier ones applied
+//
+// Migrations that already ran are skipped, based on the checksum stored in the
+// migrations table
+export async function migrate(db: Database): Promise<void> {}
+
+// Supports the following strategies:
+// - \`eager\`, which loads every locale at startup and keeps it in memory for the
+//   lifetime of the process
+// - \`lazy\`, which loads a locale the first time it’s requested
+// - \`none\`, which only serves the default locale
+export function loadLocales(strategy: Strategy): void {}
+
+// Builds the cache key from the route and its parameters, for example:
+//
+//     buildKey('/invoices/:id', { id: '42' }) === 'invoices:42'
+export function buildKey(route: string, params: Params): string {
+  return route;
+}
+
+// Deprecated, use \`formatMoney\` instead Formats an amount given in minor units
+// as a localized string
+export function formatAmount(amount: number): string {
+  return String(amount);
+}
+
+// The generated client marks \`metadata\` as required, but the API omits it for
+// drafts, so the type is wrong until the next SDK release
+/* @ts-expect-error -- \`metadata\` is missing on drafts even though the generated type requires it */
+const draft: Draft = await client.drafts.get(id);
+
+/* prettier-ignore */
+const IDENTITY = [
+	// Keeps the matrix layout, so this comment stays as written even past the print width
+	1, 0,
+	0, 1,
+];
+
+//#region Validation
+export function validate(invoice: Invoice): void {}
+//#endregion
+
+//! Generated   from the billing schema, which keeps this comment as written past the print width
+"
+`;
