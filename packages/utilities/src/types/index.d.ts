@@ -32,6 +32,13 @@ export type CommentSyntax = {
 	 */
 	isDirective: (text: string) => boolean;
 	/**
+	 * Returns whether the line at an index stays as written on a line of its
+	 * own, without the empty lines that surround directives. Receives the text
+	 * after the marker of every line in the block, with lines in code fences
+	 * as empty texts.
+	 */
+	isLineKept: (texts: ReadonlyArray<string>, index: number) => boolean;
+	/**
 	 * Returns whether a word would read as markup at the start of a line. The
 	 * formatter checks list markers and code fence markers separately.
 	 */

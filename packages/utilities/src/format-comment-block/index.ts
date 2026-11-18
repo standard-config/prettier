@@ -70,6 +70,19 @@ export function findFencedLines(
 }
 
 /**
+ * Fills lines greedily using the print width as a target, starting the first
+ * line with a prefix and later lines with a continuation prefix.
+ */
+export function fillCommentText(
+	text: string,
+	prefix: string,
+	continuation: string,
+	options: CommentBlockOptions
+): string[] {
+	return fillWords(splitWords(text), prefix, continuation, options);
+}
+
+/**
  * Reads comment lines into paragraphs, list items, and lines kept as written,
  * such as those in code fences.
  */
@@ -81,6 +94,11 @@ function parseNodes(
 	const markerPattern = getMarkerPattern(marker);
 	const nodes: BlockNode[] = [];
 	const fencedLines = findFencedLines(lines, marker);
+	const texts = lines.map((line, index) =>
+		fencedLines.has(index)
+			? ''
+			: line.replace(markerPattern, '').replace(/^[ \t]*/, '')
+	);
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
 
 	for (const [index, line] of lines.entries()) {
@@ -102,6 +120,12 @@ function parseNodes(
 
 		if (text === '') {
 			nodes.push(EMPTY_NODE);
+			openNode = undefined;
+			continue;
+		}
+
+		if (syntax.isLineKept(texts, index)) {
+			nodes.push({ isDirective: false, line, type: 'verbatim' });
 			openNode = undefined;
 			continue;
 		}
@@ -228,7 +252,8 @@ function printNode(node: BlockNode, options: CommentBlockOptions): string[] {
 }
 
 /**
- * Splits text at spaces and tabs outside code spans, which stay whole.
+ * Splits text at spaces and tabs outside code spans and inline tags such as
+ * `{@link …}`, which stay whole.
  */
 function splitWords(text: string): string[] {
 	const words: string[] = [];
@@ -237,8 +262,11 @@ function splitWords(text: string): string[] {
 	for (let index = 0; index < text.length; index += 1) {
 		const character = text[index]!;
 
-		if (character === '`') {
-			const end = text.indexOf('`', index + 1);
+		if (
+			character === '`' ||
+			(character === '{' && text[index + 1] === '@')
+		) {
+			const end = text.indexOf(character === '`' ? '`' : '}', index + 1);
 
 			if (end !== -1) {
 				word += text.slice(index, end + 1);

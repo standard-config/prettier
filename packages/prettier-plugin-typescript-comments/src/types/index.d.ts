@@ -21,11 +21,12 @@ export type ParseWithCompatibility = (
 
 export interface PluginOptions {
 	/**
-	 * Control wrapping for comments. `full-line` reflows the `//` comments that
-	 * occupy their own lines and turns their directives into block comments
-	 * where tools read both. `none` leaves all comments as written. Reflowing
-	 * uses the print width as a target and removes redundant `/` characters and
-	 * empty comment lines.
+	 * Control wrapping for comments. `full-line` reflows only the comments that
+	 * occupy their own lines: `//` comments, single-line doc comments, and
+	 * multi-line block comments with a `*` gutter. It also turns `//` directives
+	 * into block comments where tools read both. `none` leaves all comments as
+	 * written. Reflowing uses the print width as a target and removes redundant
+	 * `/` characters and empty comment lines.
 	 * @default 'full-line'
 	 */
 	tsCommentWrap?: 'full-line' | 'none' | undefined;

@@ -21,6 +21,7 @@ export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 		isDirective: (text) =>
 			DIRECTIVE_PATTERN.test(text) ||
 			(isLeading && PRAGMA_PATTERN.test(text)),
+		isLineKept: () => false,
 		isUnsafeLineStart: (word) =>
 			UNSAFE_LINE_START_PATTERN.test(word) ||
 			(isLeading && PRAGMA_PATTERN.test(word)),

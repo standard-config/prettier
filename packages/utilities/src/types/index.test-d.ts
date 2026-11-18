@@ -21,6 +21,7 @@ test('exposes valid types', () => {
 		marker: string;
 		isBlockKept: (line: string) => boolean;
 		isDirective: (text: string) => boolean;
+		isLineKept: (texts: ReadonlyArray<string>, index: number) => boolean;
 		isUnsafeLineStart: (word: string) => boolean;
 	}>();
 

@@ -16,6 +16,7 @@ export const COMMENT_SYNTAX: CommentSyntax = {
 		LINE_DIRECTIVE_PATTERN.test(text) ||
 		RANGE_DIRECTIVE_PATTERN.test(text) ||
 		TYPESCRIPT_DIRECTIVE_PATTERN.test(text),
+	isLineKept: () => false,
 	isUnsafeLineStart: (word) =>
 		BLOCK_DIRECTIVE_PATTERN.test(word) ||
 		LINE_DIRECTIVE_PATTERN.test(word) ||

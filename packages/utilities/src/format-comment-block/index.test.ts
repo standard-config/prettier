@@ -1,10 +1,16 @@
 import type { CommentSyntax } from '../types/index.d.ts';
 import { expect, test } from 'vite-plus/test';
-import formatCommentBlock, { findFencedLines } from './index.ts';
+import formatCommentBlock, {
+	fillCommentText,
+	findFencedLines,
+} from './index.ts';
 
 const TEST_SYNTAX: CommentSyntax = {
 	isBlockKept: (line) => line.startsWith('#!') || /^#[ \t]*kept$/.test(line),
 	isDirective: (text) => /^(?:directive|marker$)/.test(text),
+	isLineKept: (texts, index) =>
+		texts[index]!.startsWith('| ') ||
+		texts.slice(0, index).includes('| kept'),
 	isUnsafeLineStart: (word) => word === 'directive' || word === 'marker',
 	marker: '#',
 };
@@ -114,6 +120,12 @@ test('keeps code spans that continue on the next line together', () => {
 	).toBe('# foo bar baz\n# `qux quux`');
 });
 
+test('keeps inline tags on one line', () => {
+	expect(
+		formatComment('# foo bar baz {@link qux | quux}', { printWidth: 20 })
+	).toBe('# foo bar baz\n# {@link qux | quux}');
+});
+
 test('treats unmatched backticks as text', () => {
 	expect(formatComment('# foo ` bar baz qux quux', { printWidth: 20 })).toBe(
 		'# foo ` bar baz qux\n# quux'
@@ -212,6 +224,20 @@ test('keeps indented lines as written', () => {
 
 test('starts a paragraph after indented lines', () => {
 	expect(formatComment('#   foo\n# bar\n# baz')).toBe('#   foo\n# bar baz');
+});
+
+test('keeps lines that the syntax keeps as written on lines of their own', () => {
+	for (const input of [
+		'# foo\n# | bar   baz |\n# qux',
+		'# - foo\n# | bar |',
+		'# | kept\n# foo   bar',
+	]) {
+		expect(formatComment(input)).toBe(input);
+	}
+
+	expect(formatComment('# ```\n# | kept\n# ```\n# foo   bar')).toBe(
+		'# ```\n# | kept\n# ```\n# foo bar'
+	);
 });
 
 test('keeps directives as written', () => {
@@ -314,4 +340,16 @@ test('finds the lines of code fences', () => {
 	expect(
 		findFencedLines(['# foo', '# ```', '# bar', '# ```', '# baz'], '#')
 	).toStrictEqual(new Set([1, 2, 3]));
+});
+
+test('fills text with a prefix and a continuation', () => {
+	expect(
+		fillCommentText('bar baz qux quux', '# foo ', '#     ', {
+			indentation: '',
+			joinLines: true,
+			printWidth: 14,
+			syntax: TEST_SYNTAX,
+			tabWidth: 2,
+		})
+	).toStrictEqual(['# foo bar baz', '#     qux quux']);
 });

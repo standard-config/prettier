@@ -11,6 +11,7 @@ import {
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 } from '../constants/index.ts';
 import findComments from '../find-comments/index.ts';
+import formatBlockComment from '../format-block-comment/index.ts';
 import mapCursor from '../map-cursor/index.ts';
 
 type Conversion = {
@@ -37,16 +38,16 @@ type GroupEdit = TextEdit & { conversions: Conversion[] };
 const EMPTY_LINE_PATTERN = /^\/+[ \t]*$/;
 
 /**
- * Reflows `//` comments that Prettier prints on lines of their own, using the
- * print width as a target. Converts directives to block comments when tools
- * accept either form.
+ * Reflows comments that occupy lines of their own, using the print width as a
+ * target. Converts `//` directives to block comments when tools accept either
+ * form.
  */
 export default async function wrapComments(
 	text: string,
 	name: ParserName,
 	options: ParserOptions
 ): Promise<string> {
-	if (!text.includes('//')) {
+	if (!/\/[*/]/.test(text)) {
 		return text;
 	}
 
@@ -59,8 +60,11 @@ export default async function wrapComments(
 		text,
 		comments.filter(({ start }) => text.startsWith('//', start))
 	);
+	const blockComments = comments.filter(({ start }) =>
+		text.startsWith('/*', start)
+	);
 	const keptStarts = new Set<number>();
-	let edits = createEdits(text, groups, options, {
+	let edits = createEdits(text, groups, blockComments, options, {
 		fallThroughOffsets,
 		keptStarts,
 	});
@@ -85,7 +89,7 @@ export default async function wrapComments(
 		}
 
 		if (keptStarts.size > 0) {
-			edits = createEdits(text, groups, options, {
+			edits = createEdits(text, groups, blockComments, options, {
 				fallThroughOffsets,
 				keptStarts,
 			});
@@ -117,21 +121,35 @@ function applyEdits(text: string, edits: ReadonlyArray<TextEdit>): string {
 }
 
 /**
- * Formats each group of comments, leaving out groups that stay the same.
+ * Collects comment formatting changes in source order.
  */
 function createEdits(
 	text: string,
 	groups: ReadonlyArray<ReadonlyArray<FoundComment>>,
+	blockComments: ReadonlyArray<FoundComment>,
 	options: ParserOptions,
 	context: GroupContext
 ): GroupEdit[] {
-	return groups
-		.map((group) => ({
+	return [
+		...groups.map((group) => ({
 			end: group.at(-1)!.end,
 			start: group[0]!.start,
 			...formatGroup(text, group, options, context),
-		}))
-		.filter((edit) => edit.text !== text.slice(edit.start, edit.end));
+		})),
+		...blockComments.map(({ end, indentation, start }) => ({
+			conversions: [],
+			end,
+			start,
+			text:
+				formatBlockComment(text.slice(start, end), {
+					indentation,
+					printWidth: options.printWidth,
+					tabWidth: options.tabWidth,
+				}) ?? text.slice(start, end),
+		})),
+	]
+		.filter((edit) => edit.text !== text.slice(edit.start, edit.end))
+		.toSorted((a, b) => a.start - b.start);
 }
 
 /**

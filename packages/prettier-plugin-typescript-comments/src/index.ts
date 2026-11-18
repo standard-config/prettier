@@ -15,8 +15,7 @@ export const options: Plugin['options'] = {
 		default: 'full-line',
 		choices: [
 			{
-				description:
-					'Reflow `//` comments that Prettier prints on lines of their own.',
+				description: 'Reflow comments that occupy their own lines.',
 				value: 'full-line',
 			},
 			{

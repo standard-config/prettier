@@ -93,6 +93,35 @@ export function validate(invoice: Invoice): void {}
 //#endregion
 
 //! Generated   from the billing schema, which keeps this comment as written past the print width
+
+/** Returns the invoices that are past due, sorted by how many days they are overdue, with the oldest first */
+export function overdueInvoices(invoices: Invoice[]): Invoice[] {
+	return invoices;
+}
+
+/**
+ * Splits a payment across the open invoices of a customer.
+ * @param payment The payment to allocate, in the currency of the customer’s account rather than the currency it was paid in
+ *
+ * @param invoices Open invoices, which are settled oldest first until the payment runs out
+ * @returns The allocations, plus any remainder that couldn’t be applied to an invoice and stays as account credit
+ *
+ * @example
+ * allocate(payment,   invoices);
+ */
+export function allocate(payment: Payment, invoices: Invoice[]): Allocation[] {
+	return [];
+}
+
+export class InvoiceQueue {
+	/*
+	 * Holds invoices that failed to send, keyed by customer, so a customer with several failures gets one combined reminder instead of many
+	 */
+	private failed = new Map<string, Invoice[]>();
+}
+
+/* Webhooks are verified before parsing, since the signature covers the raw body and any re-serialization would break it */
+export const cast = /** @type {Invoice} */ (draft);
 `;
 
 test('exposes correct public API', () => {
@@ -495,7 +524,8 @@ test('formats output from other plugins’ parser hooks', async () => {
 });
 
 test('supports `tsCommentWrap`', async () => {
-	const input = '// foo bar baz\n// qux\ncorge(); // grault\n';
+	const input =
+		'/*\n * foo   bar\n */\n// foo bar baz\n// qux\ncorge(); // grault\n';
 	const options = {
 		parser: 'oxc-ts',
 		plugins: [pluginOxc, pluginTypeScriptComments],
@@ -514,7 +544,8 @@ test('supports `tsCommentWrap`', async () => {
 	};
 
 	expect(outputs).toStrictEqual({
-		'full-line': '// foo bar baz qux\ncorge(); // grault\n',
+		'full-line':
+			'/*\n * foo bar\n */\n// foo bar baz qux\ncorge(); // grault\n',
 		'none': await format(input, {
 			parser: 'oxc-ts',
 			plugins: [pluginOxc],

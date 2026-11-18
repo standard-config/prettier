@@ -250,3 +250,15 @@ test('moves the cursor along with a reflowed comment', async () => {
 
 	expect(output.slice(options.cursorOffset)).toBe('r\nbaz();\n');
 });
+
+test('formats block comments on lines of their own', async () => {
+	await expect(wrap('/** foo bar baz qux */\nquux();\n')).resolves.toBe(
+		'/**\n * foo bar baz\n * qux\n */\nquux();\n'
+	);
+});
+
+test('keeps block comments that stay as written', async () => {
+	const input = '/* foo   bar */\nbaz();\n';
+
+	await expect(wrap(input)).resolves.toBe(input);
+});
