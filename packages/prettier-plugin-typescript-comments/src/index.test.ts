@@ -353,17 +353,42 @@ test('keeps comments around other tools’ directives in place', async () => {
 		plugins: [pluginOxc, pluginTypeScriptComments],
 	};
 
-	for (const input of [
-		'// deno-lint-ignore no-explicit-any\nconst foo: any = 1; // bar\n',
-		'foo(); // deno-lint-ignore no-explicit-any\nbar();\n',
-		'// foo\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n',
-		'// $FlowFixMe[prop-missing]\nfoo.bar(); // baz\n',
-		'// pragma: allowlist nextline secret\n// #region password=hunter2\nfoo();\n',
-		'// pragma: allowlist nextline secret\n// password=hunter2\nfoo();\n',
-		'// tslint:disable-next-line\nfoo(); // bar\n',
-	]) {
-		await expect(format(input, options)).resolves.toBe(input);
-	}
+	const inputBelowDenoDirective =
+		'// deno-lint-ignore no-explicit-any\nconst foo: any = 1; // bar\n';
+	const inputWithTrailingDenoDirective =
+		'foo(); // deno-lint-ignore no-explicit-any\nbar();\n';
+	const inputAboveDenoDirective =
+		'// foo\n// deno-lint-ignore no-explicit-any\nconst bar: any = 1;\n';
+	const inputBelowFlowDirective =
+		'// $FlowFixMe[prop-missing]\nfoo.bar(); // baz\n';
+	const inputWithRegionBelowAllowlist =
+		'// pragma: allowlist nextline secret\n// #region password=hunter2\nfoo();\n';
+	const inputBelowAllowlist =
+		'// pragma: allowlist nextline secret\n// password=hunter2\nfoo();\n';
+	const inputBelowTslintDirective =
+		'// tslint:disable-next-line\nfoo(); // bar\n';
+
+	await expect(format(inputBelowDenoDirective, options)).resolves.toBe(
+		inputBelowDenoDirective
+	);
+	await expect(format(inputWithTrailingDenoDirective, options)).resolves.toBe(
+		inputWithTrailingDenoDirective
+	);
+	await expect(format(inputAboveDenoDirective, options)).resolves.toBe(
+		inputAboveDenoDirective
+	);
+	await expect(format(inputBelowFlowDirective, options)).resolves.toBe(
+		inputBelowFlowDirective
+	);
+	await expect(format(inputWithRegionBelowAllowlist, options)).resolves.toBe(
+		inputWithRegionBelowAllowlist
+	);
+	await expect(format(inputBelowAllowlist, options)).resolves.toBe(
+		inputBelowAllowlist
+	);
+	await expect(format(inputBelowTslintDirective, options)).resolves.toBe(
+		inputBelowTslintDirective
+	);
 
 	await expect(
 		format(

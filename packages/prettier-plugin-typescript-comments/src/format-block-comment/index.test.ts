@@ -224,24 +224,34 @@ test('keeps relative indentation after the first paragraph of tag text', () => {
 		'/**\n * @returns foo\n *\n * - bar:\n *\n *     ```sh\n *     baz\n *     ```\n */'
 	);
 
-	for (const input of [
-		'/**\n * @returns foo\n *\n *     bar\n *\n * baz   qux\n */',
-		'/**\n * @returns foo\n *\n * - bar\n *     baz\n */',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const inputWithGutterParagraph =
+		'/**\n * @returns foo\n *\n *     bar\n *\n * baz   qux\n */';
+	const inputWithGutterListItem =
+		'/**\n * @returns foo\n *\n * - bar\n *     baz\n */';
+
+	expect(formatComment(inputWithGutterParagraph)).toBe(
+		inputWithGutterParagraph
+	);
+	expect(formatComment(inputWithGutterListItem)).toBe(
+		inputWithGutterListItem
+	);
 });
 
 test('keeps indented lines that look like tags as written', () => {
-	for (const input of [
-		'/**\n * foo\n *\t@param   bar baz\n */',
-		'/**\n * foo:\n *\n *     @sealed\n *     class Bar {}\n */',
-		'/**\n * @example\n *     @sealed\n *     class Foo {}\n */',
-		'/**\n * @param foo   bar\n *\t@param baz qux\n */',
-		'/**\n * @param foo   bar\n *     @param baz qux\n *     @param quux corge\n */',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const input = '/**\n * foo\n *\t@param   bar baz\n */';
+	const inputWithDecorator =
+		'/**\n * foo:\n *\n *     @sealed\n *     class Bar {}\n */';
+	const inputInExample =
+		'/**\n * @example\n *     @sealed\n *     class Foo {}\n */';
+	const inputInTagText = '/**\n * @param foo   bar\n *\t@param baz qux\n */';
+	const inputAtHangingIndent =
+		'/**\n * @param foo   bar\n *     @param baz qux\n *     @param quux corge\n */';
+
+	expect(formatComment(input)).toBe(input);
+	expect(formatComment(inputWithDecorator)).toBe(inputWithDecorator);
+	expect(formatComment(inputInExample)).toBe(inputInExample);
+	expect(formatComment(inputInTagText)).toBe(inputInTagText);
+	expect(formatComment(inputAtHangingIndent)).toBe(inputAtHangingIndent);
 });
 
 test('keeps tabs after the gutter in content kept as written', () => {
@@ -347,14 +357,17 @@ test.each(['# bar', '* * *', '--', '---', '==', '> bar', 'a | b'])(
 );
 
 test('keeps Markdown table rows on lines of their own', () => {
-	for (const input of [
-		'/**\n * a | b\n * --- | ---\n * 1 | 2\n * 3 | 4\n */',
-		'/**\n * | a | b |\n * |:--|--:|\n * | 1 | 2 |\n */',
-		'/**\n * | Name\n * | ---\n * | Foo\n */',
-		'/**\n * @returns foo\n *\n *     a | b\n *     --- | ---\n *     1 | 2\n */',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const input = '/**\n * a | b\n * --- | ---\n * 1 | 2\n * 3 | 4\n */';
+	const inputWithEdgePipes =
+		'/**\n * | a | b |\n * |:--|--:|\n * | 1 | 2 |\n */';
+	const inputWithOneColumn = '/**\n * | Name\n * | ---\n * | Foo\n */';
+	const inputInTag =
+		'/**\n * @returns foo\n *\n *     a | b\n *     --- | ---\n *     1 | 2\n */';
+
+	expect(formatComment(input)).toBe(input);
+	expect(formatComment(inputWithEdgePipes)).toBe(inputWithEdgePipes);
+	expect(formatComment(inputWithOneColumn)).toBe(inputWithOneColumn);
+	expect(formatComment(inputInTag)).toBe(inputInTag);
 
 	expect(
 		formatComment(
@@ -423,13 +436,26 @@ test('reflows comments around content kept as written', () => {
 });
 
 test('keeps words that would start a Markdown block with the word before them', () => {
-	for (const word of ['##', '***', '---', '==', '>', '___']) {
-		expect(
-			formatComment(`/**\n * foo bar ${word} baz\n */`, {
-				printWidth: 11,
-			})
-		).toBe(`/**\n * foo bar ${word}\n * baz\n */`);
-	}
+	const options = { printWidth: 11 };
+
+	expect(formatComment('/**\n * foo bar ## baz\n */', options)).toBe(
+		'/**\n * foo bar ##\n * baz\n */'
+	);
+	expect(formatComment('/**\n * foo bar *** baz\n */', options)).toBe(
+		'/**\n * foo bar ***\n * baz\n */'
+	);
+	expect(formatComment('/**\n * foo bar --- baz\n */', options)).toBe(
+		'/**\n * foo bar ---\n * baz\n */'
+	);
+	expect(formatComment('/**\n * foo bar == baz\n */', options)).toBe(
+		'/**\n * foo bar ==\n * baz\n */'
+	);
+	expect(formatComment('/**\n * foo bar > baz\n */', options)).toBe(
+		'/**\n * foo bar >\n * baz\n */'
+	);
+	expect(formatComment('/**\n * foo bar ___ baz\n */', options)).toBe(
+		'/**\n * foo bar ___\n * baz\n */'
+	);
 });
 
 test('keeps doc comments with a pragma on any line as written', () => {

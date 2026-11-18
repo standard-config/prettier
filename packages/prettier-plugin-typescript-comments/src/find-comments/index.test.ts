@@ -72,15 +72,27 @@ test('finds block comments on lines of their own', async () => {
 });
 
 test('reports whether Prettier rewrites the lines of trailing comments', async () => {
-	for (const [text, hasRewrittenLines] of [
-		['foo(a, b); // c\n', false],
-		['foo(a,\n  b); // c\n', true],
-		['foo(\n  // a\n);\n', false],
-	] as const) {
-		await expect(
-			findComments(text, 'babel', await getParserOptions(text))
-		).resolves.toHaveProperty('hasRewrittenLines', hasRewrittenLines);
-	}
+	const text = 'foo(a, b); // c\n';
+	const textWithRewrittenLines = 'foo(a,\n  b); // c\n';
+	const textWithCommentInArguments = 'foo(\n  // a\n);\n';
+
+	await expect(
+		findComments(text, 'babel', await getParserOptions(text))
+	).resolves.toHaveProperty('hasRewrittenLines', false);
+	await expect(
+		findComments(
+			textWithRewrittenLines,
+			'babel',
+			await getParserOptions(textWithRewrittenLines)
+		)
+	).resolves.toHaveProperty('hasRewrittenLines', true);
+	await expect(
+		findComments(
+			textWithCommentInArguments,
+			'babel',
+			await getParserOptions(textWithCommentInArguments)
+		)
+	).resolves.toHaveProperty('hasRewrittenLines', false);
 });
 
 test('finds `//` comments that follow code', async () => {

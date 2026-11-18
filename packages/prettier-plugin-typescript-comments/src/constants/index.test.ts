@@ -90,23 +90,21 @@ test('joins configuration comments with the paragraph above', () => {
 });
 
 test('keeps configuration comments after more than two slashes that start a paragraph as written', () => {
-	for (const input of [
-		'/// global   foo\n// bar',
-		'// foo\n//\n/// exported   bar\n// baz',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const input = '/// global   foo\n// bar';
+	const inputAfterEmptyLine = '// foo\n//\n/// exported   bar\n// baz';
+
+	expect(formatComment(input)).toBe(input);
+	expect(formatComment(inputAfterEmptyLine)).toBe(inputAfterEmptyLine);
 
 	expect(formatComment('// global   foo\n// bar')).toBe('// global foo bar');
 });
 
 test('keeps unfinished rule settings that start a paragraph as written', () => {
-	for (const input of [
-		'// eslint\n// foo: off',
-		'//#region foo\n// eslint\n// bar: off',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const input = '// eslint\n// foo: off';
+	const inputAfterDirective = '//#region foo\n// eslint\n// bar: off';
+
+	expect(formatComment(input)).toBe(input);
+	expect(formatComment(inputAfterDirective)).toBe(inputAfterDirective);
 });
 
 test('matches directive lines that continue on the next line', () => {

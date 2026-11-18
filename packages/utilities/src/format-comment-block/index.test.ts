@@ -228,14 +228,16 @@ test('starts a paragraph after indented lines', () => {
 });
 
 test('keeps lines that the syntax keeps as written on lines of their own', () => {
-	for (const input of [
-		'# foo\n# | bar   baz |\n# qux',
-		'# - foo\n# | bar |',
-		'# | kept\n# foo   bar',
-		'# directive foo\n# | bar |\n# directive baz',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const inputInParagraph = '# foo\n# | bar   baz |\n# qux';
+	const inputAfterListItem = '# - foo\n# | bar |';
+	const inputBelowKeptLine = '# | kept\n# foo   bar';
+	const inputBetweenDirectives =
+		'# directive foo\n# | bar |\n# directive baz';
+
+	expect(formatComment(inputInParagraph)).toBe(inputInParagraph);
+	expect(formatComment(inputAfterListItem)).toBe(inputAfterListItem);
+	expect(formatComment(inputBelowKeptLine)).toBe(inputBelowKeptLine);
+	expect(formatComment(inputBetweenDirectives)).toBe(inputBetweenDirectives);
 
 	expect(formatComment('# ```\n# | kept\n# ```\n# foo   bar')).toBe(
 		'# ```\n# | kept\n# ```\n# foo bar'
@@ -243,13 +245,13 @@ test('keeps lines that the syntax keeps as written on lines of their own', () =>
 });
 
 test('keeps lines that the syntax can’t start a paragraph with as written', () => {
-	for (const input of [
-		'## opener   foo\n# bar',
-		'# foo\n#\n## opener   bar\n# baz',
-		'#   foo\n## opener   bar\n# baz',
-	]) {
-		expect(formatComment(input)).toBe(input);
-	}
+	const input = '## opener   foo\n# bar';
+	const inputAfterEmptyLine = '# foo\n#\n## opener   bar\n# baz';
+	const inputAfterIndentedLine = '#   foo\n## opener   bar\n# baz';
+
+	expect(formatComment(input)).toBe(input);
+	expect(formatComment(inputAfterEmptyLine)).toBe(inputAfterEmptyLine);
+	expect(formatComment(inputAfterIndentedLine)).toBe(inputAfterIndentedLine);
 
 	expect(formatComment('# opener   foo\n# bar')).toBe('# opener foo bar');
 	expect(formatComment('# foo\n## opener   bar\n# baz')).toBe(
