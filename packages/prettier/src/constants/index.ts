@@ -1,5 +1,5 @@
-import createGlobSet from '../create-glob-set/index.ts';
-import getSupportedLanguagePatterns from '../get-supported-language-patterns/index.ts';
+import createGlobSet from '@standard-config/utilities/create-glob-set';
+import getSupportedLanguagePatterns from '@standard-config/utilities/get-supported-language-patterns';
 
 export const GLOB_SET_CSS = getSupportedLanguagePatterns(
 	'CSS',

@@ -2,6 +2,9 @@ import type {
 	EditorConfigProperties,
 	EditorConfigSection,
 } from '@standard-config/utilities/types';
+import createGlobSet from '@standard-config/utilities/create-glob-set';
+import assert from 'node:assert/strict';
+import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import {
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
@@ -9,10 +12,7 @@ import {
 	GLOB_SET_SHELL_HOOKS,
 	GLOB_SET_SHELL_PROPERTIES,
 	GLOB_SET_YAML,
-} from '@standard-config/utilities/constants';
-import createGlobSet from '@standard-config/utilities/create-glob-set';
-import assert from 'node:assert/strict';
-import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
+} from '../src/constants/index.ts';
 
 /**
  * The `[*]` section mirrors the base indentation options rather than

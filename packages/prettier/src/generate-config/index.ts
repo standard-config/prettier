@@ -5,6 +5,7 @@ import type {
 	StandardConfigOverrides,
 } from '../types/index.d.ts';
 import clone from '@standard-config/utilities/clone';
+import createGlobSet from '@standard-config/utilities/create-glob-set';
 import {
 	GLOB_SET_CSS,
 	GLOB_SET_GRAPHQL,
@@ -19,8 +20,7 @@ import {
 	GLOB_SET_TYPESCRIPT,
 	GLOB_SET_VUE,
 	GLOB_SET_YAML,
-} from '@standard-config/utilities/constants';
-import createGlobSet from '@standard-config/utilities/create-glob-set';
+} from '../constants/index.ts';
 
 /**
  * Generates the base Standard Config.
