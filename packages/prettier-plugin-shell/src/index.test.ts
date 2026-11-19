@@ -1,4 +1,4 @@
-import type { Plugin } from 'prettier';
+import type { Options, Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import { format } from 'prettier';
 import * as pluginSh from 'prettier-plugin-sh';
@@ -292,6 +292,69 @@ test('formats shell code in Markdown like shell scripts', async () => {
 
 	expect(output).toBe('```sh\nfoo() {\n  bar=$((baz))\n}\n```\n');
 	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('adds an empty line after a shebang', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format('#!/bin/sh\n# foo\nbar\n', options);
+
+	expect(output).toBe('#!/bin/sh\n\n# foo\nbar\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each([
+	{
+		input: '#! /usr/bin/env nix-shell\n#! nix-shell -i bash -p jq\njq --version\n',
+		output: '#! /usr/bin/env nix-shell\n#! nix-shell -i bash -p jq\n\njq --version\n',
+	},
+	{
+		input: '#! /usr/bin/env nix-shell\n#! nix-shell -i bash -p jq\n# foo   bar\njq --version\n',
+		output: '#! /usr/bin/env nix-shell\n#! nix-shell -i bash -p jq\n\n# foo bar\njq --version\n',
+	},
+])(
+	'keeps `#!` lines below a shebang together',
+	async ({ input, output: expectedOutput }) => {
+		const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('adds an empty line after a shebang when comments are left as written', async () => {
+	const options = {
+		filepath: 'foo.sh',
+		plugins: [pluginShell],
+		shCommentWrap: 'none',
+	} satisfies Options;
+
+	const output = await format('#!/bin/sh\nfoo # bar\n', options);
+
+	expect(output).toBe('#!/bin/sh\n\nfoo # bar\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('adds an empty line after a shebang in shell code in Markdown', async () => {
+	const options = { filepath: 'foo.md', plugins: [pluginShell] };
+
+	const output = await format('```sh\n#!/bin/sh\nfoo\n```\n', options);
+
+	expect(output).toBe('```sh\n#!/bin/sh\n\nfoo\n```\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps data files that start with `#!` as written', async () => {
+	const input = '#!foo\nbar=baz\n';
+
+	await expect(
+		format(input, {
+			filepath: 'foo.properties',
+			plugins: [pluginShell],
+		})
+	).resolves.toBe(input);
 });
 
 test('respects `checkIgnorePragma`', async () => {

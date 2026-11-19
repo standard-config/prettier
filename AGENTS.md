@@ -26,4 +26,3 @@
 
 - **Shared constants:** Keep `@standard-config/utilities/constants` free of work at module load beyond defining constants. Any dependency must be loadable by both the shell and TypeScript plugins. See the [module load rationale](.agents/PROJECT.md#shared-constants-without-module-load-work).
 - **Directive behavior:** Preserve the accepted [directive conversion policy](.agents/PROJECT.md#directive-conversion) and the line covered by [next-line directives](.agents/PROJECT.md#next-line-directives) when moving or reflowing comments. Keep reflow from creating directives or changing meaning on later runs. See the [formatting stability rationale](.agents/PROJECT.md#formatting-stability).
-- **Shebang spacing:** Preserve the plugins’ different behavior after a shebang. See the [shebang spacing decision](.agents/PROJECT.md#shebang-spacing).

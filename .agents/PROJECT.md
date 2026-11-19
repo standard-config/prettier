@@ -50,10 +50,6 @@ ShellCheck directives are deliberately excluded from this pattern. `# shellcheck
 
 Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ignore` in place. This preserves comment placement even though `prettier-plugin-sh` currently formats commands beneath that marker.
 
-### Shebang Spacing
-
-The shell plugin deliberately doesn’t add an empty line after a shebang. The TypeScript plugin does.
-
 ### Shell Limitations
 
 The shell plugin deliberately retains its default behavior of simplifying Markdown and MDX data fences such as `dotenv`, `gitignore`, and `properties` and moving trailing comments. `prettier-plugin-sh` maps both data and shell languages to `sh`, and Prettier passes the parser and enclosing file path without the fence language. For example, `FOO=$(($BAR + 1))` becomes `FOO=$((BAR + 1))`, and `foo # bar` in a `gitignore` block becomes `# bar` above `foo`, changing the pattern because only a leading `#` starts a gitignore comment. Standalone data files avoid these changes because `isPropertyFile` recognizes their names. An affected block can be excluded with `prettier-ignore`, using `<!-- prettier-ignore -->` on the line before the block in Markdown.

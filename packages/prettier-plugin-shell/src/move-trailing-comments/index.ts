@@ -238,8 +238,7 @@ function buildText(
 			// comment above it
 			if (
 				previousLine !== undefined &&
-				COMMENT_LINE_PATTERN.test(previousLine) &&
-				!(movedLines.length === 1 && previousLine.startsWith('#!'))
+				COMMENT_LINE_PATTERN.test(previousLine)
 			) {
 				movedLines.push(`${getIndentation(comment)}#`);
 			}

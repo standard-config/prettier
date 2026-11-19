@@ -1,5 +1,6 @@
 import type { Parser, ParserOptions, Printer } from 'prettier';
 import type { ParserName, PluginOptions } from '../types/index.d.ts';
+import separateShebang from '@standard-config/utilities/separate-shebang';
 import { isFindingComments } from '../find-comments/index.ts';
 import {
 	callParserWithCompatibility,
@@ -8,7 +9,6 @@ import {
 	markParserAsOwn,
 	withPriorParserOptions,
 } from '../plugin-hooks/index.ts';
-import separateShebang from '../separate-shebang/index.ts';
 import wrapComments from '../wrap-comments/index.ts';
 
 /**

@@ -1,5 +1,6 @@
-import type { Doc, ParserOptions, Plugin } from 'prettier';
+import type { ParserOptions, Plugin } from 'prettier';
 import type { PluginOptions } from './types/index.d.ts';
+import separateShebang from '@standard-config/utilities/separate-shebang';
 import * as pluginSh from 'prettier-plugin-sh';
 import isPropertyFile from './is-property-file/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
@@ -26,39 +27,46 @@ function getShOptions<T>(
 }
 
 /**
- * Prints shell code with `prettier-plugin-sh`, then wraps its comments as
- * `shCommentWrap` selects.
+ * Prints shell code with `prettier-plugin-sh`, separating a shebang from what
+ * follows and wrapping comments as `shCommentWrap` selects.
  */
-async function printWithWrappedComments(
+async function printShell(
 	...[path, options, print, args]: Parameters<ShPrint>
-): Promise<Doc> {
+): Promise<string> {
+	const isDataFile = isPropertyFile(options.filepath);
+
 	// Simplifying data files could change the values they hold
-	const shOptions = getShOptions(options, !isPropertyFile(options.filepath));
+	const shOptions = getShOptions(options, !isDataFile);
 
-	// `prettier-plugin-sh` prints asynchronously despite its `Doc` return type
-	const printed = await (shPrinters.sh.print(path, shOptions, print, args) as
-		Doc | Promise<Doc>);
-
-	const { shCommentWrap } = options as PluginOptions;
-
-	if (typeof printed !== 'string' || shCommentWrap === 'none') {
-		return printed;
-	}
-
-	// Code that printed as a string reprints as one
-	const reprint = async (text: string) =>
-		(await (shPrinters.sh.print(
+	// `prettier-plugin-sh` prints a string asynchronously despite its `Doc`
+	// return type
+	const printText = async (text: string) =>
+		shPrinters.sh.print(
 			path,
 			{ ...shOptions, originalText: text },
 			print,
 			args
-		) as Doc | Promise<Doc>)) as string;
+		) as unknown as Promise<string>;
+
+	const printed = await printText(options.originalText);
+
+	// Separating the shebang first puts a comment right below the `#!` lines
+	// in a block of its own. Otherwise, `wrapComments` would leave that
+	// comment as written and only reflow it in a second pass
+	//
+	// A `#!` line in a data file is a comment, not a shebang
+	const separated = isDataFile ? printed : separateShebang(printed);
+	const { shCommentWrap } = options as PluginOptions;
+
+	if (shCommentWrap === 'none') {
+		return separated;
+	}
 
 	// A `#` after an entry in a data file can belong to the entry itself
 	const text =
-		shCommentWrap === 'all' && !isPropertyFile(options.filepath)
-			? await moveTrailingComments(printed, shOptions, reprint)
-			: printed;
+		shCommentWrap === 'all' && !isDataFile
+			? await moveTrailingComments(separated, shOptions, printText)
+			: separated;
 
 	return wrapComments(text, shOptions);
 }
@@ -123,7 +131,7 @@ export const printers: Plugin['printers'] = {
 	sh: {
 		...shPrinters.sh,
 		// Prettier awaits the root print, which `prettier-plugin-sh` relies on too
-		print: printWithWrappedComments as unknown as ShPrint,
+		print: printShell as unknown as ShPrint,
 	},
 };
 
