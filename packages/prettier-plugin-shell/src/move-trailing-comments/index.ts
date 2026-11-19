@@ -58,9 +58,11 @@ export default async function moveTrailingComments(
 		// different code, and a moved `prettier-ignore` marker could keep a
 		// whole comment block from being reflowed. A directive or pragma could
 		// start applying to the whole file, and a `#!` comment could become a
-		// shebang
+		// shebang. Bats recognizes the `@test` marker only at the end of a
+		// function’s opening line
 		if (
 			comment.startsWith('#!') ||
+			commentText === '@test' ||
 			DIRECTIVE_PATTERN.test(commentText) ||
 			IGNORE_MARKER_PATTERN.test(comment) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||

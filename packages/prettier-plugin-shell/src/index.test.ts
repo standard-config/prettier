@@ -357,6 +357,76 @@ test('keeps data files that start with `#!` as written', async () => {
 	).resolves.toBe(input);
 });
 
+test('formats Bats files', async () => {
+	const options = {
+		filepath: 'foo.bats',
+		plugins: [pluginShell],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'@test "foo" {\n  # bar baz qux quux corge\n  run grault # garply\n}\n',
+		options
+	);
+
+	expect(output).toBe(
+		'@test "foo" {\n  # bar baz qux quux\n  # corge\n  #\n  # garply\n  run grault\n}\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('formats Bats code in Markdown after a Bats shebang', async () => {
+	const options = { filepath: 'foo.md', plugins: [pluginShell] };
+
+	const output = await format(
+		'```bats\n#!/usr/bin/env bats\n@test "foo" {\n  run bar # baz\n}\n```\n',
+		options
+	);
+
+	expect(output).toBe(
+		'```bats\n#!/usr/bin/env bats\n\n@test "foo" {\n  # baz\n  run bar\n}\n```\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('formats mksh scripts', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format('#!/bin/mksh\nfoo |& # bar\n', options);
+
+	expect(output).toBe('#!/bin/mksh\n\n# bar\nfoo |&\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps Bats `@test` comments on their function lines', async () => {
+	const input = 'foo() { # @test\n  run bar\n}\n';
+
+	await expect(
+		format(input, { filepath: 'foo.bats', plugins: [pluginShell] })
+	).resolves.toBe(input);
+});
+
+test('reflows full-line `@test` comments as text', async () => {
+	const options = {
+		filepath: 'foo.bats',
+		plugins: [pluginShell],
+		printWidth: 10,
+	};
+
+	const output = await format('# foo @test\nfoo\n', options);
+
+	expect(output).toBe('# foo\n# @test\nfoo\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps data files that start with an mksh shebang from being parsed as mksh', async () => {
+	const input = '#!/bin/mksh\n[[ $foo =~ bar ]]\n';
+
+	await expect(
+		format(input, { filepath: 'foo.properties', plugins: [pluginShell] })
+	).resolves.toBe(input);
+});
+
 test('respects `checkIgnorePragma`', async () => {
 	const input = '# @noformat\nfoo    bar\n';
 

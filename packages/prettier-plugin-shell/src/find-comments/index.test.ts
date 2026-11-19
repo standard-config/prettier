@@ -1,8 +1,8 @@
 import type { ParserOptions } from 'prettier';
 import { expect, test } from 'vite-plus/test';
+import { BATS_VARIANT } from '../constants/index.ts';
 import findComments from './index.ts';
 
-const BATS_VARIANT = 8;
 const OPTIONS = {} as unknown as ParserOptions;
 
 test('finds comments on lines of their own', async () => {

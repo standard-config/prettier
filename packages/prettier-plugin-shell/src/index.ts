@@ -2,6 +2,7 @@ import type { ParserOptions, Plugin } from 'prettier';
 import type { PluginOptions } from './types/index.d.ts';
 import separateShebang from '@standard-config/utilities/separate-shebang';
 import * as pluginSh from 'prettier-plugin-sh';
+import inferVariant from './infer-variant/index.ts';
 import isPropertyFile from './is-property-file/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
@@ -36,7 +37,10 @@ async function printShell(
 	const isDataFile = isPropertyFile(options.filepath);
 
 	// Simplifying data files could change the values they hold
-	const shOptions = getShOptions(options, !isDataFile);
+	const shOptions = {
+		...getShOptions(options, !isDataFile),
+		variant: inferVariant(options.originalText, options.filepath),
+	};
 
 	// `prettier-plugin-sh` prints a string asynchronously despite its `Doc`
 	// return type
@@ -112,7 +116,14 @@ export const options: Plugin['options'] = {
 // Prettier prints with the printer of the plugin that supplies the parser
 export const parsers: Plugin['parsers'] = {
 	dockerfile: shParsers.dockerfile,
-	sh: shParsers.sh,
+	sh: {
+		...shParsers.sh,
+		parse: async (text, options) =>
+			shParsers.sh.parse(text, {
+				...options,
+				variant: inferVariant(text, options.filepath),
+			}),
+	},
 };
 
 export const printers: Plugin['printers'] = {
