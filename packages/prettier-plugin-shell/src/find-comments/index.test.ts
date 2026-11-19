@@ -89,7 +89,7 @@ test('excludes string lines before trailing comments and continued heredoc lines
 });
 
 test('ignores source text that resembles a mark', async () => {
-	const input = ['# foo', 'bar=prettier_plugin_shell_comments_mark_0_'];
+	const input = ['# foo', 'bar=prettier_plugin_shell_mark_0_'];
 
 	await expect(findComments(input, OPTIONS)).resolves.toStrictEqual({
 		fullLine: new Set([0]),

@@ -1,6 +1,6 @@
 import type { PrettierPlugin } from '@standard-config/utilities/types';
 import type { Options as PrettierOptions } from 'prettier';
-import type { ShPrintOptions as PluginShellOptions } from 'prettier-plugin-sh';
+import type { ShPrintOptions as PluginShOptions } from 'prettier-plugin-sh';
 
 type DefaultOptions = {
 	/**
@@ -39,7 +39,7 @@ type DefaultOptions = {
 	 * Remove redundant syntax from shell scripts.
 	 * @default true
 	 */
-	simplify?: PluginShellOptions['simplify'];
+	simplify?: PluginShOptions['simplify'];
 	/**
 	 * Use single quotes instead of double quotes.
 	 * @default true

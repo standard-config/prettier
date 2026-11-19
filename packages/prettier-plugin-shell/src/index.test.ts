@@ -1,9 +1,9 @@
 import type { Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import { format } from 'prettier';
-import * as pluginShell from 'prettier-plugin-sh';
+import * as pluginSh from 'prettier-plugin-sh';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
-import * as pluginShellComments from './index.ts';
+import * as pluginShell from './index.ts';
 
 const TEST_SHELL = `#!/bin/sh
 
@@ -41,14 +41,14 @@ EOF
 `;
 
 test('exposes correct public API', () => {
-	expectTypeOf(pluginShellComments).toExtend<Plugin>();
+	expectTypeOf(pluginShell).toExtend<Plugin>();
 
-	expect(pluginShellComments).toHaveProperty('options');
-	expect(pluginShellComments).toHaveProperty('parsers');
-	expect(pluginShellComments).toHaveProperty('printers');
+	expect(pluginShell).toHaveProperty('options');
+	expect(pluginShell).toHaveProperty('parsers');
+	expect(pluginShell).toHaveProperty('printers');
 
-	expect(pluginShellComments.parsers).toHaveProperty('sh');
-	expect(pluginShellComments.printers).toHaveProperty('sh');
+	expect(pluginShell.parsers).toHaveProperty('sh');
+	expect(pluginShell.printers).toHaveProperty('sh');
 
 	expectTypeOf<PluginOptions>().toBeObject();
 });
@@ -56,7 +56,7 @@ test('exposes correct public API', () => {
 test('formats shell comments', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 	};
 
 	const output = await format(TEST_SHELL, options);
@@ -68,7 +68,7 @@ test('formats shell comments', async () => {
 test('keeps directives that cover the next line next to their code', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 	};
 
 	const input = '# foo\n# nosemgrep: bar\neval "$baz" # qux\n';
@@ -79,7 +79,7 @@ test('keeps directives that cover the next line next to their code', async () =>
 test('keeps wrapped comments from starting lines with directives that cover the next line', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		printWidth: 40,
 	};
 
@@ -99,10 +99,10 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 
 	const expectedOutput = await format(input, {
 		parser: 'sh',
-		plugins: [pluginShell],
+		plugins: [pluginSh],
 	});
 
-	const options = { parser: 'sh', plugins: [pluginShellComments] };
+	const options = { parser: 'sh', plugins: [pluginShell] };
 
 	const output = await format(input, options);
 
@@ -113,7 +113,7 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 test('formats comments when listed after `prettier-plugin-sh`', async () => {
 	const options = {
 		filepath: 'foo.sh',
-		plugins: [pluginShell, pluginShellComments],
+		plugins: [pluginSh, pluginShell],
 		printWidth: 20,
 	};
 
@@ -126,7 +126,7 @@ test('formats comments when listed after `prettier-plugin-sh`', async () => {
 test('formats comments in other files that use the `sh` parser', async () => {
 	const options = {
 		filepath: '.gitignore',
-		plugins: [pluginShell, pluginShellComments],
+		plugins: [pluginSh, pluginShell],
 		printWidth: 20,
 	};
 
@@ -142,7 +142,7 @@ test('formats comments in other files that use the `sh` parser', async () => {
 test('keeps code fences in comments as written', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		printWidth: 20,
 	};
 
@@ -160,7 +160,7 @@ test('keeps code fences in comments as written', async () => {
 test('respects `printWidth`', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		printWidth: 12,
 	};
 
@@ -173,7 +173,7 @@ test('respects `printWidth`', async () => {
 test('respects `useTabs`', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		printWidth: 16,
 		tabWidth: 4,
 		useTabs: true,
@@ -194,13 +194,13 @@ test('respects `checkIgnorePragma`', async () => {
 	const expectedOutput = await format(input, {
 		checkIgnorePragma: true,
 		parser: 'sh',
-		plugins: [pluginShell],
+		plugins: [pluginSh],
 	});
 
 	const options = {
 		checkIgnorePragma: true,
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 	};
 
 	const output = await format(input, options);
@@ -215,13 +215,13 @@ test('respects `insertPragma`', async () => {
 	const expectedOutput = await format(input, {
 		insertPragma: true,
 		parser: 'sh',
-		plugins: [pluginShell],
+		plugins: [pluginSh],
 	});
 
 	const options = {
 		insertPragma: true,
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 	};
 
 	const output = await format(input, options);
@@ -233,7 +233,7 @@ test('respects `insertPragma`', async () => {
 test('respects `requirePragma`', async () => {
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		requirePragma: true,
 	};
 
@@ -251,7 +251,7 @@ test('supports `shCommentWrap`', async () => {
 	const input = '# foo bar baz\n# qux\ncorge # grault\n';
 	const options = {
 		parser: 'sh',
-		plugins: [pluginShellComments],
+		plugins: [pluginShell],
 		printWidth: 20,
 	};
 
@@ -275,7 +275,7 @@ test('supports `shCommentWrap`', async () => {
 		'full-line': '# foo bar baz qux\ncorge # grault\n',
 		'none': await format(input, {
 			parser: 'sh',
-			plugins: [pluginShell],
+			plugins: [pluginSh],
 			printWidth: 20,
 		}),
 	});
@@ -294,7 +294,7 @@ test('keeps trailing comments in property files', async () => {
 	await expect(
 		format(input, {
 			filepath: '.env',
-			plugins: [pluginShell, pluginShellComments],
+			plugins: [pluginSh, pluginShell],
 		})
 	).resolves.toBe(input);
 });

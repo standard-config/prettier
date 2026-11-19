@@ -1,6 +1,6 @@
 import type { ParserOptions } from 'prettier';
 import { format } from 'prettier';
-import * as pluginShell from 'prettier-plugin-sh';
+import * as pluginSh from 'prettier-plugin-sh';
 
 /**
  * Prints shell code without its comments, or returns `undefined` when the
@@ -15,7 +15,7 @@ export default async function printWithoutComments(
 			filepath: options.filepath,
 			keepComments: false,
 			parser: 'sh',
-			plugins: [pluginShell],
+			plugins: [pluginSh],
 			variant: options.variant,
 		});
 	} catch {

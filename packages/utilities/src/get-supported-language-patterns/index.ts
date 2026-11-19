@@ -1,5 +1,5 @@
 import { getSupportInfo } from 'prettier';
-import { languages as LANGUAGES_PLUGIN_SHELL } from 'prettier-plugin-sh';
+import { languages as LANGUAGES_PLUGIN_SH } from 'prettier-plugin-sh';
 import createGlobSet from '../create-glob-set/index.ts';
 
 const { languages: LANGUAGES_CORE } = await getSupportInfo();
@@ -7,7 +7,7 @@ const { languages: LANGUAGES_CORE } = await getSupportInfo();
 const LANGUAGES = [
 	/* prettier-ignore */
 	...LANGUAGES_CORE,
-	...LANGUAGES_PLUGIN_SHELL,
+	...LANGUAGES_PLUGIN_SH,
 ];
 
 /**

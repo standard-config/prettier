@@ -6,7 +6,7 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 ### Shared Constants Without Module Load Work
 
-Both comment plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#comment-plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.
+The shell and TypeScript plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.
 
 `@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
 
@@ -44,7 +44,7 @@ Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ig
 
 ### Shebang Spacing
 
-By maintainer decision, the shell comments plugin doesn’t add an empty line after a shebang. The TypeScript plugin does.
+By maintainer decision, the shell plugin doesn’t add an empty line after a shebang. The TypeScript plugin does.
 
 ### TypeScript Limitations
 

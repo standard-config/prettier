@@ -3,6 +3,6 @@ export const DIRECTIVE_PATTERN =
 
 export const IGNORE_MARKER_PATTERN = /^#+[ \t]*prettier-ignore$/;
 
-export const MARK_PREFIX = 'prettier_plugin_shell_comments_mark_';
+export const MARK_PREFIX = 'prettier_plugin_shell_mark_';
 
 export const PRAGMA_PATTERN = /^@(?:format|prettier)/;

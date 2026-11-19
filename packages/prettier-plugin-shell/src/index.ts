@@ -1,11 +1,11 @@
 import type { Doc, Plugin } from 'prettier';
 import type { PluginOptions } from './types/index.d.ts';
-import * as pluginShell from 'prettier-plugin-sh';
+import * as pluginSh from 'prettier-plugin-sh';
 import isPropertyFile from './is-property-file/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
 
-const { parsers: shellParsers, printers: shellPrinters } = pluginShell;
+const { parsers: shellParsers, printers: shellPrinters } = pluginSh;
 
 /**
  * Prints shell code with `prettier-plugin-sh`, then wraps its comments as
@@ -60,7 +60,7 @@ export const printers: Plugin['printers'] = {
 };
 
 export const options: Plugin['options'] = {
-	...pluginShell.options,
+	...pluginSh.options,
 	shCommentWrap: {
 		category: 'Shell',
 		description: 'Control wrapping for comments.',

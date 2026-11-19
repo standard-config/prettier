@@ -1,6 +1,6 @@
 import { defineConfig } from '@standard-config/prettier';
-import * as pluginShellComments from 'prettier-plugin-shell-comments';
+import * as pluginShell from 'prettier-plugin-shell';
 
 export default defineConfig({
-	plugins: [pluginShellComments],
+	plugins: [pluginShell],
 });

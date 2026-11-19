@@ -1,13 +1,13 @@
 import type { ParserOptions } from 'prettier';
 import { format } from 'prettier';
-import * as pluginShell from 'prettier-plugin-sh';
+import * as pluginSh from 'prettier-plugin-sh';
 import { expect, test } from 'vite-plus/test';
 import moveTrailingComments from './index.ts';
 
 const OPTIONS = { tabWidth: 2, useTabs: false } as unknown as ParserOptions;
 
 async function reprint(text: string): Promise<string> {
-	const output = await format(text, { parser: 'sh', plugins: [pluginShell] });
+	const output = await format(text, { parser: 'sh', plugins: [pluginSh] });
 	return output;
 }
 
