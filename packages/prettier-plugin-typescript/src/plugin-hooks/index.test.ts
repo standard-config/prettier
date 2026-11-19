@@ -9,7 +9,7 @@ import { format, formatWithCursor } from 'prettier';
 import { parsers as babelParsers } from 'prettier/plugins/babel';
 import { parsers as typescriptParsers } from 'prettier/plugins/typescript';
 import { expect, test, vi } from 'vite-plus/test';
-import * as pluginTypeScriptComments from '../index.ts';
+import * as pluginTypeScript from '../index.ts';
 import {
 	createPriorParserResolver,
 	getParserDelegation,
@@ -26,7 +26,7 @@ const JAVASCRIPT_PARSER_NAMES = [
 const TEST_JAVASCRIPT = 'foo(  bar  )\n';
 
 function getDirectParser(
-	plugin: typeof pluginTypeScriptComments,
+	plugin: typeof pluginTypeScript,
 	parserName: ParserName
 ): Parser {
 	const parser = plugin.parsers?.[parserName];
@@ -52,9 +52,9 @@ function createLocationFunctions(): Pick<Parser, 'locEnd' | 'locStart'> {
 }
 
 function createRejectionFixture() {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const delegationKey = Symbol.for(
-		'prettier-plugin-typescript-comments.parser-delegation'
+		'prettier-plugin-typescript.parser-delegation'
 	);
 
 	const error = new Error();
@@ -108,7 +108,7 @@ function createRejectionFixture() {
 		locEnd: parser.locEnd,
 		locStart: parser.locStart,
 		parser: 'babel',
-		plugins: [priorPlugin, wrapperPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, wrapperPlugin, pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const outerContext = {
@@ -147,7 +147,7 @@ test('returns `undefined` without a prior parser', async () => {
 	const resolvePriorParser = createPriorParserResolver(
 		'babel',
 		babelParsers.babel.astFormat,
-		getDirectParser(pluginTypeScriptComments, 'babel')
+		getDirectParser(pluginTypeScript, 'babel')
 	);
 
 	const options = {
@@ -164,10 +164,7 @@ test('returns `undefined` without a prior parser', async () => {
 });
 
 test('doesn’t resolve canonical parsers for aliased exports', async () => {
-	const currentParser = getDirectParser(
-		pluginTypeScriptComments,
-		'typescript'
-	);
+	const currentParser = getDirectParser(pluginTypeScript, 'typescript');
 	const initializeCanonicalParser = vi.fn(async (): Promise<Parser> => {
 		await Promise.resolve();
 		return typescriptParsers.typescript;
@@ -198,7 +195,7 @@ test('doesn’t resolve canonical parsers for aliased exports', async () => {
 });
 
 test('preserves the selected parser name between hooks', async () => {
-	const currentParser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const currentParser = getDirectParser(pluginTypeScript, 'babel');
 	const priorParser: Parser = {
 		...babelParsers.babel,
 		preprocess: (text) => text,
@@ -214,7 +211,7 @@ test('preserves the selected parser name between hooks', async () => {
 
 	const options = {
 		parser: 'babel',
-		plugins: [priorPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	let result = await resolvePriorParser(options, 'preprocess');
@@ -229,7 +226,7 @@ test('preserves the selected parser name between hooks', async () => {
 });
 
 test('sets and restores prior parser location functions', async () => {
-	const currentParser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const currentParser = getDirectParser(pluginTypeScript, 'babel');
 	const { locEnd, locStart } = createLocationFunctions();
 
 	const priorParser: Parser = {
@@ -244,7 +241,7 @@ test('sets and restores prior parser location functions', async () => {
 		astFormat: currentParser.astFormat,
 		locEnd: currentParser.locEnd,
 		locStart: currentParser.locStart,
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const originalPlugins = options.plugins;
@@ -268,7 +265,7 @@ test('sets and restores prior parser location functions', async () => {
 });
 
 test('doesn’t treat delegated options as entry changes for another hook', async () => {
-	const currentParser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const currentParser = getDirectParser(pluginTypeScript, 'babel');
 	const priorParser: Parser = {
 		...babelParsers.babel,
 		locEnd: (node) => babelParsers.babel.locEnd(node),
@@ -293,7 +290,7 @@ test('doesn’t treat delegated options as entry changes for another hook', asyn
 		locEnd: currentParser.locEnd,
 		locStart: currentParser.locStart,
 		parser: 'babel',
-		plugins: [priorPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const originalPlugins = options.plugins;
@@ -328,7 +325,7 @@ test('returns the active delegation only for its hook and parser', async () => {
 	};
 
 	const options = {
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const callback = vi.fn((delegatedOptions: ParserOptions) => {
@@ -361,16 +358,13 @@ test('returns the active delegation only for its hook and parser', async () => {
 test.each(['parse', 'preprocess'] as const)(
 	'retains prior parser locations only after `%s` succeeds',
 	async (hook) => {
-		const currentParser = getDirectParser(
-			pluginTypeScriptComments,
-			'babel'
-		);
+		const currentParser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		const priorParser: Parser = { ...babelParsers.babel, locEnd, locStart };
 
 		const lifecycleState: ResolvedPriorParser['lifecycleState'] = {};
-		const plugins: ParserOptions['plugins'] = [pluginTypeScriptComments];
+		const plugins: ParserOptions['plugins'] = [pluginTypeScript];
 
 		const options = {
 			astFormat: currentParser.astFormat,
@@ -420,16 +414,13 @@ test.each(['parse', 'preprocess'] as const)(
 test.each(['parse', 'preprocess'] as const)(
 	'restores prior parser options when `%s` rejects',
 	async (hook) => {
-		const currentParser = getDirectParser(
-			pluginTypeScriptComments,
-			'babel'
-		);
+		const currentParser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		const priorParser: Parser = { ...babelParsers.babel, locEnd, locStart };
 
 		const lifecycleState: ResolvedPriorParser['lifecycleState'] = {};
-		const plugins: ParserOptions['plugins'] = [pluginTypeScriptComments];
+		const plugins: ParserOptions['plugins'] = [pluginTypeScript];
 
 		const options = {
 			astFormat: currentParser.astFormat,
@@ -477,10 +468,7 @@ test.each(['parse', 'preprocess'] as const)(
 test.each(['parse', 'preprocess'] as const)(
 	'preserves hook-written lifecycle changes when `%s` rejects',
 	async (hook) => {
-		const currentParser = getDirectParser(
-			pluginTypeScriptComments,
-			'babel'
-		);
+		const currentParser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		const replacementPlugins: ParserOptions['plugins'] = [];
@@ -491,7 +479,7 @@ test.each(['parse', 'preprocess'] as const)(
 			astFormat: currentParser.astFormat,
 			locEnd: currentParser.locEnd,
 			locStart: currentParser.locStart,
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		} as unknown as ParserOptions;
 
 		const error = new Error();
@@ -531,7 +519,7 @@ test.each(['parse', 'preprocess'] as const)(
 );
 
 test('distinguishes adopted entry locations from explicit resets', async () => {
-	const currentParser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const currentParser = getDirectParser(pluginTypeScript, 'babel');
 	const { locEnd, locStart } = createLocationFunctions();
 
 	const priorPlugin: Plugin = {
@@ -555,7 +543,7 @@ test('distinguishes adopted entry locations from explicit resets', async () => {
 		locEnd: currentParser.locEnd,
 		locStart: currentParser.locStart,
 		parser: 'babel',
-		plugins: [priorPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const resolvedPriorParser = await resolvePriorParser(options, 'parse');
@@ -600,10 +588,7 @@ test('distinguishes adopted entry locations from explicit resets', async () => {
 test.each(['parse', 'preprocess'] as const)(
 	'tracks entry option resets after `%s` rejects',
 	async (hook) => {
-		const currentParser = getDirectParser(
-			pluginTypeScriptComments,
-			'babel'
-		);
+		const currentParser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		const priorPlugin: Plugin = {
@@ -626,7 +611,7 @@ test.each(['parse', 'preprocess'] as const)(
 			locEnd: currentParser.locEnd,
 			locStart: currentParser.locStart,
 			parser: 'babel',
-			plugins: [priorPlugin, pluginTypeScriptComments],
+			plugins: [priorPlugin, pluginTypeScript],
 		} as unknown as ParserOptions;
 
 		const originalPlugins = options.plugins;
@@ -732,7 +717,7 @@ test('respects `cursorOffset` with prior parser locations', async () => {
 		await formatWithCursor(TEST_JAVASCRIPT, {
 			cursorOffset,
 			parser: 'babel',
-			plugins: [priorPlugin, pluginTypeScriptComments],
+			plugins: [priorPlugin, pluginTypeScript],
 		});
 
 	expect(formatted).not.toBe(TEST_JAVASCRIPT);
@@ -741,14 +726,14 @@ test('respects `cursorOffset` with prior parser locations', async () => {
 });
 
 test('preserves plugin lists reassigned by prior parsers', async () => {
-	const currentParser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const currentParser = getDirectParser(pluginTypeScript, 'babel');
 	const reassignedPlugins: ParserOptions['plugins'] = [];
 
 	const options = {
 		astFormat: currentParser.astFormat,
 		locEnd: currentParser.locEnd,
 		locStart: currentParser.locStart,
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	await withPriorParserOptions(
@@ -808,10 +793,10 @@ test('rejects prior parsers with incompatible AST formats', async () => {
 	await expect(
 		format(TEST_JAVASCRIPT, {
 			parser: 'babel',
-			plugins: [customPlugin, pluginTypeScriptComments],
+			plugins: [customPlugin, pluginTypeScript],
 		})
 	).rejects.toThrowErrorMatchingInlineSnapshot(
-		`[TypeError: [prettier-plugin-typescript-comments] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`custom-javascript\`]`
+		`[TypeError: [prettier-plugin-typescript] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`custom-javascript\`]`
 	);
 });
 
@@ -836,7 +821,7 @@ test('passes compatible options to prior parsers', async () => {
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'typescript',
-		plugins: [observingPlugin, pluginTypeScriptComments],
+		plugins: [observingPlugin, pluginTypeScript],
 		printWidth: 80,
 	});
 
@@ -875,7 +860,7 @@ test('shares options between prior `preprocess` and `parse` hooks', async () => 
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [statefulPlugin, pluginTypeScriptComments],
+		plugins: [statefulPlugin, pluginTypeScript],
 	});
 
 	expect(observedState).toBe(true);
@@ -886,7 +871,7 @@ test('shares options between prior `preprocess` and `parse` hooks', async () => 
 test('ignores plugins with an `undefined` parser map', async () => {
 	const expectedOutput = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	});
 
 	const output = await format(TEST_JAVASCRIPT, {
@@ -894,7 +879,7 @@ test('ignores plugins with an `undefined` parser map', async () => {
 		plugins: [
 			/* prettier-ignore */
 			{ parsers: undefined },
-			pluginTypeScriptComments,
+			pluginTypeScript,
 		],
 	});
 
@@ -917,7 +902,7 @@ test.each([
 ] as const)(
 	'runs lazy copied hooks once when placed %s with the `%s` parser',
 	async (placement, parserName) => {
-		const parser = getDirectParser(pluginTypeScriptComments, parserName);
+		const parser = getDirectParser(pluginTypeScript, parserName);
 		const parse = vi.fn(function (
 			this: Parser,
 			text: string,
@@ -948,21 +933,13 @@ test.each([
 
 		const expectedOutput = await format('foo(baz,   bar  )\n', {
 			parser: parserName,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		});
 
 		const plugins = {
-			'after this plugin': [
-				pluginOxc,
-				pluginTypeScriptComments,
-				wrapperPlugin,
-			],
+			'after this plugin': [pluginOxc, pluginTypeScript, wrapperPlugin],
 			'alone': [pluginOxc, wrapperPlugin],
-			'before this plugin': [
-				pluginOxc,
-				wrapperPlugin,
-				pluginTypeScriptComments,
-			],
+			'before this plugin': [pluginOxc, wrapperPlugin, pluginTypeScript],
 		}[placement];
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -1032,7 +1009,7 @@ test.each([
 ] as const)(
 	'runs %s after plugin list replacement with the `%s` parser',
 	async (_, parserName, hook, preserveReceiver) => {
-		const parser = getDirectParser(pluginTypeScriptComments, parserName);
+		const parser = getDirectParser(pluginTypeScript, parserName);
 		const priorHook = vi.fn((text: string, options: ParserOptions) =>
 			parser[hook]!(text.replace('(', '(baz, '), options)
 		);
@@ -1067,17 +1044,12 @@ test.each([
 
 		const expectedOutput = await format('foo(baz,   bar  )\n', {
 			parser: parserName,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		});
 
 		const output = await format(TEST_JAVASCRIPT, {
 			parser: parserName,
-			plugins: [
-				pluginOxc,
-				innerPlugin,
-				outerPlugin,
-				pluginTypeScriptComments,
-			],
+			plugins: [pluginOxc, innerPlugin, outerPlugin, pluginTypeScript],
 		});
 
 		expect(priorHook).toHaveBeenCalledTimes(1);
@@ -1122,7 +1094,7 @@ test('preserves parser lifecycle state after plugin list reassignment', async ()
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [lazyPlugin, pluginTypeScriptComments],
+		plugins: [lazyPlugin, pluginTypeScript],
 	});
 
 	expect(initializeParser).toHaveBeenCalledTimes(1);
@@ -1152,7 +1124,7 @@ test('preserves reassigned plugins with the current plugin omitted', async () =>
 
 	const replacementPlugins: ParserOptions['plugins'] = [
 		replacementPlugin,
-		pluginTypeScriptComments,
+		pluginTypeScript,
 	];
 
 	const { locEnd, locStart } = createLocationFunctions();
@@ -1188,7 +1160,7 @@ test('preserves reassigned plugins with the current plugin omitted', async () =>
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [lazyPlugin, pluginTypeScriptComments],
+		plugins: [lazyPlugin, pluginTypeScript],
 	});
 
 	expect(initializeParser).toHaveBeenCalledTimes(1);
@@ -1254,7 +1226,7 @@ test('preserves reassigned plugins without omitted plugins', async () => {
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [lazyPlugin, pluginTypeScriptComments],
+		plugins: [lazyPlugin, pluginTypeScript],
 	});
 
 	expect(initializeParser).toHaveBeenCalledTimes(1);
@@ -1267,7 +1239,7 @@ test('preserves reassigned plugins without omitted plugins', async () => {
 });
 
 test('omits resolved lazy plugin copies from prior parser options', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 
 	let observedPlugins: ParserOptions['plugins'] | undefined;
 
@@ -1296,7 +1268,7 @@ test('omits resolved lazy plugin copies from prior parser options', async () => 
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [observingPlugin, lazyPlugin, pluginTypeScriptComments],
+		plugins: [observingPlugin, lazyPlugin, pluginTypeScript],
 	});
 
 	expect(initializeParser).toHaveBeenCalledTimes(1);
@@ -1323,7 +1295,7 @@ test('doesn’t initialize shadowed lazy parsers', async () => {
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [lazyPlugin, priorPlugin, pluginTypeScriptComments],
+		plugins: [lazyPlugin, priorPlugin, pluginTypeScript],
 	});
 
 	expect(initializeParser).not.toHaveBeenCalled();
@@ -1349,7 +1321,7 @@ test('passes the compatibility options argument to prior parsers', async () => {
 
 	await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [legacyPlugin, pluginTypeScriptComments],
+		plugins: [legacyPlugin, pluginTypeScript],
 	});
 
 	const [, options, compatibilityOptions] = parse.mock.lastCall!;
@@ -1358,24 +1330,24 @@ test('passes the compatibility options argument to prior parsers', async () => {
 });
 
 test('matches its own output after wrappers that copy the current parser hooks', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const wrapperPlugin = createBabelWrapperPlugin({ ...parser });
 
 	const expectedOutput = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	});
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [wrapperPlugin, pluginTypeScriptComments],
+		plugins: [wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(output).toBe(expectedOutput);
 });
 
 test('continues to prior parsers through copied wrappers', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 
 	const priorPlugin: Plugin = {
 		parsers: {
@@ -1390,19 +1362,19 @@ test('continues to prior parsers through copied wrappers', async () => {
 
 	const expectedOutput = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [priorPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, pluginTypeScript],
 	});
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [priorPlugin, wrapperPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(output).toBe(expectedOutput);
 });
 
 test('avoids recursion through wrappers that inherit from the current parser', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	let parseCallCount = 0;
 
 	const wrapperParser = {
@@ -1428,7 +1400,7 @@ test('avoids recursion through wrappers that inherit from the current parser', a
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [wrapperPlugin, pluginTypeScriptComments],
+		plugins: [wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(output).toBe(expectedOutput);
@@ -1436,7 +1408,7 @@ test('avoids recursion through wrappers that inherit from the current parser', a
 });
 
 test('matches the wrapper’s output when it reuses the current `parse` function', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const wrapperPlugin = createBabelWrapperPlugin({
 		...parser,
 		preprocess: () => 'foo(  baz  )\n',
@@ -1449,14 +1421,14 @@ test('matches the wrapper’s output when it reuses the current `parse` function
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [wrapperPlugin, pluginTypeScriptComments],
+		plugins: [wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(output).toBe(expectedOutput);
 });
 
 test('rejects incompatible wrappers before skipping shared hooks', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 
 	const wrapperPlugin = createBabelWrapperPlugin({
 		...parser,
@@ -1467,15 +1439,15 @@ test('rejects incompatible wrappers before skipping shared hooks', async () => {
 	await expect(
 		format(TEST_JAVASCRIPT, {
 			parser: 'babel',
-			plugins: [wrapperPlugin, pluginTypeScriptComments],
+			plugins: [wrapperPlugin, pluginTypeScript],
 		})
 	).rejects.toThrowErrorMatchingInlineSnapshot(
-		`[TypeError: [prettier-plugin-typescript-comments] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`incompatible-javascript\`]`
+		`[TypeError: [prettier-plugin-typescript] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`incompatible-javascript\`]`
 	);
 });
 
 test('avoids recursion through wrappers that copy `preprocess`', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const wrapperPlugin = createBabelWrapperPlugin({
 		...parser,
 		parse: (text, options) => babelParsers.babel.parse(text, options),
@@ -1488,7 +1460,7 @@ test('avoids recursion through wrappers that copy `preprocess`', async () => {
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [wrapperPlugin, pluginTypeScriptComments],
+		plugins: [wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(output).toBe(expectedOutput);
@@ -1497,7 +1469,7 @@ test('avoids recursion through wrappers that copy `preprocess`', async () => {
 test.each(['after this plugin', 'alone', 'before this plugin'] as const)(
 	'uses location fields from a copied wrapper placed %s only when Prettier selects it',
 	async (placement) => {
-		const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+		const parser = getDirectParser(pluginTypeScript, 'babel');
 
 		const locEnd = vi.fn(babelParsers.babel.locEnd);
 		const locStart = vi.fn(babelParsers.babel.locStart);
@@ -1529,20 +1501,16 @@ test.each(['after this plugin', 'alone', 'before this plugin'] as const)(
 
 		const expectedResult = await formatWithCursor(TEST_JAVASCRIPT, {
 			...options,
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		});
 
 		const plugins = {
-			'after this plugin': [
-				priorPlugin,
-				pluginTypeScriptComments,
-				wrapperPlugin,
-			],
+			'after this plugin': [priorPlugin, pluginTypeScript, wrapperPlugin],
 			'alone': [priorPlugin, wrapperPlugin],
 			'before this plugin': [
 				priorPlugin,
 				wrapperPlugin,
-				pluginTypeScriptComments,
+				pluginTypeScript,
 			],
 		}[placement];
 
@@ -1572,7 +1540,7 @@ test.each([
 ] as const)(
 	'preserves wrapper location overrides from %s when placed %s',
 	async (source, placement) => {
-		const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+		const parser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		let observedLocEnd: Parser['locEnd'] | undefined;
@@ -1612,17 +1580,13 @@ test.each([
 
 		const wrapperPlugin = createBabelWrapperPlugin(wrapperParser);
 		const plugins = {
-			'after this plugin': [
-				priorPlugin,
-				pluginTypeScriptComments,
-				wrapperPlugin,
-			],
+			'after this plugin': [priorPlugin, pluginTypeScript, wrapperPlugin],
 			'alone': [priorPlugin, wrapperPlugin],
 		}[placement];
 
 		const expectedOutput = await format(TEST_JAVASCRIPT, {
 			parser: 'babel',
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		});
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -1649,7 +1613,7 @@ test.each([
 ] as const)(
 	'passes location overrides from `%s` wrappers to the prior parser when placed %s',
 	async (hook, placement) => {
-		const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+		const parser = getDirectParser(pluginTypeScript, 'babel');
 		const { locEnd, locStart } = createLocationFunctions();
 
 		let observedLocEnd: Parser['locEnd'] | undefined;
@@ -1694,22 +1658,18 @@ test.each([
 		});
 
 		const plugins = {
-			'after this plugin': [
-				priorPlugin,
-				pluginTypeScriptComments,
-				wrapperPlugin,
-			],
+			'after this plugin': [priorPlugin, pluginTypeScript, wrapperPlugin],
 			'alone': [priorPlugin, wrapperPlugin],
 			'before this plugin': [
 				priorPlugin,
 				wrapperPlugin,
-				pluginTypeScriptComments,
+				pluginTypeScript,
 			],
 		}[placement];
 
 		const expectedOutput = await format(TEST_JAVASCRIPT, {
 			parser: 'babel',
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		});
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -1737,7 +1697,7 @@ test.each([
 ] as const)(
 	'passes plugin list overrides from `%s` wrappers to the prior parser when placed %s',
 	async (hook, placement) => {
-		const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+		const parser = getDirectParser(pluginTypeScript, 'babel');
 
 		let observedOptions: ParserOptions | undefined;
 		let observedPlugins: ParserOptions['plugins'] | undefined;
@@ -1780,22 +1740,18 @@ test.each([
 		});
 
 		const plugins = {
-			'after this plugin': [
-				priorPlugin,
-				pluginTypeScriptComments,
-				wrapperPlugin,
-			],
+			'after this plugin': [priorPlugin, pluginTypeScript, wrapperPlugin],
 			'alone': [priorPlugin, wrapperPlugin],
 			'before this plugin': [
 				priorPlugin,
 				wrapperPlugin,
-				pluginTypeScriptComments,
+				pluginTypeScript,
 			],
 		}[placement];
 
 		const expectedOutput = await format(TEST_JAVASCRIPT, {
 			parser: 'babel',
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		});
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -1977,7 +1933,7 @@ test.each([
 test.each(['alone', 'before this plugin'] as const)(
 	'runs wrapped hooks once when placed %s without a prior parser',
 	async (placement) => {
-		const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+		const parser = getDirectParser(pluginTypeScript, 'babel');
 		let parseCallCount = 0;
 		let preprocessCallCount = 0;
 
@@ -2006,12 +1962,12 @@ test.each(['alone', 'before this plugin'] as const)(
 
 		const expectedOutput = await format('foo(qux, baz,   bar  )\n', {
 			parser: 'babel',
-			plugins: [pluginTypeScriptComments],
+			plugins: [pluginTypeScript],
 		});
 
 		const plugins = {
 			'alone': [wrapperPlugin],
-			'before this plugin': [wrapperPlugin, pluginTypeScriptComments],
+			'before this plugin': [wrapperPlugin, pluginTypeScript],
 		}[placement];
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -2026,7 +1982,7 @@ test.each(['alone', 'before this plugin'] as const)(
 );
 
 test('adds an empty line after a shebang only after delegated preprocessing', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const input = '#!/usr/bin/env node\nfoo(  bar  )\n';
 	let preprocessCallCount = 0;
 
@@ -2049,7 +2005,7 @@ test('adds an empty line after a shebang only after delegated preprocessing', as
 
 	const output = await format(input, {
 		parser: 'babel',
-		plugins: [wrapperPlugin, pluginTypeScriptComments],
+		plugins: [wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(preprocessCallCount).toBe(1);
@@ -2057,7 +2013,7 @@ test('adds an empty line after a shebang only after delegated preprocessing', as
 });
 
 test('restores parser locations when a wrapper rejects after delegated parsing', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const { locEnd, locStart } = createLocationFunctions();
 
 	const priorPlugin: Plugin = {
@@ -2098,7 +2054,7 @@ test('restores parser locations when a wrapper rejects after delegated parsing',
 		locEnd: parser.locEnd,
 		locStart: parser.locStart,
 		parser: 'babel',
-		plugins: [priorPlugin, wrapperPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, wrapperPlugin, pluginTypeScript],
 	} as unknown as ParserOptions;
 
 	const originalPlugins = options.plugins;
@@ -2115,7 +2071,7 @@ test('restores parser locations when a wrapper rejects after delegated parsing',
 });
 
 test('preserves locations reset by a wrapper before parsing again', async () => {
-	const parser = getDirectParser(pluginTypeScriptComments, 'babel');
+	const parser = getDirectParser(pluginTypeScript, 'babel');
 	const { locEnd, locStart } = createLocationFunctions();
 
 	let observedParsedLocEnd: Parser['locEnd'] | undefined;
@@ -2166,12 +2122,12 @@ test('preserves locations reset by a wrapper before parsing again', async () => 
 
 	const expectedOutput = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [pluginTypeScriptComments],
+		plugins: [pluginTypeScript],
 	});
 
 	const output = await format(TEST_JAVASCRIPT, {
 		parser: 'babel',
-		plugins: [priorPlugin, wrapperPlugin, pluginTypeScriptComments],
+		plugins: [priorPlugin, wrapperPlugin, pluginTypeScript],
 	});
 
 	expect(observedParsedLocEnd).toBe(locEnd);

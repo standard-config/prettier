@@ -3,7 +3,7 @@ import type { PluginOptions } from './index.ts';
 import * as pluginOxc from '@prettier/plugin-oxc';
 import { format, formatWithCursor } from 'prettier';
 import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
-import * as pluginTypeScriptComments from './index.ts';
+import * as pluginTypeScript from './index.ts';
 
 const JAVASCRIPT_PARSER_NAMES = ['babel', 'oxc', 'oxc-ts', 'typescript'];
 
@@ -139,15 +139,15 @@ export const cast = /** @type {Invoice} */ (draft);
 `;
 
 test('exposes correct public API', () => {
-	expectTypeOf(pluginTypeScriptComments).toExtend<Plugin>();
+	expectTypeOf(pluginTypeScript).toExtend<Plugin>();
 
-	expect(pluginTypeScriptComments).toHaveProperty('options');
-	expect(pluginTypeScriptComments).toHaveProperty('parsers');
+	expect(pluginTypeScript).toHaveProperty('options');
+	expect(pluginTypeScript).toHaveProperty('parsers');
 
-	expect(pluginTypeScriptComments.parsers).toHaveProperty('babel');
-	expect(pluginTypeScriptComments.parsers).toHaveProperty('oxc');
-	expect(pluginTypeScriptComments.parsers).toHaveProperty('oxc-ts');
-	expect(pluginTypeScriptComments.parsers).toHaveProperty('typescript');
+	expect(pluginTypeScript.parsers).toHaveProperty('babel');
+	expect(pluginTypeScript.parsers).toHaveProperty('oxc');
+	expect(pluginTypeScript.parsers).toHaveProperty('oxc-ts');
+	expect(pluginTypeScript.parsers).toHaveProperty('typescript');
 
 	expectTypeOf<PluginOptions>().toBeObject();
 });
@@ -155,7 +155,7 @@ test('exposes correct public API', () => {
 test('formats TypeScript comments', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const output = await format(TEST_TYPESCRIPT, options);
@@ -169,7 +169,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 	async (parser) => {
 		const options = {
 			parser,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 			printWidth: 20,
 		};
 
@@ -190,7 +190,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 	async (parser) => {
 		const options = {
 			parser,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		};
 
 		const output = await format(
@@ -210,7 +210,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 	async (parser) => {
 		const options = {
 			parser,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		};
 
 		const output = await format(
@@ -230,7 +230,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 	async (parser) => {
 		const options = {
 			parser,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		};
 		const input =
 			'/* eslint-disable-next-line\n  no-console */\nconsole.log(foo); // bar\n';
@@ -251,7 +251,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 test('moves comments after JSX text above the element that holds the text', async () => {
 	const options = {
 		parser: 'oxc',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 41,
 	};
 
@@ -269,7 +269,7 @@ test('moves comments after JSX text above the element that holds the text', asyn
 test('moves comments after JSX text above directives and the comments with them', async () => {
 	const options = {
 		parser: 'oxc',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 41,
 	};
 
@@ -307,7 +307,7 @@ test('moves comments after JSX text above directives and the comments with them'
 test('moves comments above their lines as Prettier prints them', async () => {
 	const options = {
 		parser: 'oxc',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	await expect(format('foo(a,\n  b); // bar\n', options)).resolves.toBe(
@@ -340,7 +340,7 @@ test('moves comments above their lines as Prettier prints them', async () => {
 test('keeps comments that Prettier would print after code again in place', async () => {
 	const options = {
 		parser: 'oxc',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 	const input = 'const foo = bar\n  ? baz // qux\n  : quux;\n';
 
@@ -350,7 +350,7 @@ test('keeps comments that Prettier would print after code again in place', async
 test('keeps comments around other tools’ directives in place', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const inputBelowDenoDirective =
@@ -403,7 +403,7 @@ test('keeps comments around other tools’ directives in place', async () => {
 test('formats comments in JSX', async () => {
 	const options = {
 		parser: 'oxc',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 20,
 	};
 
@@ -435,14 +435,14 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 
 		const output = await format(TEST_JAVASCRIPT, {
 			...options,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		});
 
 		expect(output).toBe(expectedOutput);
 		await expect(
 			format(output, {
 				...options,
-				plugins: [pluginOxc, pluginTypeScriptComments],
+				plugins: [pluginOxc, pluginTypeScript],
 			})
 		).resolves.toBe(output);
 	}
@@ -467,7 +467,7 @@ test('leaves out the `oxc` parsers when `@prettier/plugin-oxc` fails to load', a
 test('adds an empty line after a shebang', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const output = await format('#!/usr/bin/env node\nfoo(  bar  )\n', options);
@@ -479,7 +479,7 @@ test('adds an empty line after a shebang', async () => {
 test('formats code blocks in Markdown', async () => {
 	const options = {
 		parser: 'markdown',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const output = await format(
@@ -496,7 +496,7 @@ test('formats code blocks in Markdown', async () => {
 test('formats comments in code blocks in Markdown', async () => {
 	const options = {
 		parser: 'markdown',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 20,
 	};
 
@@ -514,7 +514,7 @@ test('formats comments in code blocks in Markdown', async () => {
 test('respects `printWidth`', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 12,
 	};
 
@@ -527,7 +527,7 @@ test('respects `printWidth`', async () => {
 test('respects `useTabs`', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 16,
 		tabWidth: 4,
 		useTabs: true,
@@ -550,7 +550,7 @@ test('respects `cursorOffset`', async () => {
 	const result = await formatWithCursor(input.replace('|', ''), {
 		cursorOffset: input.indexOf('|'),
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	});
 
 	expect(result.formatted.slice(result.cursorOffset)).toBe('bar);\n');
@@ -562,7 +562,7 @@ test('respects `cursorOffset`', async () => {
 		{
 			cursorOffset: inputWithComment.indexOf('|'),
 			parser: 'oxc-ts',
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		}
 	);
 
@@ -577,7 +577,7 @@ test('respects `cursorOffset`', async () => {
 		{
 			cursorOffset: inputWithTrailingComment.indexOf('|'),
 			parser: 'oxc-ts',
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		}
 	);
 
@@ -594,7 +594,7 @@ test.each(['cr', 'crlf'] as const)(
 		const options = {
 			endOfLine,
 			parser: 'oxc-ts',
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		};
 
 		const output = await format(
@@ -625,7 +625,7 @@ test('respects `rangeStart` and `rangeEnd`', async () => {
 	await expect(
 		format(input, {
 			parser: 'oxc-ts',
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 			rangeEnd: 32,
 			rangeStart: 20,
 		})
@@ -649,7 +649,7 @@ test('respects `rangeStart` and `rangeEnd` with `insertPragma`', async () => {
 	await expect(
 		format(input, {
 			...options,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		})
 	).resolves.toBe(expectedOutput);
 });
@@ -666,7 +666,7 @@ test('respects `checkIgnorePragma`', async () => {
 	const options = {
 		checkIgnorePragma: true,
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const output = await format(input, options);
@@ -687,7 +687,7 @@ test('respects `insertPragma`', async () => {
 	const options = {
 		insertPragma: true,
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 	};
 
 	const output = await format(input, options);
@@ -702,7 +702,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 		const options = {
 			insertPragma: true,
 			parser,
-			plugins: [pluginOxc, pluginTypeScriptComments],
+			plugins: [pluginOxc, pluginTypeScript],
 		};
 
 		const output = await format(
@@ -720,7 +720,7 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 test('respects `requirePragma`', async () => {
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		requirePragma: true,
 	};
 
@@ -756,7 +756,7 @@ test('formats output from other plugins’ parser hooks', async () => {
 
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, testPlugin, emptyPlugin, pluginTypeScriptComments],
+		plugins: [pluginOxc, testPlugin, emptyPlugin, pluginTypeScript],
 	};
 
 	const output = await format(TEST_JAVASCRIPT, options);
@@ -774,7 +774,7 @@ test('supports `tsCommentWrap`', async () => {
 		'/*\n * foo   bar\n */\n// foo bar baz\n// qux\ncorge(); // grault\n';
 	const options = {
 		parser: 'oxc-ts',
-		plugins: [pluginOxc, pluginTypeScriptComments],
+		plugins: [pluginOxc, pluginTypeScript],
 		printWidth: 20,
 	};
 

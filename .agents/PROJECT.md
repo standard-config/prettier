@@ -8,7 +8,7 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 Both comment plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#comment-plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.
 
-`@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript comments plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
+`@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
 
 ## Compatibility
 
@@ -20,17 +20,17 @@ The root `package.json` sets a newer Node.js minimum for development than `packa
 
 ### Directive Conversion
 
-The TypeScript comments plugin’s conversion rules are defined by [`formatGroup`](../packages/prettier-plugin-typescript-comments/src/wrap-comments/index.ts) and [`moveTrailingComments`](../packages/prettier-plugin-typescript-comments/src/move-trailing-comments/index.ts). They cover directives matched by [`BLOCK_DIRECTIVE_PATTERN`](../packages/prettier-plugin-typescript-comments/src/constants/index.ts), trailing suppressions, and qualifying fall-through comments.
+The TypeScript plugin’s conversion rules are defined by [`formatGroup`](../packages/prettier-plugin-typescript/src/wrap-comments/index.ts) and [`moveTrailingComments`](../packages/prettier-plugin-typescript/src/move-trailing-comments/index.ts). They cover directives matched by [`BLOCK_DIRECTIVE_PATTERN`](../packages/prettier-plugin-typescript/src/constants/index.ts), trailing suppressions, and qualifying fall-through comments.
 
 The maintainer’s conversion policy includes bare `eslint-disable` and `eslint-enable` (without `-line` or `-next-line`), their `oxlint-` forms, and ESLint configuration comments: `eslint` rule settings, `eslint-env`, `exported`, `global`, and `globals`. Converting `//` to `/* … */` can activate previously ignored settings or suppressions. A `// global …` line intended as prose can consequently become a declaration. This is an accepted consequence.
 
 [ESLint 10 reports `/* eslint-env */` comments as errors](https://eslint.org/docs/latest/use/migrate-to-10.0.0#-eslint-env-comments-are-reported-as-errors). The maintainer accepts this consequence of converting `eslint-env` for consistency.
 
-Converting only the first line of an `eslint-disable` whose rules continue on indented lines below could suppress every rule. [`isContinuedList`](../packages/prettier-plugin-typescript-comments/src/move-trailing-comments/index.ts) identifies continued lists.
+Converting only the first line of an `eslint-disable` whose rules continue on indented lines below could suppress every rule. [`isContinuedList`](../packages/prettier-plugin-typescript/src/move-trailing-comments/index.ts) identifies continued lists.
 
 ### Formatting Stability
 
-The extra formatting passes in [`wrapComments`](../packages/prettier-plugin-typescript-comments/src/wrap-comments/index.ts) are intentional. Formatting first makes every edit use the lines Prettier prints. Formatting the edited code again keeps a directive as `//` when converting it would move it off the code it covers, and leaves a moved comment in its original place when Prettier would print it after code again.
+The extra formatting passes in [`wrapComments`](../packages/prettier-plugin-typescript/src/wrap-comments/index.ts) are intentional. Formatting first makes every edit use the lines Prettier prints. Formatting the edited code again keeps a directive as `//` when converting it would move it off the code it covers, and leaves a moved comment in its original place when Prettier would print it after code again.
 
 When joining a line to a paragraph or collapsing its spaces would create a directive, the shared reflow engine’s [`parseNodes`](../packages/utilities/src/format-comment-block/index.ts) keeps that line as written on its own rather than starting a new reflowed paragraph with it. A new paragraph could wrap differently and move where the next run splits paragraphs.
 
@@ -44,7 +44,7 @@ Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ig
 
 ### Shebang Spacing
 
-By maintainer decision, the shell comments plugin doesn’t add an empty line after a shebang. The TypeScript comments plugin does.
+By maintainer decision, the shell comments plugin doesn’t add an empty line after a shebang. The TypeScript plugin does.
 
 ### TypeScript Limitations
 

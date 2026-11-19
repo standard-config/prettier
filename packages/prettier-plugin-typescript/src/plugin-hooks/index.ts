@@ -9,12 +9,10 @@ import type {
 } from '../types/index.d.ts';
 
 const PARSER_DELEGATION = Symbol.for(
-	'prettier-plugin-typescript-comments.parser-delegation'
+	'prettier-plugin-typescript.parser-delegation'
 );
-const PARSER_MARKER = Symbol.for('prettier-plugin-typescript-comments.parser');
-const PARSER_ORIGIN = Symbol.for(
-	'prettier-plugin-typescript-comments.parser-origin'
-);
+const PARSER_MARKER = Symbol.for('prettier-plugin-typescript.parser');
+const PARSER_ORIGIN = Symbol.for('prettier-plugin-typescript.parser-origin');
 
 type ParserContext = {
 	delegation?: ParserDelegation;
@@ -316,7 +314,7 @@ function assertCompatibleParser(
 			.join(' or ');
 
 		throw new TypeError(
-			`[prettier-plugin-typescript-comments] Unsupported AST format for the \`${name}\` parser. Expected ${expectedAstFormats}, received \`${parser.astFormat}\``
+			`[prettier-plugin-typescript] Unsupported AST format for the \`${name}\` parser. Expected ${expectedAstFormats}, received \`${parser.astFormat}\``
 		);
 	}
 }
