@@ -1,7 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`generates a valid Prettier config 1`] = `
+exports[`is a valid Prettier config 1`] = `
 {
+  "bracketSpacing": true,
   "plugins": [
     "@prettier/plugin-oxc",
     "prettier-plugin-expand-json",
@@ -9,12 +10,6 @@ exports[`generates a valid Prettier config 1`] = `
     "prettier-plugin-shell",
     "prettier-plugin-yaml",
   ],
-}
-`;
-
-exports[`generates a valid Prettier config 2`] = `
-{
-  "bracketSpacing": true,
   "printWidth": 80,
   "quoteProps": "consistent",
   "singleQuote": true,
@@ -24,7 +19,7 @@ exports[`generates a valid Prettier config 2`] = `
 }
 `;
 
-exports[`generates a valid Prettier config 3`] = `
+exports[`is a valid Prettier config 2`] = `
 {
   "overrides": [
     {

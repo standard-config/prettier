@@ -5,6 +5,8 @@ import type {
 import createGlobSet from '@standard-config/utilities/create-glob-set';
 import assert from 'node:assert/strict';
 import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
+import * as pluginShell from 'prettier-plugin-shell';
+import BASE_CONFIG from '../src/base-config/index.ts';
 import {
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
@@ -14,6 +16,9 @@ import {
 	GLOB_SET_YAML,
 } from '../src/constants/index.ts';
 
+const { shTabWidth, shUseTabs, tabWidth, useTabs } = BASE_CONFIG;
+const shellOptions = pluginShell.options!;
+
 /**
  * The `[*]` section mirrors Prettier’s global indentation options.
  */
@@ -21,15 +26,24 @@ const defaults: EditorConfigProperties = {
 	/* oxlint-disable-next-line unicorn/text-encoding-identifier-case */
 	charset: 'utf-8',
 	end_of_line: 'lf',
-	indent_size: 4,
-	indent_style: 'tab',
+	indent_size: tabWidth!,
+	indent_style: useTabs ? 'tab' : 'space',
 	insert_final_newline: true,
 	trim_trailing_whitespace: true,
 };
 
 /**
- * Sections are in alphabetical order by label, and each one only includes the
- * properties that differ from `[*]`.
+ * The shell plugin indents every file it formats with its own options.
+ */
+const shellIndentation: EditorConfigProperties = {
+	indent_size: Number(shTabWidth ?? shellOptions.shTabWidth!.default),
+	indent_style:
+		(shUseTabs ?? shellOptions.shUseTabs!.default) ? 'tab' : 'space',
+};
+
+/**
+ * Sections are in alphabetical order by label, and the hand-written ones only
+ * include the properties that differ from `[*]`.
  */
 const sections: EditorConfigSection[] = [
 	[
@@ -39,30 +53,9 @@ const sections: EditorConfigSection[] = [
 			indent_style: 'space',
 		},
 	],
-	[
-		'Shell',
-		GLOB_SET_SHELL,
-		{
-			indent_size: 2,
-			indent_style: 'space',
-		},
-	],
-	[
-		'Shell hooks',
-		GLOB_SET_SHELL_HOOKS,
-		{
-			indent_size: 2,
-			indent_style: 'space',
-		},
-	],
-	[
-		'Shell properties',
-		GLOB_SET_SHELL_PROPERTIES,
-		{
-			indent_size: 2,
-			indent_style: 'space',
-		},
-	],
+	['Shell', GLOB_SET_SHELL, shellIndentation],
+	['Shell hooks', GLOB_SET_SHELL_HOOKS, shellIndentation],
+	['Shell properties', GLOB_SET_SHELL_PROPERTIES, shellIndentation],
 	[
 		'YAML',
 		GLOB_SET_YAML,

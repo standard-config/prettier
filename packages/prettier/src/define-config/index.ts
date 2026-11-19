@@ -1,6 +1,6 @@
 import type { Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
-import generateConfig from '../generate-config/index.ts';
+import BASE_CONFIG from '../base-config/index.ts';
 import mergeConfig from '../merge-config/index.ts';
 import transformConfig from '../transform-config/index.ts';
 
@@ -12,7 +12,8 @@ export default function defineConfig(
 ): PrettierConfig {
 	const { pluginOverrides, ...extensionConfig } = config;
 
-	const extendedConfig = mergeConfig(generateConfig(), extensionConfig);
-
-	return transformConfig(extendedConfig, pluginOverrides);
+	return transformConfig(
+		mergeConfig(BASE_CONFIG, extensionConfig),
+		pluginOverrides
+	);
 }

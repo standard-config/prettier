@@ -1,8 +1,4 @@
-import type {
-	StandardConfig,
-	StandardConfigOverrides,
-} from '../types/index.d.ts';
-import clone from '@standard-config/utilities/clone';
+import type { StandardConfig } from '../types/index.d.ts';
 import createGlobSet from '@standard-config/utilities/create-glob-set';
 import {
 	GLOB_SET_CSS,
@@ -16,30 +12,24 @@ import {
 } from '../constants/index.ts';
 
 /**
- * Generates the base Standard Config.
+ * The base Standard Config entry.
  */
-export default function generateConfig(): StandardConfig {
-	return clone({
-		plugins: [
-			'@prettier/plugin-oxc',
-			'prettier-plugin-expand-json',
-			'prettier-plugin-markdown-html',
-			'prettier-plugin-shell',
-			'prettier-plugin-yaml',
-		],
-		bracketSpacing: true,
-		printWidth: 80,
-		quoteProps: 'consistent',
-		singleQuote: true,
-		tabWidth: 4,
-		trailingComma: 'es5',
-		useTabs: true,
-		overrides: [...getFileTypeOverrides(), ...getFileNameOverrides()],
-	});
-}
-
-function getFileTypeOverrides(): StandardConfigOverrides {
-	return [
+const BASE_CONFIG: StandardConfig = {
+	plugins: [
+		'@prettier/plugin-oxc',
+		'prettier-plugin-expand-json',
+		'prettier-plugin-markdown-html',
+		'prettier-plugin-shell',
+		'prettier-plugin-yaml',
+	],
+	bracketSpacing: true,
+	printWidth: 80,
+	quoteProps: 'consistent',
+	singleQuote: true,
+	tabWidth: 4,
+	trailingComma: 'es5',
+	useTabs: true,
+	overrides: [
 		{
 			files: GLOB_SET_CSS,
 			options: {
@@ -112,11 +102,6 @@ function getFileTypeOverrides(): StandardConfigOverrides {
 				yamlCollectionStyle: 'block',
 			},
 		},
-	];
-}
-
-function getFileNameOverrides(): StandardConfigOverrides {
-	return [
 		{
 			files: [
 				'.oxfmtrc.json',
@@ -386,5 +371,7 @@ function getFileNameOverrides(): StandardConfigOverrides {
 				],
 			},
 		},
-	];
-}
+	],
+};
+
+export default BASE_CONFIG;
