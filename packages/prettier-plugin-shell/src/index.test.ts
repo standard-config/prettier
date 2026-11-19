@@ -43,11 +43,19 @@ EOF
 test('exposes correct public API', () => {
 	expectTypeOf(pluginShell).toExtend<Plugin>();
 
-	expect(pluginShell).toHaveProperty('options');
-	expect(pluginShell).toHaveProperty('parsers');
-	expect(pluginShell).toHaveProperty('printers');
+	expect(pluginShell).toHaveProperty('languages', pluginSh.languages);
 
+	expect(pluginShell).toHaveProperty('options');
+	expect(pluginShell.options).toHaveProperty('shCommentWrap');
+	expect(pluginShell.options).toHaveProperty('shTabWidth.default', 2);
+	expect(pluginShell.options).toHaveProperty('shUseTabs.default', false);
+
+	expect(pluginShell).toHaveProperty('parsers');
+	expect(pluginShell.parsers).toHaveProperty('dockerfile');
 	expect(pluginShell.parsers).toHaveProperty('sh');
+
+	expect(pluginShell).toHaveProperty('printers');
+	expect(pluginShell.printers).toHaveProperty('dockerfile');
 	expect(pluginShell.printers).toHaveProperty('sh');
 
 	expectTypeOf<PluginOptions>().toBeObject();
@@ -100,6 +108,7 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 	const expectedOutput = await format(input, {
 		parser: 'sh',
 		plugins: [pluginSh],
+		simplify: true,
 	});
 
 	const options = { parser: 'sh', plugins: [pluginShell] };
@@ -110,10 +119,10 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('formats comments when listed after `prettier-plugin-sh`', async () => {
+test('formats files that `prettier-plugin-sh` supports', async () => {
 	const options = {
 		filepath: 'foo.sh',
-		plugins: [pluginSh, pluginShell],
+		plugins: [pluginShell],
 		printWidth: 20,
 	};
 
@@ -126,7 +135,7 @@ test('formats comments when listed after `prettier-plugin-sh`', async () => {
 test('formats comments in other files that use the `sh` parser', async () => {
 	const options = {
 		filepath: '.gitignore',
-		plugins: [pluginSh, pluginShell],
+		plugins: [pluginShell],
 		printWidth: 20,
 	};
 
@@ -170,13 +179,26 @@ test('respects `printWidth`', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('respects `useTabs`', async () => {
+test('supports `shTabWidth`', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		shTabWidth: 4,
+	};
+
+	const output = await format('foo() {\nbar\n}\n', options);
+
+	expect(output).toBe('foo() {\n    bar\n}\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('supports `shUseTabs`', async () => {
 	const options = {
 		parser: 'sh',
 		plugins: [pluginShell],
 		printWidth: 16,
-		tabWidth: 4,
-		useTabs: true,
+		shTabWidth: 4,
+		shUseTabs: true,
 	};
 
 	const output = await format(
@@ -185,6 +207,90 @@ test('respects `useTabs`', async () => {
 	);
 
 	expect(output).toBe('foo() {\n\t# bar baz\n\t# qux\n\tquux\n}\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('ignores Prettier’s indentation options', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		tabWidth: 4,
+		useTabs: true,
+	};
+
+	const output = await format('foo() {\nbar\n}\n', options);
+
+	expect(output).toBe('foo() {\n  bar\n}\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('simplifies shell scripts', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format('foo=$(( $bar + 1 ))\n', options);
+
+	expect(output).toBe('foo=$((bar + 1))\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps data files from being simplified', async () => {
+	const options = { filepath: '.env', plugins: [pluginShell] };
+
+	const output = await format('FOO=$(( $BAR + 1 ))\n', options);
+
+	expect(output).toBe('FOO=$(($BAR + 1))\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('formats Dockerfiles like `prettier-plugin-sh`', async () => {
+	const input = 'FROM foo\nRUN bar > baz && \\\n qux < quux\n';
+	const options = { filepath: 'Dockerfile', plugins: [pluginShell] };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		await format(input, { filepath: 'Dockerfile', plugins: [pluginSh] })
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('formats Dockerfiles with `shTabWidth` and `shUseTabs`', async () => {
+	const input = 'FROM foo\nRUN bar && \\\n baz\n';
+	const options = {
+		filepath: 'Dockerfile',
+		plugins: [pluginShell],
+		tabWidth: 8,
+		useTabs: true,
+	};
+
+	const output = await format(input, options);
+	const outputWithTabWidth = await format(input, {
+		...options,
+		shTabWidth: 4,
+	});
+	const outputWithTabs = await format(input, { ...options, shUseTabs: true });
+
+	expect(output).toBe('FROM foo\nRUN bar \\\n  && baz\n');
+	expect(outputWithTabWidth).toBe('FROM foo\nRUN bar \\\n    && baz\n');
+	expect(outputWithTabs).toBe('FROM foo\nRUN bar \\\n\t&& baz\n');
+	await expect(format(output, options)).resolves.toBe(output);
+	await expect(
+		format(outputWithTabWidth, { ...options, shTabWidth: 4 })
+	).resolves.toBe(outputWithTabWidth);
+	await expect(
+		format(outputWithTabs, { ...options, shUseTabs: true })
+	).resolves.toBe(outputWithTabs);
+});
+
+test('formats shell code in Markdown like shell scripts', async () => {
+	const options = { filepath: 'foo.md', plugins: [pluginShell], tabWidth: 4 };
+
+	const output = await format(
+		'```sh\nfoo() {\nbar=$(( $baz ))\n}\n```\n',
+		options
+	);
+
+	expect(output).toBe('```sh\nfoo() {\n  bar=$((baz))\n}\n```\n');
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
@@ -294,7 +400,7 @@ test('keeps trailing comments in property files', async () => {
 	await expect(
 		format(input, {
 			filepath: '.env',
-			plugins: [pluginSh, pluginShell],
+			plugins: [pluginShell],
 		})
 	).resolves.toBe(input);
 });

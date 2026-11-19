@@ -233,9 +233,6 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.10.1
-      prettier-plugin-shell:
-        specifier: workspace:*
-        version: link:packages/prettier-plugin-shell
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -279,6 +276,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.10.1
+      prettier-plugin-shell:
+        specifier: workspace:*
+        version: link:../prettier-plugin-shell
       publint:
         specifier: ^0.3.25
         version: 0.3.25

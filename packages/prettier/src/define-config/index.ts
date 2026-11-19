@@ -10,20 +10,9 @@ import transformConfig from '../transform-config/index.ts';
 export default function defineConfig(
 	config: StandardConfig = {}
 ): PrettierConfig {
-	const {
-		pluginOverrides,
-		shTabWidth,
-		shUseTabs,
-		tabWidth,
-		useTabs,
-		...extensionConfig
-	} = config;
+	const { pluginOverrides, ...extensionConfig } = config;
 
-	const baseConfig = generateConfig(
-		{ tabWidth, useTabs },
-		{ shTabWidth, shUseTabs }
-	);
+	const extendedConfig = mergeConfig(generateConfig(), extensionConfig);
 
-	const extendedConfig = mergeConfig(baseConfig, extensionConfig);
 	return transformConfig(extendedConfig, pluginOverrides);
 }

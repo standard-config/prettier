@@ -3,7 +3,7 @@
 ## Overview
 
 - **Repository:** Contains the shareable Prettier config.
-- **Layout:** `packages/prettier` publishes `@standard-config/prettier`. `packages/prettier-plugin-shell` and `packages/prettier-plugin-typescript` are private Prettier plugins. `packages/utilities` contains the private `@standard-config/utilities` package, and `packages/tests` holds fixtures.
+- **Layout:** `packages/prettier` publishes `@standard-config/prettier`. `packages/prettier-plugin-shell` is a private wrapper around `prettier-plugin-sh`, and `packages/prettier-plugin-typescript` is a private Prettier plugin. `packages/utilities` contains the private `@standard-config/utilities` package, and `packages/tests` holds fixtures.
 - **Disclosure:** The repository is public and open source.
 
 ## Agent Documentation
@@ -26,5 +26,4 @@
 
 - **Shared constants:** Keep `@standard-config/utilities/constants` free of work at module load beyond defining constants. Any dependency must be loadable by both the shell and TypeScript plugins. See the [module load rationale](.agents/PROJECT.md#shared-constants-without-module-load-work).
 - **Directive behavior:** Preserve the accepted [directive conversion policy](.agents/PROJECT.md#directive-conversion) and the line covered by [next-line directives](.agents/PROJECT.md#next-line-directives) when moving or reflowing comments. Keep reflow from creating directives or changing meaning on later runs. See the [formatting stability rationale](.agents/PROJECT.md#formatting-stability).
-- **Root configuration:** By maintainer decision, keep the TypeScript plugin disabled in the root `prettier.config.ts`.
 - **Shebang spacing:** Preserve the plugins’ different behavior after a shebang. See the [shebang spacing decision](.agents/PROJECT.md#shebang-spacing).

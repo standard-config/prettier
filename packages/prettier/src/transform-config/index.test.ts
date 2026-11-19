@@ -1,31 +1,9 @@
 import type { Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
+import * as pluginShell from 'prettier-plugin-shell';
 import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
 import transformConfig from './index.ts';
-
-const CONFIG = {
-	overrides: [
-		{
-			files: ['*.json'],
-			options: {
-				plugins: ['prettier-plugin-foo'],
-			},
-		},
-		{
-			files: ['*.sh'],
-			options: {
-				plugins: ['prettier-plugin-sh'],
-			},
-		},
-		{
-			files: ['*.md'],
-			options: {
-				proseWrap: 'never',
-			},
-		},
-	],
-} as const satisfies StandardConfig;
 
 test('returns a Prettier config', () => {
 	expectTypeOf(transformConfig).returns.toEqualTypeOf<PrettierConfig>();
@@ -71,10 +49,7 @@ test('doesn’t mutate the input config', () => {
 						'dependencies',
 						'devDependencies'
 					),
-					plugins: [
-						expect.stringContaining('prettier-plugin-sh'),
-						'prettier-plugin-bar',
-					],
+					plugins: ['prettier-plugin-bar'],
 				},
 			},
 		],
@@ -166,10 +141,7 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 			{
 				files: ['*.json'],
 				options: {
-					plugins: [
-						expect.stringContaining('prettier-plugin-sh'),
-						'prettier-plugin-bar',
-					],
+					plugins: ['prettier-plugin-bar'],
 				},
 			},
 			{
@@ -180,59 +152,16 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 	});
 });
 
-test('keeps `prettier-plugin-sh` in override `plugins`', () => {
-	expect(transformConfig(CONFIG)).toStrictEqual({
-		overrides: [
-			{
-				files: ['*.json'],
-				options: {
-					plugins: [
-						expect.stringContaining('prettier-plugin-sh'),
-						'prettier-plugin-foo',
-					],
-				},
-			},
-			{
-				files: ['*.sh'],
-				options: {
-					plugins: [expect.stringContaining('prettier-plugin-sh')],
-				},
-			},
-			{
-				files: ['*.md'],
-				options: {
-					proseWrap: 'never',
-				},
-			},
-		],
-	});
-});
-
-test('omits `prettier-plugin-sh` from override `plugins` when `pluginOverrides` sets it to `undefined`', () => {
+test('resolves `prettier-plugin-shell` to the bundled plugin', () => {
 	expect(
-		transformConfig(CONFIG, {
-			'prettier-plugin-sh': undefined,
-		})
-	).toStrictEqual({
-		overrides: [
-			{
-				files: ['*.json'],
-				options: {
-					plugins: ['prettier-plugin-foo'],
-				},
-			},
-			{
-				files: ['*.sh'],
-				options: {},
-			},
-			{
-				files: ['*.md'],
-				options: {
-					proseWrap: 'never',
-				},
-			},
-		],
-	});
+		transformConfig({ plugins: ['prettier-plugin-shell'] })
+	).toStrictEqual({ plugins: [pluginShell] });
+	expect(
+		transformConfig(
+			{ plugins: ['prettier-plugin-shell'] },
+			{ 'prettier-plugin-shell': undefined }
+		)
+	).toStrictEqual({});
 });
 
 test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => {

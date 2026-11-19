@@ -1,6 +1,4 @@
 import type {
-	IndentationOptions,
-	ShellIndentationOptions,
 	StandardConfig,
 	StandardConfigOverrides,
 } from '../types/index.d.ts';
@@ -8,103 +6,57 @@ import clone from '@standard-config/utilities/clone';
 import createGlobSet from '@standard-config/utilities/create-glob-set';
 import {
 	GLOB_SET_CSS,
-	GLOB_SET_GRAPHQL,
 	GLOB_SET_HTML,
 	GLOB_SET_JAVASCRIPT,
-	GLOB_SET_JAVASCRIPT_FLOW,
 	GLOB_SET_JSON,
-	GLOB_SET_JSON5,
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
-	GLOB_SET_SHELL_PROPERTIES,
 	GLOB_SET_TYPESCRIPT,
-	GLOB_SET_VUE,
 	GLOB_SET_YAML,
 } from '../constants/index.ts';
 
 /**
  * Generates the base Standard Config.
- *
- * Shell scripts can’t be reliably identified by name alone—they’re recognized
- * by the shebang, not the extension. As a result, shell formatting options
- * (two-space indentation) must be defined as the global defaults.
- *
- * This requires overriding those options for other file types individually
- * with what we consider the actual defaults (`baseDefaults`). `generateConfig`
- * is a factory that encapsulates this logic and returns the final config.
  */
-export default function generateConfig(
-	baseDefaults: IndentationOptions = {},
-	shDefaults: ShellIndentationOptions = {}
-): StandardConfig {
-	const { tabWidth = 4, useTabs = true } = baseDefaults;
-	const { shTabWidth = 2, shUseTabs = false } = shDefaults;
-
+export default function generateConfig(): StandardConfig {
 	return clone({
 		plugins: [
 			'@prettier/plugin-oxc',
 			'prettier-plugin-expand-json',
 			'prettier-plugin-markdown-html',
-			'prettier-plugin-sh',
+			'prettier-plugin-shell',
 			'prettier-plugin-yaml',
 		],
 		bracketSpacing: true,
 		printWidth: 80,
 		quoteProps: 'consistent',
-		simplify: true,
 		singleQuote: true,
-		tabWidth: shTabWidth,
+		tabWidth: 4,
 		trailingComma: 'es5',
-		useTabs: shUseTabs,
-		overrides: [
-			...getFileTypeOverrides({ tabWidth, useTabs }),
-			...getFileNameOverrides(),
-		],
+		useTabs: true,
+		overrides: [...getFileTypeOverrides(), ...getFileNameOverrides()],
 	});
 }
 
-function getFileTypeOverrides(
-	baseDefaults: IndentationOptions = {}
-): StandardConfigOverrides {
+function getFileTypeOverrides(): StandardConfigOverrides {
 	return [
 		{
 			files: GLOB_SET_CSS,
 			options: {
-				...baseDefaults,
 				printWidth: 100,
 				singleQuote: false,
 			},
 		},
 		{
-			files: GLOB_SET_GRAPHQL,
-			options: {
-				...baseDefaults,
-			},
-		},
-		{
 			files: GLOB_SET_HTML,
 			options: {
-				...baseDefaults,
 				printWidth: 100,
 			},
 		},
 		{
 			files: GLOB_SET_JAVASCRIPT,
 			options: {
-				...baseDefaults,
 				parser: 'oxc',
-			},
-		},
-		{
-			files: GLOB_SET_JAVASCRIPT_FLOW,
-			options: {
-				...baseDefaults,
-			},
-		},
-		{
-			files: GLOB_SET_JSON,
-			options: {
-				...baseDefaults,
 			},
 		},
 		{
@@ -117,12 +69,6 @@ function getFileTypeOverrides(
 				],
 				jsonRecursiveSort: true,
 				jsonSortOrder: ['$schema'],
-			},
-		},
-		{
-			files: GLOB_SET_JSON5,
-			options: {
-				...baseDefaults,
 			},
 		},
 		/**
@@ -140,9 +86,8 @@ function getFileTypeOverrides(
 		{
 			files: createGlobSet(GLOB_SET_MARKDOWN, GLOB_SET_MDX),
 			options: {
-				...baseDefaults,
 				proseWrap: 'never',
-				simplify: false,
+				shUseTabs: false,
 				useTabs: false,
 			},
 		},
@@ -154,27 +99,15 @@ function getFileTypeOverrides(
 			},
 		},
 		{
-			files: createGlobSet(GLOB_SET_SHELL_PROPERTIES, '.flaskenv'),
-			options: {
-				simplify: false,
-			},
-		},
-		{
 			files: GLOB_SET_TYPESCRIPT,
 			options: {
-				...baseDefaults,
 				parser: 'oxc-ts',
-			},
-		},
-		{
-			files: GLOB_SET_VUE,
-			options: {
-				...baseDefaults,
 			},
 		},
 		{
 			files: GLOB_SET_YAML,
 			options: {
+				tabWidth: 2,
 				useTabs: false,
 				yamlCollectionStyle: 'block',
 			},

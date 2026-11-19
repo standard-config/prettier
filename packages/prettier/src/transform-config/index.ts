@@ -8,6 +8,7 @@ import type {
 import clone from '@standard-config/utilities/clone';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
+import * as pluginShell from 'prettier-plugin-shell';
 
 let disableOxcParser = false;
 
@@ -55,21 +56,8 @@ export default function transformConfig(
 
 	transform(config);
 
-	const [pluginSh] = transformPlugins(
-		['prettier-plugin-sh'],
-		pluginOverrides
-	);
-
 	for (const override of config.overrides ?? []) {
 		transform(override.options);
-
-		const { plugins } = override.options;
-
-		// Shell options are global, so overrides that replace `plugins` must
-		// keep `prettier-plugin-sh` for Prettier to recognize them
-		if (plugins && pluginSh && !plugins.includes(pluginSh)) {
-			plugins.unshift(pluginSh);
-		}
 	}
 
 	return config as PrettierConfig;
@@ -94,11 +82,12 @@ function transformPlugins(
 				'prettier-plugin-expand-json',
 				'prettier-plugin-markdown-html',
 				'prettier-plugin-pkg',
-				'prettier-plugin-sh',
 				'prettier-plugin-sort-json',
 				'prettier-plugin-yaml',
 			].map((name) => [name, transformPlugin(name)])
 		),
+		// Private plugins
+		'prettier-plugin-shell': pluginShell,
 		...pluginOverrides,
 	};
 

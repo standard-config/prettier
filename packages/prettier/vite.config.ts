@@ -8,7 +8,10 @@ export default defineConfig({
 	},
 	pack: {
 		deps: {
-			alwaysBundle: [/^@standard-config\/utilities\//],
+			alwaysBundle: [
+				/^@standard-config\/utilities\//,
+				/^prettier-plugin-shell$/,
+			],
 			neverBundle: true,
 		},
 		dts: {

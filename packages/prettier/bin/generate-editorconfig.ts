@@ -15,8 +15,7 @@ import {
 } from '../src/constants/index.ts';
 
 /**
- * The `[*]` section mirrors the base indentation options rather than
- * Prettier’s global options, which are reserved for shell scripts.
+ * The `[*]` section mirrors Prettier’s global indentation options.
  */
 const defaults: EditorConfigProperties = {
 	/* oxlint-disable-next-line unicorn/text-encoding-identifier-case */

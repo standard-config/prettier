@@ -10,11 +10,6 @@ exports[`exposes correct constants 1`] = `
     "*.scss",
     "*.wxss",
   ],
-  "GLOB_SET_GRAPHQL": [
-    "*.gql",
-    "*.graphql",
-    "*.graphqls",
-  ],
   "GLOB_SET_HTML": [
     "*.handlebars",
     "*.hbs",
@@ -58,9 +53,6 @@ exports[`exposes correct constants 1`] = `
     "end.frag",
     "Jakefile",
     "start.frag",
-  ],
-  "GLOB_SET_JAVASCRIPT_FLOW": [
-    "*.js.flow",
   ],
   "GLOB_SET_JSON": [
     ".all-contributorsrc",
@@ -123,9 +115,6 @@ exports[`exposes correct constants 1`] = `
     "composer.json",
     "package-lock.json",
     "package.json",
-  ],
-  "GLOB_SET_JSON5": [
-    "*.json5",
   ],
   "GLOB_SET_MARKDOWN": [
     "*.livemd",
@@ -265,9 +254,6 @@ exports[`exposes correct constants 1`] = `
     "*.mts",
     "*.ts",
     "*.tsx",
-  ],
-  "GLOB_SET_VUE": [
-    "*.vue",
   ],
   "GLOB_SET_YAML": [
     ".clang-format",

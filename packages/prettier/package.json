@@ -50,6 +50,7 @@
 		"@standard-config/utilities": "workspace:*",
 		"@types/node": "catalog:",
 		"prettier": "catalog:",
+		"prettier-plugin-shell": "workspace:*",
 		"publint": "^0.3.25",
 		"typescript": "catalog:",
 		"vite-plus": "catalog:"

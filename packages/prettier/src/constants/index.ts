@@ -8,8 +8,6 @@ export const GLOB_SET_CSS = getSupportedLanguagePatterns(
 	'SCSS'
 );
 
-export const GLOB_SET_GRAPHQL = getSupportedLanguagePatterns('GraphQL');
-
 export const GLOB_SET_HTML = getSupportedLanguagePatterns(
 	'Handlebars',
 	'HTML',
@@ -21,15 +19,11 @@ export const GLOB_SET_JAVASCRIPT = getSupportedLanguagePatterns(
 	'JSX'
 );
 
-export const GLOB_SET_JAVASCRIPT_FLOW = getSupportedLanguagePatterns('Flow');
-
 export const GLOB_SET_JSON = getSupportedLanguagePatterns(
 	'JSON',
 	'JSON with Comments',
 	'JSON.stringify'
 );
-
-export const GLOB_SET_JSON5 = getSupportedLanguagePatterns('JSON5');
 
 export const GLOB_SET_MARKDOWN = getSupportedLanguagePatterns('Markdown');
 
@@ -68,7 +62,5 @@ export const GLOB_SET_TYPESCRIPT = getSupportedLanguagePatterns(
 	'TSX',
 	'TypeScript'
 );
-
-export const GLOB_SET_VUE = getSupportedLanguagePatterns('Vue');
 
 export const GLOB_SET_YAML = getSupportedLanguagePatterns('YAML');

@@ -1,5 +1,6 @@
 import type { Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
+import * as pluginShell from 'prettier-plugin-shell';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import defineConfig from './index.ts';
 
@@ -24,24 +25,23 @@ test('merges custom config with the base config', () => {
 
 	const result = defineConfig(config);
 
+	expect(result).toHaveProperty('shUseTabs', true);
 	expect(result).toHaveProperty('singleQuote', false);
-	expect(result).toHaveProperty('useTabs', true);
+	expect(result).toHaveProperty('useTabs', false);
 
 	expect(result).toHaveProperty('plugins', expect.any(Array));
 	expect(result).toHaveProperty('overrides', expect.any(Array));
 	expect(result.overrides).toContainEqual(config.overrides[0]);
 
-	const { options } = result.overrides![0]!;
+	expect(result.plugins).toContain(pluginShell);
 
-	expect(options).toHaveProperty('useTabs', false);
-
-	expect(result.plugins).not.toHaveLength(0);
-
-	for (const plugin of result.plugins!) {
+	for (const plugin of result.plugins!.filter(
+		(plugin) => plugin !== pluginShell
+	)) {
 		expect(plugin).toContain('node_modules');
 	}
 });
 
 test('supports `shTabWidth`', () => {
-	expect(defineConfig({ shTabWidth: 4 })).toHaveProperty('tabWidth', 4);
+	expect(defineConfig({ shTabWidth: 4 })).toHaveProperty('shTabWidth', 4);
 });

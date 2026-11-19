@@ -8,6 +8,18 @@ export interface PluginOptions {
 	 * @default 'all'
 	 */
 	shCommentWrap?: 'all' | 'full-line' | 'none' | undefined;
+	/**
+	 * Specify the number of spaces per indentation level. Affects files
+	 * formatted by the shell plugin.
+	 * @default 2
+	 */
+	shTabWidth?: number | undefined;
+	/**
+	 * Indent lines with tabs instead of spaces. Affects files formatted by the
+	 * shell plugin.
+	 * @default false
+	 */
+	shUseTabs?: boolean | undefined;
 }
 
 declare module 'prettier' {

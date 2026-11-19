@@ -4,17 +4,25 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 ## Architecture
 
+### Override Plugin Lists
+
+Overrides that replace `plugins`, such as the JSON and `package.json` overrides, deliberately leave out the shell plugin. Setting a `sh*` option globally therefore makes Prettier warn about an unknown option for the files they match. These warnings are accepted.
+
 ### Shared Constants Without Module Load Work
 
 The shell and TypeScript plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.
 
 `@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
 
+### Shell Indentation
+
+Shell scripts can’t be reliably identified by file name alone because Prettier also recognizes them by their shebang. `prettier-plugin-shell` therefore applies `shTabWidth` and `shUseTabs` in its printers, allowing the config’s global indentation defaults to serve other languages without relying on file name overrides to identify shell scripts.
+
 ## Compatibility
 
 ### Node.js Engine Ranges
 
-The root `package.json` sets a newer Node.js minimum for development than `packages/prettier/package.json` sets for consumers. The private `@standard-config/utilities` package is bundled into the published config at build time, so its bundled code shares the config’s runtime requirements. The [**Node.js compatibility**](../AGENTS.md#compatibility) rule prevents the development runtime from becoming an accidental consumer requirement.
+The root `package.json` sets a newer Node.js minimum for development than `packages/prettier/package.json` sets for consumers. The private `@standard-config/utilities` and `prettier-plugin-shell` packages are bundled into the published config at build time, so their bundled code shares the config’s runtime requirements. The [**Node.js compatibility**](../AGENTS.md#compatibility) rule prevents the development runtime from becoming an accidental consumer requirement.
 
 ## Comment Formatting
 
@@ -22,9 +30,9 @@ The root `package.json` sets a newer Node.js minimum for development than `packa
 
 The TypeScript plugin’s conversion rules are defined by [`formatGroup`](../packages/prettier-plugin-typescript/src/wrap-comments/index.ts) and [`moveTrailingComments`](../packages/prettier-plugin-typescript/src/move-trailing-comments/index.ts). They cover directives matched by [`BLOCK_DIRECTIVE_PATTERN`](../packages/prettier-plugin-typescript/src/constants/index.ts), trailing suppressions, and qualifying fall-through comments.
 
-The maintainer’s conversion policy includes bare `eslint-disable` and `eslint-enable` (without `-line` or `-next-line`), their `oxlint-` forms, and ESLint configuration comments: `eslint` rule settings, `eslint-env`, `exported`, `global`, and `globals`. Converting `//` to `/* … */` can activate previously ignored settings or suppressions. A `// global …` line intended as prose can consequently become a declaration. This is an accepted consequence.
+The conversion policy deliberately includes bare `eslint-disable` and `eslint-enable` (without `-line` or `-next-line`), their `oxlint-` forms, and ESLint configuration comments: `eslint` rule settings, `eslint-env`, `exported`, `global`, and `globals`. Converting `//` to `/* … */` can activate previously ignored settings or suppressions, giving ESLint directives the block form their authors presumably intended. A `// global …` line intended as prose can consequently become a declaration. This is an accepted consequence.
 
-[ESLint 10 reports `/* eslint-env */` comments as errors](https://eslint.org/docs/latest/use/migrate-to-10.0.0#-eslint-env-comments-are-reported-as-errors). The maintainer accepts this consequence of converting `eslint-env` for consistency.
+[ESLint 10 reports `/* eslint-env */` comments as errors](https://eslint.org/docs/latest/use/migrate-to-10.0.0#-eslint-env-comments-are-reported-as-errors). `eslint-env` is deliberately converted for consistency, with these errors accepted as a consequence.
 
 Converting only the first line of an `eslint-disable` whose rules continue on indented lines below could suppress every rule. [`isContinuedList`](../packages/prettier-plugin-typescript/src/move-trailing-comments/index.ts) identifies continued lists.
 
@@ -44,7 +52,11 @@ Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ig
 
 ### Shebang Spacing
 
-By maintainer decision, the shell plugin doesn’t add an empty line after a shebang. The TypeScript plugin does.
+The shell plugin deliberately doesn’t add an empty line after a shebang. The TypeScript plugin does.
+
+### Shell Limitations
+
+The shell plugin deliberately retains its default behavior of simplifying Markdown and MDX data fences such as `dotenv`, `gitignore`, and `properties` and moving trailing comments. `prettier-plugin-sh` maps both data and shell languages to `sh`, and Prettier passes the parser and enclosing file path without the fence language. For example, `FOO=$(($BAR + 1))` becomes `FOO=$((BAR + 1))`, and `foo # bar` in a `gitignore` block becomes `# bar` above `foo`, changing the pattern because only a leading `#` starts a gitignore comment. Standalone data files avoid these changes because `isPropertyFile` recognizes their names. An affected block can be excluded with `prettier-ignore`, using `<!-- prettier-ignore -->` on the line before the block in Markdown.
 
 ### TypeScript Limitations
 

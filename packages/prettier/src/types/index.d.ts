@@ -1,6 +1,6 @@
 import type { PrettierPlugin } from '@standard-config/utilities/types';
 import type { Options as PrettierOptions } from 'prettier';
-import type { ShPrintOptions as PluginShOptions } from 'prettier-plugin-sh';
+import type {} from 'prettier-plugin-shell';
 
 type DefaultOptions = {
 	/**
@@ -16,47 +16,34 @@ type DefaultOptions = {
 	 */
 	jsonSortOrder?: string | string[] | undefined;
 	/**
-	 * Maximum line length before wrapping.
+	 * Specify the line length that the printer will wrap on.
 	 * @default 80
 	 */
 	printWidth?: PrettierOptions['printWidth'];
 	/**
-	 * Control when object properties are quoted.
+	 * Change when properties in objects are quoted.
 	 * @default 'consistent'
 	 */
 	quoteProps?: PrettierOptions['quoteProps'];
-	/**
-	 * Indentation width for shell scripts.
-	 * @default 2
-	 */
-	shTabWidth?: PrettierOptions['tabWidth'];
-	/**
-	 * Use tabs instead of spaces for shell scripts.
-	 * @default false
-	 */
-	shUseTabs?: PrettierOptions['useTabs'];
-	/**
-	 * Remove redundant syntax from shell scripts.
-	 * @default true
-	 */
-	simplify?: PluginShOptions['simplify'];
 	/**
 	 * Use single quotes instead of double quotes.
 	 * @default true
 	 */
 	singleQuote?: PrettierOptions['singleQuote'];
 	/**
-	 * Indentation width for all non-shell files.
+	 * Specify the number of spaces per indentation level. Doesn’t affect files
+	 * formatted by the shell plugin.
 	 * @default 4
 	 */
 	tabWidth?: PrettierOptions['tabWidth'];
 	/**
-	 * Print trailing commas where valid in ES5.
+	 * Print trailing commas wherever possible.
 	 * @default 'es5'
 	 */
 	trailingComma?: PrettierOptions['trailingComma'];
 	/**
-	 * Use tabs instead of spaces for all non-shell files.
+	 * Indent lines with tabs instead of spaces. Doesn’t affect files formatted
+	 * by the shell plugin.
 	 * @default true
 	 */
 	useTabs?: PrettierOptions['useTabs'];
@@ -69,13 +56,6 @@ export type StandardOptions = {
 		K in keyof PrettierOptions as K extends keyof DefaultOptions ? never : K
 	]: PrettierOptions[K];
 } & DefaultOptions;
-
-export type IndentationOptions = Pick<StandardOptions, 'tabWidth' | 'useTabs'>;
-
-export type ShellIndentationOptions = Pick<
-	StandardOptions,
-	'shTabWidth' | 'shUseTabs'
->;
 
 export type StandardConfigOverride = {
 	excludeFiles?: string[];
