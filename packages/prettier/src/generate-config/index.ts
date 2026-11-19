@@ -35,10 +35,10 @@ import {
  */
 export default function generateConfig(
 	baseDefaults: IndentationOptions = {},
-	shellDefaults: ShellIndentationOptions = {}
+	shDefaults: ShellIndentationOptions = {}
 ): StandardConfig {
 	const { tabWidth = 4, useTabs = true } = baseDefaults;
-	const { shellTabWidth = 2, shellUseTabs = false } = shellDefaults;
+	const { shTabWidth = 2, shUseTabs = false } = shDefaults;
 
 	return clone({
 		plugins: [
@@ -53,9 +53,9 @@ export default function generateConfig(
 		quoteProps: 'consistent',
 		simplify: true,
 		singleQuote: true,
-		tabWidth: shellTabWidth,
+		tabWidth: shTabWidth,
 		trailingComma: 'es5',
-		useTabs: shellUseTabs,
+		useTabs: shUseTabs,
 		overrides: [
 			...getFileTypeOverrides({ tabWidth, useTabs }),
 			...getFileNameOverrides(),

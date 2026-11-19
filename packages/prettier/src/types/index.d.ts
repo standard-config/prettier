@@ -29,12 +29,12 @@ type DefaultOptions = {
 	 * Indentation width for shell scripts.
 	 * @default 2
 	 */
-	shellTabWidth?: PrettierOptions['tabWidth'];
+	shTabWidth?: PrettierOptions['tabWidth'];
 	/**
 	 * Use tabs instead of spaces for shell scripts.
 	 * @default false
 	 */
-	shellUseTabs?: PrettierOptions['useTabs'];
+	shUseTabs?: PrettierOptions['useTabs'];
 	/**
 	 * Remove redundant syntax from shell scripts.
 	 * @default true
@@ -74,7 +74,7 @@ export type IndentationOptions = Pick<StandardOptions, 'tabWidth' | 'useTabs'>;
 
 export type ShellIndentationOptions = Pick<
 	StandardOptions,
-	'shellTabWidth' | 'shellUseTabs'
+	'shTabWidth' | 'shUseTabs'
 >;
 
 export type StandardConfigOverride = {

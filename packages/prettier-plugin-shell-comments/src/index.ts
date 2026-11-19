@@ -9,7 +9,7 @@ const { parsers: shellParsers, printers: shellPrinters } = pluginShell;
 
 /**
  * Prints shell code with `prettier-plugin-sh`, then wraps its comments as
- * `shellCommentWrap` selects.
+ * `shCommentWrap` selects.
  */
 async function printWithWrappedComments(
 	...[path, options, print, args]: Parameters<typeof shellPrinters.sh.print>
@@ -22,9 +22,9 @@ async function printWithWrappedComments(
 		args
 	) as Doc | Promise<Doc>);
 
-	const { shellCommentWrap } = options as PluginOptions;
+	const { shCommentWrap } = options as PluginOptions;
 
-	if (typeof printed !== 'string' || shellCommentWrap === 'none') {
+	if (typeof printed !== 'string' || shCommentWrap === 'none') {
 		return printed;
 	}
 
@@ -39,7 +39,7 @@ async function printWithWrappedComments(
 
 	// A `#` after an entry in a data file can belong to the entry itself
 	const text =
-		shellCommentWrap === 'all' && !isPropertyFile(options.filepath)
+		shCommentWrap === 'all' && !isPropertyFile(options.filepath)
 			? await moveTrailingComments(printed, options, reprint)
 			: printed;
 
@@ -61,7 +61,7 @@ export const printers: Plugin['printers'] = {
 
 export const options: Plugin['options'] = {
 	...pluginShell.options,
-	shellCommentWrap: {
+	shCommentWrap: {
 		category: 'Shell',
 		description: 'Control wrapping for comments.',
 		type: 'choice',

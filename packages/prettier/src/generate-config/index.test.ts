@@ -13,7 +13,7 @@ test('generates a valid Prettier config', () => {
 });
 
 test('accepts custom formatting options', () => {
-	const config = generateConfig({ tabWidth: 2 }, { shellTabWidth: 4 });
+	const config = generateConfig({ tabWidth: 2 }, { shTabWidth: 4 });
 
 	expectTypeOf(config).toEqualTypeOf<StandardConfig>();
 

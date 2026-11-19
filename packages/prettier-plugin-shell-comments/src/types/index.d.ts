@@ -7,7 +7,7 @@ export interface PluginOptions {
 	 * `#` characters and empty comment lines.
 	 * @default 'all'
 	 */
-	shellCommentWrap?: 'all' | 'full-line' | 'none' | undefined;
+	shCommentWrap?: 'all' | 'full-line' | 'none' | undefined;
 }
 
 declare module 'prettier' {

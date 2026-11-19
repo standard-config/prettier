@@ -4,7 +4,7 @@ import { expectTypeOf, test } from 'vite-plus/test';
 
 test('exposes valid types', () => {
 	expectTypeOf<PluginOptions>()
-		.toHaveProperty('shellCommentWrap')
+		.toHaveProperty('shCommentWrap')
 		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });
 
@@ -13,6 +13,6 @@ test('extends Prettier’s `Options`', () => {
 	expectTypeOf<PrettierOptions>().toHaveProperty('useTabs');
 
 	expectTypeOf<PrettierOptions>()
-		.toHaveProperty('shellCommentWrap')
+		.toHaveProperty('shCommentWrap')
 		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });

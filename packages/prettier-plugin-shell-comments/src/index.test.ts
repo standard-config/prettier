@@ -247,7 +247,7 @@ test('respects `requirePragma`', async () => {
 	).resolves.toBe(output);
 });
 
-test('supports `shellCommentWrap`', async () => {
+test('supports `shCommentWrap`', async () => {
 	const input = '# foo bar baz\n# qux\ncorge # grault\n';
 	const options = {
 		parser: 'sh',
@@ -258,15 +258,15 @@ test('supports `shellCommentWrap`', async () => {
 	const outputs = {
 		'all': await format(input, {
 			...options,
-			shellCommentWrap: 'all',
+			shCommentWrap: 'all',
 		}),
 		'full-line': await format(input, {
 			...options,
-			shellCommentWrap: 'full-line',
+			shCommentWrap: 'full-line',
 		}),
 		'none': await format(input, {
 			...options,
-			shellCommentWrap: 'none',
+			shCommentWrap: 'none',
 		}),
 	};
 
@@ -283,7 +283,7 @@ test('supports `shellCommentWrap`', async () => {
 	await expect(
 		format(outputs['full-line'], {
 			...options,
-			shellCommentWrap: 'full-line',
+			shCommentWrap: 'full-line',
 		})
 	).resolves.toBe(outputs['full-line']);
 });

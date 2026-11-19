@@ -12,8 +12,8 @@ export default function defineConfig(
 ): PrettierConfig {
 	const {
 		pluginOverrides,
-		shellTabWidth,
-		shellUseTabs,
+		shTabWidth,
+		shUseTabs,
 		tabWidth,
 		useTabs,
 		...extensionConfig
@@ -21,7 +21,7 @@ export default function defineConfig(
 
 	const baseConfig = generateConfig(
 		{ tabWidth, useTabs },
-		{ shellTabWidth, shellUseTabs }
+		{ shTabWidth, shUseTabs }
 	);
 
 	const extendedConfig = mergeConfig(baseConfig, extensionConfig);

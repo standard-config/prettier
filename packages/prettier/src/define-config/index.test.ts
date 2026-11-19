@@ -9,7 +9,7 @@ test('returns a Prettier config', () => {
 
 test('merges custom config with the base config', () => {
 	const config = {
-		shellUseTabs: true,
+		shUseTabs: true,
 		singleQuote: false,
 		useTabs: false,
 		overrides: [
@@ -40,4 +40,8 @@ test('merges custom config with the base config', () => {
 	for (const plugin of result.plugins!) {
 		expect(plugin).toContain('node_modules');
 	}
+});
+
+test('supports `shTabWidth`', () => {
+	expect(defineConfig({ shTabWidth: 4 })).toHaveProperty('tabWidth', 4);
 });
