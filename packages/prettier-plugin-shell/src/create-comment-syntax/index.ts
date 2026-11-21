@@ -10,8 +10,8 @@ const UNSAFE_LINE_START_PATTERN =
 	/^(?:#|-\*-|(?:cSpell|cspell|spell-?checker):|dotenv-linter:|pragma:|shellcheck|SPDX-|vi:|vim:|(?:bats|c8|endregion|istanbul|prettier-ignore|region|v8)$)/;
 
 /**
- * Returns the syntax of shell comments, where pragmas count as directives
- * only in the comments that start the file.
+ * Returns the syntax of shell comments, where pragmas count as directives only
+ * in the comments that start the file.
  */
 export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 	return {

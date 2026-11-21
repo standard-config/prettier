@@ -30,8 +30,7 @@ const CONTINUED_LINE_PATTERN = /(?<!\\)(?:\\\\)*(?:&&|\\|\|\|?)$/;
 const MAX_REPRINTS = 3;
 
 /**
- * Moves trailing comments onto their own lines, leaving the code itself
- * unchanged.
+ * Moves trailing comments onto their own lines without changing the code.
  */
 export default async function moveTrailingComments(
 	text: string,
@@ -54,12 +53,11 @@ export default async function moveTrailingComments(
 		const comment = line.slice(column);
 		const commentText = comment.replace(/^#+[ \t]*/, '');
 
-		// A moved suppression marker or next-line directive could cover
-		// different code, and a moved `prettier-ignore` marker could keep a
-		// whole comment block from being reflowed. A directive or pragma could
-		// start applying to the whole file, and a `#!` comment could become a
-		// shebang. Bats recognizes the `@test` marker only at the end of a
-		// function’s opening line
+		// Moving a suppression or next-line directive could change which code
+		// it covers. Moving `prettier-ignore` could prevent an entire comment
+		// block from reflowing. A pragma or directive could take effect across
+		// the file, and `#!` could become a shebang. Bats recognizes `@test`
+		// only at the end of the function’s opening line
 		if (
 			comment.startsWith('#!') ||
 			commentText === '@test' ||
@@ -133,8 +131,8 @@ export default async function moveTrailingComments(
 	}
 
 	// A moved comment can land inside a string or heredoc and become part of
-	// the code. Marked comments that survive printing without comments did,
-	// so those stay where they are
+	// the code. Marked comments that survive printing without comments did, so
+	// those stay where they are
 	const markPrefix = createMarkPrefix(lines.join('\n'), MARK_PREFIX);
 	const markedCode = await printWithoutComments(
 		buildText(
@@ -176,9 +174,8 @@ export default async function moveTrailingComments(
 	}
 
 	// `prettier-plugin-sh` can take more than one pass to settle the
-	// indentation of a moved comment. A change in the number of `#`
-	// characters can indicate duplicated or lost comment text, so keep the
-	// previous result
+	// indentation of a moved comment. A change in the number of `#` characters
+	// can indicate duplicated or lost comment text, so keep the previous result
 	let result = movedText;
 
 	for (let pass = 0; pass < MAX_REPRINTS; pass += 1) {

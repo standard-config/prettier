@@ -10,29 +10,29 @@ const pluginOxc = await loadOxcPlugin();
 export const options: Plugin['options'] = {
 	tsCommentWrap: {
 		category: 'JavaScript',
-		description: 'Control wrapping for comments.',
+		description: 'Wrap comments to the preferred line length.',
 		type: 'choice',
 		default: 'all',
 		choices: [
 			{
 				description:
-					'Move trailing `//` comments onto their own lines where possible, then reflow supported comments.',
+					'Move trailing line comments onto their own lines.',
 				value: 'all',
 			},
 			{
-				description: 'Reflow comments that occupy their own lines.',
+				description: 'Wrap comments already on their own lines.',
 				value: 'full-line',
 			},
 			{
-				description: 'Leave all comments as written.',
+				description: 'Leave comments as written.',
 				value: 'none',
 			},
 		],
 	},
 };
 
-// Prettier uses the parser from the last plugin that defines it, so this
-// plugin has to come after `@prettier/plugin-oxc` in the plugin list
+// Prettier uses the parser from the last plugin that defines it, so this plugin
+// has to come after `@prettier/plugin-oxc` in the plugin list
 export const parsers: Plugin['parsers'] = {
 	babel: createParser('babel', babelParsers.babel),
 	...(pluginOxc && {

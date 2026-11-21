@@ -32,10 +32,10 @@ type MoveContext = {
 };
 
 /**
- * Moves eligible trailing `//` comments above the code they follow.
- * Converts supported suppressions and directives to block comments on the
- * same line, except those whose offsets are kept. Comments that move to
- * another line use the indentation measured for them, if any.
+ * Moves eligible trailing `//` comments above the code they follow. Converts
+ * supported suppressions and directives to block comments on the same line,
+ * except those whose offsets are kept. Comments that move to another line use
+ * the indentation measured for them, if any.
  */
 export default function moveTrailingComments(
 	text: string,
@@ -90,8 +90,7 @@ export default function moveTrailingComments(
 			const continuesBelow =
 				nextLine !== undefined && isContinuedList(directive, nextLine);
 
-			// Only directives after exactly two slashes are eligible for
-			// conversion
+			// Only convert directives that follow exactly two slashes
 			if (
 				/^\/\/(?!\/)/.test(commentText) &&
 				!continuesBelow &&
@@ -110,9 +109,9 @@ export default function moveTrailingComments(
 			continue;
 		}
 
-		// Empty comments and directives that only work in `//` comments or cover
-		// the next line stay in place, as do unfinished rule settings, which could
-		// continue below
+		// Empty comments and directives that only work in `//` comments or
+		// cover the next line stay in place, as do unfinished rule settings,
+		// which could continue below
 		if (
 			directive === '' ||
 			LINE_DIRECTIVE_PATTERN.test(directive) ||
@@ -131,10 +130,9 @@ export default function moveTrailingComments(
 
 		const isRelocated = targetLineStart !== lineStart;
 
-		// Prettier can rewrite the lines around a comment that moves to
-		// another line, so the comment goes above a directive covering that
-		// line instead of staying in place, and above the comments grouped
-		// with the directive
+		// Prettier can rewrite the lines around a comment that moves to another
+		// line, so place the comment above any directive covering the target
+		// line and any comments grouped with that directive
 		let commentAbove = isRelocated
 			? findDirectiveAbove(text, targetLineStart, found)
 			: undefined;
@@ -155,11 +153,11 @@ export default function moveTrailingComments(
 				findOwnLineCommentAbove(text, targetLineStart, found);
 		}
 
-		// ESLint’s `no-fallthrough` rule reads only the last comment before a
-		// `case` or `default`, or before the closing brace of a block that
-		// forms a clause’s whole body. Moving a fall-through comment there
-		// would silence the rule, and moving another comment there could hide
-		// one already present
+		// ESLint’s `no-fallthrough` checks only the last comment before `case`
+		// or `default`, or before the closing brace when a block forms the
+		// whole clause body. Moving a fall-through comment there would silence
+		// the rule. Moving another comment there could hide an existing
+		// fall-through comment
 		if (
 			isInsideText(targetCodeStart, textRanges) ||
 			findDirectiveAbove(text, targetLineStart, found) !== undefined ||
@@ -229,12 +227,8 @@ export default function moveTrailingComments(
 }
 
 /**
- * Returns the start of the line that a moved comment goes above, and the
- * offset of the code on that line. Prettier can join or split JSX text,
- * so a line starting inside or at the end of that text targets the
- * innermost containing element or fragment. This repeats while the new
- * line also starts inside or at the end of JSX text, so the inserted
- * `//` comment doesn’t become text.
+ * Finds where to insert a moved comment without turning it into JSX text.
+ * Returns the start of the target line and the offset where its code begins.
  */
 function findTargetLine(
 	text: string,
@@ -258,8 +252,7 @@ function findTargetLine(
 }
 
 /**
- * Returns the innermost JSX element or fragment that holds a range of JSX
- * text.
+ * Returns the innermost JSX element or fragment that holds a range of JSX text.
  */
 function findJsxElement(
 	range: TextRange,
@@ -284,10 +277,7 @@ function findRange(
 }
 
 /**
- * Returns whether a directive without a `--` description continues its list
- * on the next `//` line by ending with a comma or colon, leaving a bracket
- * unclosed, or being followed by text indented past one space after the
- * slashes.
+ * Checks whether a directive’s list continues on the next `//` line.
  */
 export function isContinuedList(text: string, nextLine: string): boolean {
 	return (
@@ -334,8 +324,7 @@ export function getCommentText(comment: string): string {
 }
 
 /**
- * Returns the ranges of all comments, including block comments that share
- * lines with code.
+ * Returns all comment ranges, including inline block comments.
  */
 function getAllComments(
 	text: string,

@@ -3,8 +3,8 @@ import { format } from 'prettier';
 import * as pluginSh from 'prettier-plugin-sh';
 
 /**
- * Prints shell code without its comments, or returns `undefined` when the
- * code can’t be parsed.
+ * Prints shell code without its comments, or returns `undefined` when the code
+ * can’t be parsed.
  */
 export default async function printWithoutComments(
 	text: string,

@@ -1,8 +1,8 @@
 import type { TextEdit } from '../types/index.d.ts';
 
 /**
- * Maps a cursor offset through edits ordered by their starting positions in
- * the original text. Within an edit, it preserves the cursor’s place among the
+ * Maps a cursor offset through edits ordered by their starting positions in the
+ * original text. Within an edit, it preserves the cursor’s place among the
  * characters of the comment text, leaving out whitespace and comment markers.
  */
 export default function mapCursor(

@@ -170,8 +170,8 @@ function applyEdits(text: string, edits: ReadonlyArray<TextEdit>): string {
 }
 
 /**
- * Collects comment formatting changes in source order, including the edits
- * that move trailing comments.
+ * Collects comment formatting changes in source order, including the edits that
+ * move trailing comments.
  */
 function createEdits(
 	text: string,
@@ -246,11 +246,7 @@ function createEdits(
 }
 
 /**
- * Prepares the group of `//` comments directly above moved comments to match
- * the next run’s formatting. Removes empty `//` lines that would start their
- * joined group and records the target line when the group above ends with a
- * non-empty `//` line, so a separator can be added before the first moved
- * comment.
+ * Adjusts spacing above moved comments to preserve groups on the next run.
  */
 function formatGroupAboveMoves(
 	text: string,
@@ -288,8 +284,8 @@ function formatGroupAboveMoves(
 
 /**
  * Adds an empty `//` line after the comments moved above a `//` comment that
- * stays `//` once its group is formatted, which would otherwise join the two
- * on the next run.
+ * stays `//` once its group is formatted, which would otherwise join the two on
+ * the next run.
  */
 function separateMovedComments(
 	text: string,
@@ -311,9 +307,8 @@ function separateMovedComments(
 }
 
 /**
- * Returns where each converted comment and each comment that moves to another
- * line starts once the edits are applied, along with the offset of the
- * original comment.
+ * Returns the original and edited offsets of each converted comment and each
+ * comment moved to another line.
  */
 function findEditedOffsets(edits: ReadonlyArray<CommentEdit>): {
 	conversions: Array<Omit<Conversion, 'line'> & { offset: number }>;
@@ -390,8 +385,7 @@ function groupComments(
 }
 
 /**
- * Formats a group of comments, keeping its lines apart from the code around
- * them.
+ * Formats a comment group and keeps its lines separate from surrounding code.
  */
 function formatGroup(
 	text: string,
@@ -444,8 +438,8 @@ function formatGroup(
 		};
 	}
 
-	// A directive that covers the next line can sit above the group, or a
-	// conversion can leave it outside the block that follows
+	// A next-line directive can sit above the group or end up outside the
+	// following block after conversion
 	const directiveAbove = findDirectiveAbove(text, lineStart, found);
 	let isBelowDirective =
 		directiveAbove !== undefined &&
@@ -509,9 +503,9 @@ function formatGroup(
 		isBelowDirective = false;
 	};
 
-	// ESLint’s `no-fallthrough` rule only recognizes a fall-through comment when
-	// it’s the last comment before a `case` or `default`, or at the end of a
-	// block that forms a clause’s whole body
+	// ESLint’s `no-fallthrough` rule only recognizes a fall-through comment
+	// when it’s the last comment before a `case` or `default`, or at the end of
+	// a block that forms a clause’s whole body
 	const nextCodePattern = /\S/g;
 	nextCodePattern.lastIndex = group.at(-1)!.end;
 	const isAtFallThroughPosition = found.fallThroughOffsets.has(
@@ -592,8 +586,8 @@ function isContinuedDirective(comment: string, nextLine: string): boolean {
 }
 
 /**
- * Returns whether a `//` comment that ends on the previous line holds a
- * directive whose list continues on a `//` line that starts at an offset.
+ * Returns whether this `//` line continues a directive’s list from the previous
+ * `//` comment.
  */
 function isBelowContinuedDirective(
 	text: string,
@@ -625,9 +619,9 @@ function isBelowSuppression(text: string, offset: number): boolean {
 			lineEnd > 0 ? text.lastIndexOf('\n', lineEnd - 1) + 1 : 0;
 		const line = text.slice(lineStart, lineEnd);
 
-		// TypeScript reads suppressions from `//` comments anywhere on a line and
-		// from the last line of a block comment. For a one-line block comment after
-		// code, that last line starts at `/*`
+		// TypeScript reads suppressions from `//` comments anywhere on a line
+		// and from the last line of a block comment. For a one-line block
+		// comment after code, that last line starts at `/*`
 		if (
 			/(?:^[ \t]*[*/]*|\/[*/]+)[ \t]*@ts-(?:expect-error|ignore)\b/.test(
 				line

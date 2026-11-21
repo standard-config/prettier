@@ -119,8 +119,8 @@ const BASE_CONFIG: StandardConfig = {
 			},
 		},
 		/**
-		 * All `.oxlintrc.json` fields defined by the Oxlint documentation
-		 * are sorted, including nested fields.
+		 * All `.oxlintrc.json` fields defined by the Oxlint documentation are
+		 * sorted, including nested fields.
 		 */
 		{
 			files: [
@@ -196,8 +196,8 @@ const BASE_CONFIG: StandardConfig = {
 			},
 		},
 		/**
-		 * All `package.json` fields defined in the `npm@12` specification
-		 * are sorted, along with additional commonly used fields.
+		 * All `package.json` fields defined in the `npm@12` specification are
+		 * sorted, along with additional commonly used fields.
 		 */
 		{
 			files: ['package.json'],

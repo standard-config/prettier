@@ -59,8 +59,8 @@ export default async function wrapComments(
 			indentation,
 			joinLines,
 			printWidth: options.printWidth,
-			// Keep the block’s first line as written when a directive on the line
-			// above covers it
+			// Keep the block’s first line as written when a directive on the
+			// line above covers it
 			syntax: isBelowDirective
 				? {
 						...syntax,

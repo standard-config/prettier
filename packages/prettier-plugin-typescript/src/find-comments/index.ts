@@ -25,9 +25,9 @@ export type FoundComment = {
 export type FoundComments = {
 	comments: FoundComment[];
 	/**
-	 * Offsets used to check fall-through comment placement: the start of each
-	 * `case` or `default` clause and the closing brace of a block that forms a
-	 * clause’s whole body.
+	 * Offsets where ESLint checks for fall-through comments. These include each
+	 * `case` or `default` clause start and the closing brace of any block that
+	 * forms the whole clause body.
 	 */
 	fallThroughOffsets: Set<number>;
 	/**
@@ -44,8 +44,7 @@ export type FoundComments = {
 	 */
 	jsxTextRanges: TextRange[];
 	/**
-	 * Offsets of single-line comments that Prettier prints at the end of a
-	 * line.
+	 * Start offsets of single-line comments printed at line ends.
 	 */
 	lineEndStarts: Set<number>;
 	/**
@@ -79,13 +78,9 @@ const MARK_PATTERN = /\u0001([\u0010-\u0019]+)\u0002/g;
 const findingComments = new AsyncLocalStorage<true>();
 
 /**
- * Finds the comments that Prettier prints on lines of their own and the `//`
- * comments that follow code, along with the indentation of their lines.
- * Comments that Prettier prints as written, such as those in code after a
- * `prettier-ignore` comment, aren’t included. Also returns offsets used to
- * check fall-through comment placement, the offsets of single-line comments
- * printed at the end of a line, and the ranges of JSX elements, JSX text,
- * strings, template text, and block comments.
+ * Finds full-line comments and trailing `//` comments that Prettier prints,
+ * along with the source ranges needed to move them safely. Skips comments that
+ * Prettier leaves as written.
  */
 export default async function findComments(
 	text: string,
@@ -112,8 +107,7 @@ export default async function findComments(
 		};
 	}
 
-	// Mark each comment as Prettier prints it, which leaves the code it parses
-	// unchanged
+	// Mark comments as Prettier prints them so it parses the original code
 	const markingPrinter: Printer = {
 		...printer,
 		preprocess(ast: unknown, printOptions) {
@@ -135,8 +129,8 @@ export default async function findComments(
 			const start = printOptions.locStart(path.node);
 			const end = printOptions.locEnd(path.node);
 
-			// Code embedded in the code, such as in an HTML template, has offsets
-			// of its own
+			// Code embedded in the code, such as in an HTML template, has
+			// offsets of its own
 			if (
 				printOptions.originalText !== text ||
 				!/^\/[*/]/.test(text.slice(start, end))
@@ -394,8 +388,8 @@ function isOnOwnLine(text: string, start: number, end: number): boolean {
 }
 
 /**
- * Returns the formatting options that Prettier and its plugins support,
- * leaving out those that Prettier handles outside the parser.
+ * Returns the formatting options that Prettier and its plugins support, leaving
+ * out those that Prettier handles outside the parser.
  */
 async function getFormatOptions(options: ParserOptions): Promise<Options> {
 	const { options: supportedOptions } = await getSupportInfo({

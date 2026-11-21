@@ -5,8 +5,7 @@ export type OxcPlugin = Plugin & {
 };
 
 /**
- * Loads `@prettier/plugin-oxc`, returning `undefined` where its native
- * binding isn’t available.
+ * Loads `@prettier/plugin-oxc` when its native binding is available.
  */
 export default async function loadOxcPlugin(): Promise<OxcPlugin | undefined> {
 	try {

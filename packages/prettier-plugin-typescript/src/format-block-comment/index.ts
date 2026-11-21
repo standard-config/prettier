@@ -24,7 +24,7 @@ const DOC_SYNTAX: CommentSyntax = {
 	isBlockKept: () => false,
 	isDirective: () => false,
 	isLineKept: isMarkdownBlock,
-	// Starting a line with these words can turn prose into a block tag or a
+	// At the start of a line, these words can turn prose into a block tag,
 	// Markdown quote, heading, or rule
 	isUnsafeLineStart: (word) =>
 		/^(?:#{1,6}$|>|@|[-=]+$|\*{3,}$|_{3,}$)/.test(word),
@@ -60,13 +60,13 @@ const PRAGMA_PATTERN =
 // ESLint rule settings can span several lines in a block comment
 const RULE_SETTING_PATTERN = /^eslint(?=[ \t]|$)/;
 
-// A Markdown table’s body can contain rows without a `|` until an empty line
-// or another block structure ends it
+// A Markdown table’s body can contain rows without a `|` until an empty line or
+// another block structure ends it
 const TABLE_DELIMITER_PATTERN =
 	/^(?=.*\|)\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/;
 
-// Require a tag boundary to avoid treating `@scope/package` and
-// `@decorator()` as block tags
+// Require a tag boundary to avoid treating `@scope/package` and `@decorator()`
+// as block tags
 const TAG_PATTERN = /^@([A-Za-z][\w-]*)(?=[\s{]|$)/;
 
 // A list item or a code fence ends the first paragraph of a tag’s text
@@ -145,8 +145,8 @@ export default function formatBlockComment(
 
 /**
  * Returns comment text without the markers, gutter, or following space,
- * omitting leading and trailing blank lines. Other whitespace-only lines
- * become empty strings.
+ * omitting leading and trailing blank lines. Other whitespace-only lines become
+ * empty strings.
  */
 function getContents(comment: string, isDocComment: boolean): string[] {
 	const contents = comment
@@ -370,8 +370,8 @@ function toCommentLines(texts: ReadonlyArray<string>): string[] {
 }
 
 /**
- * Splits the text of a block tag into the type and name that stay on its
- * first line and the description that follows them.
+ * Splits the text of a block tag into the type and name that stay on its first
+ * line and the description that follows them.
  */
 function splitTagText(tag: string, tagText: string): [string, string] {
 	let rest = tagText;
@@ -398,8 +398,8 @@ function splitTagText(tag: string, tagText: string): [string, string] {
 }
 
 /**
- * Returns the name at the start of a block tag’s text, such as an optional
- * name in brackets or the list of type parameters of `@template`.
+ * Returns the name at the start of a block tag’s text, such as an optional name
+ * in brackets or the list of type parameters of `@template`.
  */
 function findTagName(tag: string, text: string): string {
 	if (text.startsWith('[')) {
@@ -416,9 +416,9 @@ function findTagName(tag: string, text: string): string {
 }
 
 /**
- * Returns the offset of the bracket matching the one at the start of the
- * text, or `-1` if none is found. Skips quoted text without treating escaped
- * quotes as closing quotes.
+ * Returns the offset of the bracket matching the one at the start of the text,
+ * or `-1` if none is found. Skips quoted text without treating escaped quotes
+ * as closing quotes.
  */
 function findClosingBracket(text: string): number {
 	const [opening] = text;

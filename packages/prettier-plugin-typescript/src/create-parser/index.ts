@@ -51,7 +51,7 @@ export default function createParser(
 		text: string,
 		options: ParserOptions
 	) => {
-		// This plugin formats code that it has preprocessed to find its comments
+		// Finding comments runs the formatter on code already preprocessed
 		if (isFindingComments()) {
 			return text;
 		}
@@ -110,8 +110,7 @@ export default function createParser(
 }
 
 /**
- * Separates a shebang from what follows, keeping the cursor on the same
- * character.
+ * Separates the shebang while keeping the cursor on the same character.
  */
 function separateShebangLine(text: string, options: ParserOptions): string {
 	const result = separateShebang(text);
@@ -127,8 +126,8 @@ function separateShebangLine(text: string, options: ParserOptions): string {
 }
 
 /**
- * Returns whether Prettier formats only a range of the code, where a change
- * to the code would shift the range.
+ * Returns whether Prettier formats only a range of the code, where a change to
+ * the code would shift the range.
  */
 function isPartialFormat(text: string, options: ParserOptions): boolean {
 	return (
@@ -142,10 +141,10 @@ function isPartialFormat(text: string, options: ParserOptions): boolean {
 }
 
 /**
- * Returns whether Prettier inserted a pragma into the code after measuring
- * it, which leaves the code longer than its range. A pragma that Prettier
- * merges into an existing docblock isn’t recognized, so this plugin’s changes
- * appear only on the next run.
+ * Returns whether Prettier inserted a pragma into the code after measuring it,
+ * which leaves the code longer than its range. A pragma that Prettier merges
+ * into an existing docblock isn’t recognized, so this plugin’s changes appear
+ * only on the next run.
  */
 function hasInsertedPragma(text: string, options: ParserOptions): boolean {
 	if (!options.insertPragma || options.requirePragma) {

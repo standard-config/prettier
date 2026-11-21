@@ -16,9 +16,8 @@ export type CommentBlockOptions = {
 
 export type CommentSyntax = {
 	/**
-	 * Characters that start each comment line, such as `#` or `//`.
-	 * Repetitions of the last character are also treated as part of the marker
-	 * when parsing.
+	 * Characters that start each comment line, such as `#` or `//`. Parsing
+	 * treats repetitions of the last character as part of the marker.
 	 */
 	marker: string;
 	/**
@@ -27,15 +26,13 @@ export type CommentSyntax = {
 	 */
 	isBlockKept: (line: string) => boolean;
 	/**
-	 * Returns whether the text after the marker is a directive, which stays as
-	 * written.
+	 * Returns whether the marker is followed by a directive to keep as written.
 	 */
 	isDirective: (text: string) => boolean;
 	/**
-	 * Returns whether the line at an index stays as written on a line of its
-	 * own, without the empty lines that surround directives. Receives the text
-	 * after the marker of every line in the block, with lines in code fences
-	 * as empty texts.
+	 * Returns whether a line stays as written without the blank lines added
+	 * around directives. Each entry holds the text after its comment marker,
+	 * with empty strings for lines inside code fences.
 	 */
 	isLineKept: (texts: ReadonlyArray<string>, index: number) => boolean;
 	/**
@@ -44,9 +41,9 @@ export type CommentSyntax = {
 	 */
 	isUnsafeLineStart: (word: string) => boolean;
 	/**
-	 * Returns whether a line would change meaning at the start of a reflowed
-	 * paragraph, so it stays as written there. It can still join the paragraph
-	 * above.
+	 * Returns whether starting a paragraph with this line would change its
+	 * meaning. The line can join the paragraph above but must stay as written
+	 * on its own.
 	 */
 	isUnsafeParagraphStart: (line: string) => boolean;
 };

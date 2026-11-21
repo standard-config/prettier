@@ -23,8 +23,7 @@ type Candidate = {
 };
 
 /**
- * Finds the comments in printed shell code, excluding a shebang on the first
- * line.
+ * Finds comments in printed shell code, excluding the initial shebang.
  */
 export default async function findComments(
 	lines: ReadonlyArray<string>,
@@ -71,8 +70,8 @@ export default async function findComments(
 	}
 
 	// The shell parser doesn’t expose nested comments, so mark each candidate
-	// `#` and print without comments. Marks inside heredocs and strings survive.
-	// Marking right after `#` keeps line endings intact
+	// `#` and print without comments. Marks inside heredocs and strings
+	// survive. Marking right after `#` keeps line endings intact
 	const markPrefix = createMarkPrefix(lines.join('\n'), MARK_PREFIX);
 	const markedLines = [...lines];
 

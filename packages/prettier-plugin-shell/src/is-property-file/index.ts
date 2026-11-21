@@ -1,8 +1,7 @@
 import { basename } from 'node:path';
 import { languages } from 'prettier-plugin-sh';
 
-// `prettier-plugin-sh` assigns `.flaskenv` to Shell, but it holds dotenv
-// entries
+// `prettier-plugin-sh` classifies the dotenv file `.flaskenv` as shell
 const PROPERTY_FILENAMES = new Set(['.flaskenv']);
 
 // Data formats that `prettier-plugin-sh` also formats, matching the shell

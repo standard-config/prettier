@@ -1,6 +1,5 @@
 /**
- * Returns a mark prefix that the text doesn’t contain, adding underscores if
- * needed.
+ * Appends underscores until the text no longer contains the mark prefix.
  */
 export default function createMarkPrefix(text: string, prefix: string): string {
 	let markPrefix = prefix;
