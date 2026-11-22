@@ -1,6 +1,7 @@
 import type { PrettierPlugin } from '@standard-config/utilities/types';
 import type { Options as PrettierOptions } from 'prettier';
 import type {} from 'prettier-plugin-shell';
+import type {} from 'prettier-plugin-typescript';
 
 type DefaultOptions = {
 	/**

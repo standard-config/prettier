@@ -6,7 +6,7 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 ### Override Plugin Lists
 
-Overrides that replace `plugins`, such as the JSON and `package.json` overrides, deliberately leave out the shell plugin. Setting a `sh*` option globally therefore makes Prettier warn about an unknown option for the files they match. These warnings are accepted.
+The JSON and `package.json` overrides deliberately replace the global `plugins` list and omit the shell and TypeScript plugins. If the config sets a shell option (`sh*`) or `tsCommentWrap` globally, Prettier warns that the option is unknown when it formats a matching file. These warnings are accepted.
 
 ### Shared Constants Without Module Load Work
 
@@ -22,7 +22,7 @@ Shell scripts can’t be reliably identified by file name alone because Prettier
 
 ### Node.js Engine Ranges
 
-The root `package.json` sets a newer Node.js minimum for development than `packages/prettier/package.json` sets for consumers. The private `@standard-config/utilities` and `prettier-plugin-shell` packages are bundled into the published config at build time, so their bundled code shares the config’s runtime requirements. The [**Node.js compatibility**](../AGENTS.md#compatibility) rule prevents the development runtime from becoming an accidental consumer requirement.
+The root `package.json` sets a newer Node.js minimum for development than `packages/prettier/package.json` sets for consumers. The consumer minimum also applies to code the published config bundles from `@standard-config/utilities`, `prettier-plugin-shell`, and `prettier-plugin-typescript`. The [**Node.js compatibility**](../AGENTS.md#compatibility) rule prevents the development runtime from becoming an accidental consumer requirement.
 
 ## Comment Formatting
 

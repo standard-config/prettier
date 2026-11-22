@@ -34,10 +34,16 @@ export default function mergeConfig(
 	return result;
 }
 
+/**
+ * Checks whether a value is an array.
+ */
 function isArray(value: unknown): value is unknown[] {
 	return Array.isArray(value);
 }
 
+/**
+ * Checks whether a value is a non-null object, including an array.
+ */
 function isObject(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
 }

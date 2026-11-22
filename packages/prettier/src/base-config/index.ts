@@ -20,6 +20,7 @@ const BASE_CONFIG: StandardConfig = {
 		'prettier-plugin-expand-json',
 		'prettier-plugin-markdown-html',
 		'prettier-plugin-shell',
+		'prettier-plugin-typescript',
 		'prettier-plugin-yaml',
 	],
 	bracketSpacing: true,

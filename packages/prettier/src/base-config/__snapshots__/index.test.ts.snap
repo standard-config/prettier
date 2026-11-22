@@ -8,6 +8,7 @@ exports[`is a valid Prettier config 1`] = `
     "prettier-plugin-expand-json",
     "prettier-plugin-markdown-html",
     "prettier-plugin-shell",
+    "prettier-plugin-typescript",
     "prettier-plugin-yaml",
   ],
   "printWidth": 80,

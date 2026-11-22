@@ -11,6 +11,7 @@ export default defineConfig({
 			alwaysBundle: [
 				/^@standard-config\/utilities\//,
 				/^prettier-plugin-shell$/,
+				/^prettier-plugin-typescript$/,
 			],
 			neverBundle: true,
 		},

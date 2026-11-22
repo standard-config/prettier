@@ -9,6 +9,7 @@ import clone from '@standard-config/utilities/clone';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
 import * as pluginShell from 'prettier-plugin-shell';
+import * as pluginTypeScript from 'prettier-plugin-typescript';
 
 let disableOxcParser = false;
 
@@ -88,6 +89,7 @@ function transformPlugins(
 		),
 		// Private plugins
 		'prettier-plugin-shell': pluginShell,
+		'prettier-plugin-typescript': pluginTypeScript,
 		...pluginOverrides,
 	};
 

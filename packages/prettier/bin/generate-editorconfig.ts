@@ -81,6 +81,9 @@ if (process.argv.includes('--check')) {
 	writeFileSync(file, content);
 }
 
+/**
+ * Formats glob patterns and their properties as an EditorConfig section.
+ */
 function formatSection(
 	patterns: ReadonlyArray<string>,
 	properties: EditorConfigProperties
@@ -94,6 +97,9 @@ function formatSection(
 	return lines.join('\n');
 }
 
+/**
+ * Returns a single glob unchanged or groups multiple globs in braces.
+ */
 function formatSectionHeading(patterns: ReadonlyArray<string>): string {
 	if (patterns.length === 1) {
 		return patterns[0]!;
