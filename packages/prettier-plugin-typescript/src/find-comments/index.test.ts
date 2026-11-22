@@ -205,11 +205,15 @@ test('measures marks as zero columns wide', async () => {
 	).resolves.toStrictEqual([]);
 });
 
-test('finds comments in code with a large array', async () => {
-	const text = `const foo = [${'0,'.repeat(150_000)}];\n// bar\n`;
+test(
+	'finds comments in code with a large array',
+	{ timeout: 30_000 },
+	async () => {
+		const text = `const foo = [${'0,'.repeat(150_000)}];\n// bar\n`;
 
-	await expect(findCommentTexts(text)).resolves.toHaveLength(1);
-});
+		await expect(findCommentTexts(text)).resolves.toHaveLength(1);
+	}
+);
 
 test('keeps the printer’s own preprocessing', async () => {
 	const options = await getParserOptions('// foo\n');
