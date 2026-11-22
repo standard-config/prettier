@@ -1,7 +1,8 @@
 import type { CategorySort } from 'prettier-plugin-sort-json';
 
 /**
- * @deprecated Use an array value for the `jsonSortOrder` property instead.
+ * Builds a `jsonSortOrder` value that preserves the listed key order. Unlisted
+ * keys sort lexically at `*`, or last if `*` is omitted.
  */
 export default function prioritizeKeys(...keys: ReadonlyArray<string>): string {
 	const sortKeys = [...new Set(keys)];

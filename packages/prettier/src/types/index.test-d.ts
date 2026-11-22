@@ -1,9 +1,4 @@
-import type {
-	StandardConfig,
-	StandardConfigOverride,
-	StandardConfigOverrides,
-	StandardOptions,
-} from './index.d.ts';
+import type { StandardConfig, StandardOptions } from './index.d.ts';
 import { expectTypeOf, test } from 'vite-plus/test';
 
 test('exposes valid types', () => {
@@ -20,7 +15,4 @@ test('exposes valid types', () => {
 	expectTypeOf<StandardOptions>()
 		.toHaveProperty('shUseTabs')
 		.toEqualTypeOf<boolean | undefined>();
-
-	expectTypeOf<StandardConfigOverride>().toBeObject();
-	expectTypeOf<StandardConfigOverrides>().toBeArray();
 });

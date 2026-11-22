@@ -1,8 +1,8 @@
-import type { Config as PrettierConfig } from 'prettier';
+import type { Plugin, Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import * as pluginShell from 'prettier-plugin-shell';
-import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
+import { expect, expectTypeOf, test } from 'vite-plus/test';
 import transformConfig from './index.ts';
 
 test('returns a Prettier config', () => {
@@ -119,20 +119,10 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 					],
 				},
 			},
-			{
-				files: ['package.json'],
-				options: {
-					plugins: ['prettier-plugin-expand-json'],
-				},
-			},
 		],
 	} as const satisfies StandardConfig;
 
-	const result = transformConfig(config, {
-		'prettier-plugin-expand-json': undefined,
-	});
-
-	expect(result).toStrictEqual({
+	expect(transformConfig(config)).toStrictEqual({
 		plugins: [
 			expect.stringContaining('node_modules'),
 			'prettier-plugin-foo',
@@ -141,79 +131,32 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 			{
 				files: ['*.json'],
 				options: {
-					plugins: ['prettier-plugin-bar'],
+					plugins: [
+						expect.stringContaining('node_modules'),
+						'prettier-plugin-bar',
+					],
 				},
-			},
-			{
-				files: ['package.json'],
-				options: {},
 			},
 		],
 	});
+});
+
+test('normalizes plugin lists', () => {
+	const plugin: Plugin = {};
+
+	expect(
+		transformConfig({ plugins: [undefined, plugin] as never })
+	).toStrictEqual({
+		plugins: [plugin],
+	});
+
+	expect(transformConfig({ plugins: [] })).toStrictEqual({});
 });
 
 test('resolves `prettier-plugin-shell` to the bundled plugin', () => {
 	expect(
 		transformConfig({ plugins: ['prettier-plugin-shell'] })
 	).toStrictEqual({ plugins: [pluginShell] });
-	expect(
-		transformConfig(
-			{ plugins: ['prettier-plugin-shell'] },
-			{ 'prettier-plugin-shell': undefined }
-		)
-	).toStrictEqual({});
-});
-
-test('omits `@prettier/plugin-oxc` config when it’s unavailable', async () => {
-	vi.resetModules();
-	vi.doMock('@prettier/plugin-oxc', () => {
-		throw new Error();
-	});
-
-	onTestFinished(() => {
-		vi.doUnmock('@prettier/plugin-oxc');
-		vi.resetModules();
-	});
-
-	const { default: transformConfig } = await import('./index.ts');
-
-	const config = {
-		plugins: [
-			/* prettier-ignore */
-			'@prettier/plugin-oxc',
-			'prettier-plugin-foo',
-		],
-		overrides: [
-			{
-				files: ['*.js'],
-				options: {
-					parser: 'oxc',
-				},
-			},
-			{
-				files: ['*.ts'],
-				options: {
-					parser: 'oxc-ts',
-				},
-			},
-		],
-	} as const satisfies StandardConfig;
-
-	const result = transformConfig(config);
-
-	expect(result).toStrictEqual({
-		plugins: ['prettier-plugin-foo'],
-		overrides: [
-			{
-				files: ['*.js'],
-				options: {},
-			},
-			{
-				files: ['*.ts'],
-				options: {},
-			},
-		],
-	});
 });
 
 test('normalizes `jsonSortOrder` arrays on config and overrides', () => {

@@ -1,34 +1,25 @@
-import type { PrettierPlugins } from '@standard-config/utilities/types';
-import type { Config as PrettierConfig } from 'prettier';
 import type {
-	StandardConfig,
-	StandardConfigPluginOverrides,
-	StandardOptions,
-} from '../types/index.d.ts';
+	PrettierPlugin,
+	PrettierPlugins,
+} from '@standard-config/utilities/types';
+import type { Config as PrettierConfig } from 'prettier';
+import type { StandardConfig, StandardOptions } from '../types/index.d.ts';
 import clone from '@standard-config/utilities/clone';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
 import * as pluginShell from 'prettier-plugin-shell';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
 
-let disableOxcParser = false;
-
-try {
-	await import('@prettier/plugin-oxc');
-} catch {
-	disableOxcParser = true;
-}
-
 /**
  * Converts Standard Config to an exportable, Prettier-compatible format.
  */
 export default function transformConfig(
-	config: StandardConfig,
-	pluginOverrides: StandardConfigPluginOverrides = {}
+	config: StandardConfig
 ): PrettierConfig {
 	/* oxlint-disable-next-line eslint/no-param-reassign */
 	config = clone(config);
 
+	/* oxlint-disable-next-line unicorn/consistent-function-scoping */
 	const transform = (options: StandardOptions) => {
 		if (options.jsonSortOrder) {
 			options.jsonSortOrder = transformJSONSortOrder(
@@ -37,20 +28,12 @@ export default function transformConfig(
 		}
 
 		if (options.plugins) {
-			const plugins = transformPlugins(options.plugins, pluginOverrides);
+			const plugins = transformPlugins(options.plugins);
 
 			if (plugins.length > 0) {
 				options.plugins = plugins;
 			} else {
 				delete options.plugins;
-			}
-		}
-
-		if (disableOxcParser) {
-			const { parser } = options;
-
-			if (typeof parser === 'string' && parser.startsWith('oxc')) {
-				delete options.parser;
 			}
 		}
 	};
@@ -64,6 +47,9 @@ export default function transformConfig(
 	return config as PrettierConfig;
 }
 
+/**
+ * Converts a key list to a `jsonSortOrder` string and passes strings through.
+ */
 function transformJSONSortOrder(jsonSortOrder: string | string[]): string {
 	if (Array.isArray(jsonSortOrder)) {
 		return prioritizeKeys(...jsonSortOrder);
@@ -72,11 +58,11 @@ function transformJSONSortOrder(jsonSortOrder: string | string[]): string {
 	return jsonSortOrder;
 }
 
-function transformPlugins(
-	plugins: PrettierPlugins,
-	pluginOverrides: StandardConfigPluginOverrides
-): PrettierPlugins {
-	const pluginMap: StandardConfigPluginOverrides = {
+/**
+ * Resolves known plugin paths.
+ */
+function transformPlugins(plugins: PrettierPlugins): PrettierPlugins {
+	const pluginMap: Record<string, PrettierPlugin> = {
 		...Object.fromEntries(
 			[
 				'@prettier/plugin-oxc',
@@ -90,7 +76,6 @@ function transformPlugins(
 		// Private plugins
 		'prettier-plugin-shell': pluginShell,
 		'prettier-plugin-typescript': pluginTypeScript,
-		...pluginOverrides,
 	};
 
 	const resolved: PrettierPlugins = [];
@@ -109,11 +94,10 @@ function transformPlugins(
 	return resolved;
 }
 
-function transformPlugin(plugin: string): string | undefined {
-	if (disableOxcParser && plugin === '@prettier/plugin-oxc') {
-		return undefined;
-	}
-
+/**
+ * Returns a plugin path or its unresolved name.
+ */
+function transformPlugin(plugin: string): string {
 	try {
 		return fileURLToPath(import.meta.resolve(plugin));
 	} catch {

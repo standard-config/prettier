@@ -19,9 +19,6 @@ export default defineConfig({
 	},
 	lint: defineOxlintConfig({
 		ignorePatterns: IGNORE_PATTERNS,
-		rules: {
-			'typescript/no-deprecated': 'off',
-		},
 		overrides: [
 			{
 				files: [

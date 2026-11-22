@@ -10,10 +10,5 @@ import transformConfig from '../transform-config/index.ts';
 export default function defineConfig(
 	config: StandardConfig = {}
 ): PrettierConfig {
-	const { pluginOverrides, ...extensionConfig } = config;
-
-	return transformConfig(
-		mergeConfig(BASE_CONFIG, extensionConfig),
-		pluginOverrides
-	);
+	return transformConfig(mergeConfig(BASE_CONFIG, config));
 }

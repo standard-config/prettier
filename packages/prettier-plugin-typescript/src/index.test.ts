@@ -2,7 +2,7 @@ import type { Parser, Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import * as pluginOxc from '@prettier/plugin-oxc';
 import { format, formatWithCursor } from 'prettier';
-import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
+import { expect, expectTypeOf, test } from 'vite-plus/test';
 import * as pluginTypeScript from './index.ts';
 
 const JAVASCRIPT_PARSER_NAMES = ['babel', 'oxc', 'oxc-ts', 'typescript'];
@@ -447,22 +447,6 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 		).resolves.toBe(output);
 	}
 );
-
-test('leaves out the `oxc` parsers when `@prettier/plugin-oxc` fails to load', async () => {
-	vi.doMock('@prettier/plugin-oxc', () => {
-		throw new Error('foo');
-	});
-
-	onTestFinished(() => {
-		vi.doUnmock('@prettier/plugin-oxc');
-	});
-
-	vi.resetModules();
-	const plugin = await import('./index.ts');
-
-	expect(plugin.parsers).not.toHaveProperty('oxc');
-	expect(plugin.parsers).not.toHaveProperty('oxc-ts');
-});
 
 test('adds an empty line after a shebang', async () => {
 	const options = {

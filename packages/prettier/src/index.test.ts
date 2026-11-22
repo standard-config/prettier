@@ -5,7 +5,6 @@ test('exposes correct public API', () => {
 	expect({ ...exports }).toMatchInlineSnapshot(`
 		{
 		  "defineConfig": [Function],
-		  "prioritizeKeys": [Function],
 		}
 	`);
 });

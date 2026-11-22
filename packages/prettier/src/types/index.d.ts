@@ -1,4 +1,3 @@
-import type { PrettierPlugin } from '@standard-config/utilities/types';
 import type { Options as PrettierOptions } from 'prettier';
 import type {} from 'prettier-plugin-shell';
 import type {} from 'prettier-plugin-typescript';
@@ -63,26 +62,15 @@ export type StandardOptions = {
 	]: PrettierOptions[K];
 } & DefaultOptions;
 
-export type StandardConfigOverride = {
+type StandardConfigOverride = {
 	excludeFiles?: string[];
 	files: string[];
 	options: StandardOptions;
 };
 
-export type StandardConfigOverrides = StandardConfigOverride[];
-
-export type StandardConfigPluginOverrides = Record<
-	string,
-	PrettierPlugin | undefined
->;
-
 export type StandardConfig = StandardOptions & {
 	/**
 	 * File-based config overrides.
 	 */
-	overrides?: StandardConfigOverrides;
-	/**
-	 * @deprecated Intended for development use and not covered by semver.
-	 */
-	pluginOverrides?: StandardConfigPluginOverrides;
+	overrides?: StandardConfigOverride[];
 };
