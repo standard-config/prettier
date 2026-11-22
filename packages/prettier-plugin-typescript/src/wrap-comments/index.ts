@@ -1,4 +1,3 @@
-import type { CommentSyntax } from '@standard-config/utilities/types';
 import type { ParserOptions } from 'prettier';
 import type { FoundComment, FoundComments } from '../find-comments/index.ts';
 import type {
@@ -14,10 +13,10 @@ import formatCommentBlock, {
 } from '@standard-config/utilities/format-comment-block';
 import {
 	BLOCK_DIRECTIVE_PATTERN,
-	COMMENT_SYNTAX,
 	FALL_THROUGH_PATTERN,
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 } from '../constants/index.ts';
+import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, { formatCode } from '../find-comments/index.ts';
 import formatBlockComment from '../format-block-comment/index.ts';
 import mapCursor from '../map-cursor/index.ts';
@@ -36,14 +35,6 @@ type GroupContext = {
 };
 
 const EMPTY_LINE_PATTERN = /^\/+[ \t]*$/;
-
-// Keep the block’s first line as written when a directive on the line above
-// covers it
-const FIRST_LINE_KEPT_SYNTAX: CommentSyntax = {
-	...COMMENT_SYNTAX,
-	isLineKept: (texts, index) =>
-		index === 0 || COMMENT_SYNTAX.isLineKept(texts, index),
-};
 
 /**
  * Reflows comments on lines of their own, using the print width as a target.
@@ -398,15 +389,16 @@ function formatGroup(
 	);
 	const { indentation } = group[0]!;
 	const conversions: Conversion[] = [];
+	const syntax = createCommentSyntax();
 
-	if (lines.some((line) => COMMENT_SYNTAX.isBlockKept(line))) {
+	if (lines.some((line) => syntax.isBlockKept(line))) {
 		return {
 			conversions,
 			text: text.slice(group[0]!.start, group.at(-1)!.end),
 		};
 	}
 
-	const fencedLines = findFencedLines(lines, COMMENT_SYNTAX.marker);
+	const fencedLines = findFencedLines(lines, syntax.marker);
 	const formattedLines: string[] = [];
 	let block: string[] = [];
 
@@ -476,9 +468,16 @@ function formatGroup(
 					indentation,
 					joinLines: true,
 					printWidth: options.printWidth,
+					// Keep the block’s first line as written when a directive
+					// on the line above covers it
 					syntax: isBelowDirective
-						? FIRST_LINE_KEPT_SYNTAX
-						: COMMENT_SYNTAX,
+						? {
+								...syntax,
+								isLineKept: (texts, lineIndex) =>
+									lineIndex === 0 ||
+									syntax.isLineKept(texts, lineIndex),
+							}
+						: syntax,
 					tabWidth: options.tabWidth,
 				})
 			);
@@ -494,7 +493,7 @@ function formatGroup(
 		if (
 			EMPTY_LINE_PATTERN.test(block.at(-1) ?? '') &&
 			(conversions.at(-1)?.line === formattedLines.length - 1 ||
-				COMMENT_SYNTAX.isDirective(lastText))
+				syntax.isDirective(lastText))
 		) {
 			formattedLines.push('//');
 		}

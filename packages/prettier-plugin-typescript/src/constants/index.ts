@@ -1,6 +1,3 @@
-import type { CommentSyntax } from '@standard-config/utilities/types';
-import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
-
 // Tools read these directives from block comments. Convert line comments with
 // `eslint-disable`, `eslint-enable`, or configuration directives such as
 // `global` to the block form ESLint reads. Treat `eslint-env` like the other
@@ -9,47 +6,6 @@ import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constant
 // parse prose as configuration
 export const BLOCK_DIRECTIVE_PATTERN =
 	/^(?:@jsx(?:Frag|ImportSource|Runtime)?\b|@ts-(?:expect-error|ignore)\b|(?:biome-ignore|eslint-disable-(?:next-)?line|oxlint-disable-(?:next-)?line)\b|(?:c8|istanbul|v8)[ \t]+ignore\b|(?:cSpell|cspell|spell-?checker):|eslint[ \t]+(?:"[^"]*"|'[^']*'|[\w@/-]+)[ \t]*:(?=[ \t]*\S)|(?:eslint|oxlint)-(?:disable|enable)\b(?!-)|(?:eslint-env|exported|globals?)(?=[ \t]|$)|node:coverage\b|prettier-ignore$)/;
-
-export const COMMENT_SYNTAX: CommentSyntax = {
-	marker: '//',
-	// Bundlers keep `//!` comments and those that mention `@license` or
-	// `@preserve` as legal comments
-	isBlockKept: (line) =>
-		line.startsWith('//!') || /@(?:license|preserve)\b/.test(line),
-	// ESLint ignores its configuration comments in `//` comments, so a line
-	// starting with `global` can join the prose above
-	isDirective: (text) =>
-		(BLOCK_DIRECTIVE_PATTERN.test(text) &&
-			!CONFIGURATION_COMMENT_PATTERN.test(text)) ||
-		LINE_DIRECTIVE_PATTERN.test(text) ||
-		NEXT_LINE_DIRECTIVE_PATTERN.test(text) ||
-		TYPESCRIPT_DIRECTIVE_PATTERN.test(text),
-	// Keep next-line directives directly above the lines they cover. Leave any
-	// comment on those lines as written
-	isLineKept: (texts, index) =>
-		NEXT_LINE_DIRECTIVE_PATTERN.test(texts[index]!) ||
-		NEXT_LINE_DIRECTIVE_PATTERN.test(texts[index - 1] ?? ''),
-	isUnsafeLineStart: (word) =>
-		BLOCK_DIRECTIVE_PATTERN.test(word) ||
-		LINE_DIRECTIVE_PATTERN.test(word) ||
-		NEXT_LINE_DIRECTIVE_PATTERN.test(word) ||
-		TYPESCRIPT_DIRECTIVE_PATTERN.test(word) ||
-		/^(?:(?:[#@]|c8|eslint|istanbul|v8)$|pragma:)/.test(word),
-	// Keep a paragraph’s opening line as written if it contains an unfinished
-	// setting or a configuration comment after more than two slashes. Reflow
-	// could strip the extra slashes or complete the setting with the next line.
-	// Either change could turn it into a block comment on a later run
-	isUnsafeParagraphStart: (line) => {
-		const text = line.replace(/^\/+[ \t]*/, '');
-
-		return (
-			(line.startsWith('///') &&
-				BLOCK_DIRECTIVE_PATTERN.test(text) &&
-				CONFIGURATION_COMMENT_PATTERN.test(text)) ||
-			UNFINISHED_SETTING_PATTERN.test(text)
-		);
-	},
-};
 
 // ESLint’s configuration comments start with these names
 export const CONFIGURATION_COMMENT_PATTERN =

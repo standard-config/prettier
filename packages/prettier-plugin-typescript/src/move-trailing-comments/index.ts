@@ -8,7 +8,6 @@ import {
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
 import {
 	BLOCK_DIRECTIVE_PATTERN,
-	COMMENT_SYNTAX,
 	CONTINUED_DIRECTIVE_PATTERN,
 	FALL_THROUGH_PATTERN,
 	INDENTED_LINE_PATTERN,
@@ -18,6 +17,7 @@ import {
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 	UNFINISHED_SETTING_PATTERN,
 } from '../constants/index.ts';
+import createCommentSyntax from '../create-comment-syntax/index.ts';
 
 type MoveContext = {
 	/**
@@ -45,6 +45,7 @@ export default function moveTrailingComments(
 ): CommentEdit[] {
 	const { comments, fallThroughOffsets, textRanges } = found;
 	const edits: CommentEdit[] = [];
+	const syntax = createCommentSyntax();
 
 	const movedTargets = new Set<number>();
 
@@ -60,7 +61,7 @@ export default function moveTrailingComments(
 			code.trim() === '' ||
 			!commentText.startsWith('//') ||
 			keptStarts.has(comment.start) ||
-			COMMENT_SYNTAX.isBlockKept(commentText) ||
+			syntax.isBlockKept(commentText) ||
 			isInsideText(codeStart, textRanges)
 		) {
 			continue;
@@ -189,7 +190,7 @@ export default function moveTrailingComments(
 			indentation,
 			joinLines: true,
 			printWidth: options.printWidth,
-			syntax: COMMENT_SYNTAX,
+			syntax,
 			tabWidth: options.tabWidth,
 		});
 
