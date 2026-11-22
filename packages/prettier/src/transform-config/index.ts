@@ -2,13 +2,44 @@ import type {
 	PrettierPlugin,
 	PrettierPlugins,
 } from '@standard-config/utilities/types';
-import type { Config as PrettierConfig } from 'prettier';
+import type {
+	Config as PrettierConfig,
+	Options as PrettierOptions,
+} from 'prettier';
 import type { StandardConfig, StandardOptions } from '../types/index.d.ts';
-import clone from '@standard-config/utilities/clone';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
 import * as pluginShell from 'prettier-plugin-shell';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
+
+/**
+ * Declares the shell and TypeScript plugins’ options so Prettier recognizes
+ * them when an override supplies its own `plugins` list.
+ */
+const OPTIONS_PLUGIN: PrettierPlugin = {
+	options: {
+		...pluginShell.options,
+		...pluginTypeScript.options,
+	},
+};
+
+/**
+ * Maps known plugin names to absolute paths or imported modules so Prettier can
+ * load them without resolving their names from the consuming project.
+ */
+const PLUGINS = new Map<string, PrettierPlugin>([
+	...[
+		'@prettier/plugin-oxc',
+		'prettier-plugin-expand-json',
+		'prettier-plugin-markdown-html',
+		'prettier-plugin-pkg',
+		'prettier-plugin-sort-json',
+		'prettier-plugin-yaml',
+	].map((name) => [name, transformPlugin(name)] as const),
+	// Private plugins
+	['prettier-plugin-shell', pluginShell],
+	['prettier-plugin-typescript', pluginTypeScript],
+]);
 
 /**
  * Converts Standard Config to an exportable, Prettier-compatible format.
@@ -16,35 +47,46 @@ import * as pluginTypeScript from 'prettier-plugin-typescript';
 export default function transformConfig(
 	config: StandardConfig
 ): PrettierConfig {
-	/* oxlint-disable-next-line eslint/no-param-reassign */
-	config = clone(config);
+	const { overrides } = config;
 
-	/* oxlint-disable-next-line unicorn/consistent-function-scoping */
-	const transform = (options: StandardOptions) => {
-		if (options.jsonSortOrder) {
-			options.jsonSortOrder = transformJSONSortOrder(
-				options.jsonSortOrder
-			);
-		}
-
-		if (options.plugins) {
-			const plugins = transformPlugins(options.plugins);
-
-			if (plugins.length > 0) {
-				options.plugins = plugins;
-			} else {
-				delete options.plugins;
-			}
-		}
+	return {
+		...transformOptions(config),
+		...(overrides && {
+			/* oxlint-disable-next-line oxc/no-map-spread */
+			overrides: overrides.map((override) => ({
+				...override,
+				options: transformOptions(override.options, [OPTIONS_PLUGIN]),
+			})),
+		}),
 	};
+}
 
-	transform(config);
+/**
+ * Converts options to a Prettier-compatible format. Prepends `fallbackPlugins`
+ * to any `plugins` list so its plugins can override the fallback declarations.
+ */
+function transformOptions(
+	options: StandardOptions,
+	fallbackPlugins: PrettierPlugins = []
+): PrettierOptions {
+	const { plugins, jsonSortOrder } = options;
 
-	for (const override of config.overrides ?? []) {
-		transform(override.options);
-	}
-
-	return config as PrettierConfig;
+	return {
+		...options,
+		...(jsonSortOrder !== undefined && {
+			jsonSortOrder: transformJSONSortOrder(jsonSortOrder),
+		}),
+		...(plugins && {
+			plugins: [
+				...fallbackPlugins,
+				...plugins.map((plugin) =>
+					typeof plugin === 'string'
+						? (PLUGINS.get(plugin) ?? plugin)
+						: plugin
+				),
+			],
+		}),
+	} as PrettierOptions;
 }
 
 /**
@@ -59,49 +101,8 @@ function transformJSONSortOrder(jsonSortOrder: string | string[]): string {
 }
 
 /**
- * Resolves known plugin paths.
- */
-function transformPlugins(plugins: PrettierPlugins): PrettierPlugins {
-	const pluginMap: Record<string, PrettierPlugin> = {
-		...Object.fromEntries(
-			[
-				'@prettier/plugin-oxc',
-				'prettier-plugin-expand-json',
-				'prettier-plugin-markdown-html',
-				'prettier-plugin-pkg',
-				'prettier-plugin-sort-json',
-				'prettier-plugin-yaml',
-			].map((name) => [name, transformPlugin(name)])
-		),
-		// Private plugins
-		'prettier-plugin-shell': pluginShell,
-		'prettier-plugin-typescript': pluginTypeScript,
-	};
-
-	const resolved: PrettierPlugins = [];
-
-	for (const plugin of plugins) {
-		const resolvedPlugin =
-			typeof plugin === 'string' && Object.hasOwn(pluginMap, plugin)
-				? pluginMap[plugin]
-				: plugin;
-
-		if (resolvedPlugin) {
-			resolved.push(resolvedPlugin);
-		}
-	}
-
-	return resolved;
-}
-
-/**
- * Returns a plugin path or its unresolved name.
+ * Returns the path to a plugin that this package depends on.
  */
 function transformPlugin(plugin: string): string {
-	try {
-		return fileURLToPath(import.meta.resolve(plugin));
-	} catch {
-		/* v8 ignore next -- @preserve */
-		return plugin;
-	}
+	return fileURLToPath(import.meta.resolve(plugin));
 }

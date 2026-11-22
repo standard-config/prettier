@@ -1,4 +1,6 @@
 import type { Config as PrettierConfig } from 'prettier';
+import { isAbsolute } from 'node:path';
+import { getSupportInfo } from 'prettier';
 import * as pluginShell from 'prettier-plugin-shell';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
@@ -33,12 +35,17 @@ test('merges custom config with the base config', () => {
 	expect(result).toHaveProperty('plugins', expect.any(Array));
 	expect(result.plugins).toContain(pluginShell);
 	expect(result.plugins).toContain(pluginTypeScript);
+});
 
-	for (const plugin of result.plugins!.filter(
-		(plugin) => plugin !== pluginShell && plugin !== pluginTypeScript
-	)) {
-		expect(plugin).toContain('node_modules');
-	}
+test('resolves every plugin name in the base config', () => {
+	const { overrides = [], plugins = [] } = defineConfig();
+
+	const names = [
+		...plugins,
+		...overrides.flatMap((override) => override.options?.plugins ?? []),
+	].filter((plugin) => typeof plugin === 'string' && !isAbsolute(plugin));
+
+	expect(names).toStrictEqual([]);
 });
 
 test('supports custom config options', () => {
@@ -55,4 +62,27 @@ test('supports custom config options', () => {
 	expect(result).toHaveProperty('shTabWidth', 4);
 	expect(result).toHaveProperty('shUseTabs', true);
 	expect(result).toHaveProperty('tsCommentWrap', 'none');
+});
+
+test('supports custom config options where overrides replace `plugins`', async () => {
+	const { overrides = [] } = defineConfig();
+
+	const pluginLists = overrides.flatMap((override) =>
+		override.options?.plugins ? [override.options.plugins] : []
+	);
+
+	expect(pluginLists).not.toHaveLength(0);
+
+	for (const plugins of pluginLists) {
+		const { options } = await getSupportInfo({ plugins });
+
+		expect(options.map((option) => option.name)).toStrictEqual(
+			expect.arrayContaining([
+				'shCommentWrap',
+				'shTabWidth',
+				'shUseTabs',
+				'tsCommentWrap',
+			])
+		);
+	}
 });

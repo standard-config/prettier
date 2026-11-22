@@ -2,8 +2,16 @@ import type { Plugin, Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import * as pluginShell from 'prettier-plugin-shell';
+import * as pluginTypeScript from 'prettier-plugin-typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import transformConfig from './index.ts';
+
+const OPTIONS_PLUGIN = {
+	options: {
+		...pluginShell.options,
+		...pluginTypeScript.options,
+	},
+};
 
 test('returns a Prettier config', () => {
 	expectTypeOf(transformConfig).returns.toEqualTypeOf<PrettierConfig>();
@@ -11,6 +19,12 @@ test('returns a Prettier config', () => {
 
 test('returns an empty config for an empty input', () => {
 	expect(transformConfig({})).toStrictEqual({});
+});
+
+test('keeps `overrides` set to `undefined`', () => {
+	expect(transformConfig({ overrides: undefined })).toStrictEqual({
+		overrides: undefined,
+	});
 });
 
 test('doesn’t mutate the input config', () => {
@@ -49,7 +63,7 @@ test('doesn’t mutate the input config', () => {
 						'dependencies',
 						'devDependencies'
 					),
-					plugins: ['prettier-plugin-bar'],
+					plugins: [OPTIONS_PLUGIN, 'prettier-plugin-bar'],
 				},
 			},
 		],
@@ -132,6 +146,7 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 				files: ['*.json'],
 				options: {
 					plugins: [
+						OPTIONS_PLUGIN,
 						expect.stringContaining('node_modules'),
 						'prettier-plugin-bar',
 					],
@@ -141,16 +156,55 @@ test('resolves `plugins` to a Prettier-compatible format', () => {
 	});
 });
 
-test('normalizes plugin lists', () => {
+test('keeps empty `plugins` lists', () => {
+	expect(transformConfig({ plugins: [] })).toStrictEqual({ plugins: [] });
+});
+
+test('keeps plugin objects as provided', () => {
 	const plugin: Plugin = {};
 
-	expect(
-		transformConfig({ plugins: [undefined, plugin] as never })
-	).toStrictEqual({
-		plugins: [plugin],
-	});
+	const result = transformConfig({ plugins: [plugin] });
 
-	expect(transformConfig({ plugins: [] })).toStrictEqual({});
+	expect(result.plugins).toHaveLength(1);
+	expect(result.plugins?.[0]).toBe(plugin);
+});
+
+test('declares shell and TypeScript options in overrides that set `plugins`', () => {
+	const config = {
+		plugins: ['prettier-plugin-foo'],
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					plugins: [],
+				},
+			},
+			{
+				files: ['*.yaml'],
+				options: {
+					tabWidth: 2,
+				},
+			},
+		],
+	} as const satisfies StandardConfig;
+
+	expect(transformConfig(config)).toStrictEqual({
+		plugins: ['prettier-plugin-foo'],
+		overrides: [
+			{
+				files: ['*.json'],
+				options: {
+					plugins: [OPTIONS_PLUGIN],
+				},
+			},
+			{
+				files: ['*.yaml'],
+				options: {
+					tabWidth: 2,
+				},
+			},
+		],
+	});
 });
 
 test('resolves `prettier-plugin-shell` to the bundled plugin', () => {

@@ -210,8 +210,11 @@ test(
 	{ timeout: 30_000 },
 	async () => {
 		const text = `const foo = [${'0,'.repeat(150_000)}];\n// bar\n`;
+		const options = await getParserOptions('foo();\n');
 
-		await expect(findCommentTexts(text)).resolves.toHaveLength(1);
+		const { comments } = await findComments(text, 'babel', options);
+
+		expect(comments).toHaveLength(1);
 	}
 );
 

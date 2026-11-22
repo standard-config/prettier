@@ -6,7 +6,9 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 ### Override Plugin Lists
 
-The JSON and `package.json` overrides deliberately replace the global `plugins` list and omit the shell and TypeScript plugins. If the config sets a shell option (`sh*`) or `tsCommentWrap` globally, Prettier warns that the option is unknown when it formats a matching file. These warnings are accepted.
+The JSON and `package.json` overrides deliberately omit the shell and TypeScript plugins. Prettier checks every option in effect for a file against its active plugins. That includes options from earlier matching overrides, such as the Markdown override’s `shUseTabs` setting.
+
+When an override supplies a `plugins` list, even an empty one, the config prepends a plugin that declares the shell options (`sh*`) and `tsCommentWrap`. This prevents unknown option warnings when the list replaces the global plugins. Prettier uses the last declaration of each option, so the override’s own plugins take precedence. See [`transformConfig`](../packages/prettier/src/transform-config/index.ts).
 
 ### Shared Constants Without Module Load Work
 
