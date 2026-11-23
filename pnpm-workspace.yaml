@@ -28,10 +28,10 @@ minimumReleaseAgeExclude:
   - prettier-plugin-yaml
 
 overrides:
+  vite: npm:@voidzero-dev/vite-plus-core@latest
   vite-plus>oxfmt: '-'
   vite-plus>oxlint: latest
-  vite-plus>oxlint-tsgolint: latest
-  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vite-plus>tsrs: latest
 
 packages:
   - packages/*

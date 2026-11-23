@@ -12,8 +12,9 @@ import {
 import wrapComments from '../wrap-comments/index.ts';
 
 /**
- * Wraps a parser to reflow comments and separate a shebang from what follows
- * after earlier `preprocess` hooks run and before `parse` runs.
+ * Creates a parser that defers to the prior compatible parser before the
+ * supplied base parser. After earlier plugins preprocess the source, it reflows
+ * comments and separates the shebang before parsing.
  */
 export default function createParser(
 	name: ParserName,
