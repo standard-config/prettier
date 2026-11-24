@@ -3,7 +3,6 @@ import type { PluginOptions } from './types/index.d.ts';
 import separateShebang from '@standard-config/utilities/separate-shebang';
 import * as pluginSh from 'prettier-plugin-sh';
 import inferVariant from './infer-variant/index.ts';
-import isPropertyFile from './is-property-file/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
 
@@ -11,18 +10,32 @@ const { parsers: shParsers, printers: shPrinters } = pluginSh;
 
 type ShPrint = typeof shPrinters.sh.print;
 
+// `sh-syntax` can parse these languages. The others that `prettier-plugin-sh`
+// assigns to the `sh` parser are data formats or shells with incompatible
+// syntax, such as Nushell and Tcsh
+const LANGUAGE_NAMES = new Set([
+	'Alpine Abuild',
+	'Gentoo Ebuild',
+	'Gentoo Eclass',
+	'husky',
+	'OpenRC runscript',
+	'Shell',
+]);
+
 /**
  * Returns the options for `prettier-plugin-sh`, with `shTabWidth` and
  * `shUseTabs` taking precedence over Prettier’s indentation settings.
  */
-function getShOptions<T>(
-	options: ParserOptions<T>,
-	simplify: boolean
-): ParserOptions<T> {
+function getShOptions<T>(options: ParserOptions<T>): ParserOptions<T> {
 	const { shTabWidth, shUseTabs } = options as ParserOptions<T> &
 		PluginOptions;
 
-	return { ...options, simplify, tabWidth: shTabWidth!, useTabs: shUseTabs! };
+	return {
+		...options,
+		simplify: true,
+		tabWidth: shTabWidth!,
+		useTabs: shUseTabs!,
+	};
 }
 
 /**
@@ -32,11 +45,8 @@ function getShOptions<T>(
 async function printShell(
 	...[path, options, print, args]: Parameters<ShPrint>
 ): Promise<string> {
-	const isDataFile = isPropertyFile(options.filepath);
-
-	// Simplifying data files could change the values they hold
 	const shOptions = {
-		...getShOptions(options, !isDataFile),
+		...getShOptions(options),
 		variant: inferVariant(options.originalText, options.filepath),
 	};
 
@@ -53,26 +63,34 @@ async function printShell(
 	const printed = await printText(options.originalText);
 
 	// Separate the shebang so a comment directly below the `#!` lines wraps on
-	// the first pass. In data files, `#!` starts an ordinary comment
-	const separated = isDataFile ? printed : separateShebang(printed);
+	// the first pass
+	const separated = separateShebang(printed);
 	const { shCommentWrap } = options as PluginOptions;
 
 	if (shCommentWrap === 'none') {
 		return separated;
 	}
 
-	// A `#` after an entry in a data file can belong to the entry itself
 	const text =
-		shCommentWrap === 'all' && !isDataFile
+		shCommentWrap === 'all'
 			? await moveTrailingComments(separated, shOptions, printText)
 			: separated;
 
 	return wrapComments(text, shOptions);
 }
 
-export const languages: Plugin['languages'] = pluginSh.languages.filter(
-	({ parsers }) => parsers.every((parser) => parser === 'sh')
-);
+export const languages: Plugin['languages'] = pluginSh.languages
+	.filter(({ name }) => LANGUAGE_NAMES.has(name))
+	/* oxlint-disable-next-line oxc/no-map-spread */
+	.map((language) => ({
+		...language,
+		// `prettier-plugin-sh` classifies the dotenv file `.flaskenv` as shell
+		...(language.filenames && {
+			filenames: language.filenames.filter(
+				(filename) => filename !== '.flaskenv'
+			),
+		}),
+	}));
 
 export const options: Plugin['options'] = {
 	shCommentWrap: {

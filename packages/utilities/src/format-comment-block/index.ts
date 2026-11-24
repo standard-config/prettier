@@ -89,7 +89,7 @@ export function fillCommentText(
  */
 function parseNodes(
 	lines: ReadonlyArray<string>,
-	{ joinLines, syntax }: CommentBlockOptions
+	{ syntax }: CommentBlockOptions
 ): BlockNode[] {
 	const { marker } = syntax;
 	const markerPattern = getMarkerPattern(marker);
@@ -103,11 +103,6 @@ function parseNodes(
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
 
 	for (const [index, line] of lines.entries()) {
-		// Data files can hold commented-out entries, one per line
-		if (!joinLines) {
-			openNode = undefined;
-		}
-
 		const rest = line.replace(markerPattern, '');
 		const [indentation] = /^[ \t]*/.exec(rest)!;
 		const text = rest.slice(indentation.length);

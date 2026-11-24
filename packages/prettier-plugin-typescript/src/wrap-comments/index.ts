@@ -466,7 +466,6 @@ function formatGroup(
 			formattedLines.push(
 				...formatCommentBlock(block, {
 					indentation,
-					joinLines: true,
 					printWidth: options.printWidth,
 					// Keep the block’s first line as written when a directive
 					// on the line above covers it

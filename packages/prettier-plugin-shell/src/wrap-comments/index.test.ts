@@ -69,10 +69,3 @@ test('separates comment blocks with different indentation', async () => {
 
 	await expect(wrapComments(input, OPTIONS)).resolves.toBe(input);
 });
-
-test('keeps comment lines apart in property files', async () => {
-	const options = { ...OPTIONS, filepath: '.gitignore' } as ParserOptions;
-	const input = '# foo\n# bar\nbaz\n';
-
-	await expect(wrapComments(input, options)).resolves.toBe(input);
-});

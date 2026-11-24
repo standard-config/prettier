@@ -188,7 +188,6 @@ export default function moveTrailingComments(
 
 		const movedLines = formatCommentBlock([commentText], {
 			indentation,
-			joinLines: true,
 			printWidth: options.printWidth,
 			syntax,
 			tabWidth: options.tabWidth,

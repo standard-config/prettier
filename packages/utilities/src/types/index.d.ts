@@ -5,10 +5,6 @@ export type CommentBlockOptions = {
 	 * Spaces and tabs before each comment line.
 	 */
 	indentation: string;
-	/**
-	 * Whether to join consecutive lines into paragraphs and list items.
-	 */
-	joinLines: boolean;
 	printWidth: number;
 	syntax: CommentSyntax;
 	tabWidth: number;

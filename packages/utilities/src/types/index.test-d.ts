@@ -11,7 +11,6 @@ import { expectTypeOf, test } from 'vite-plus/test';
 test('exposes valid types', () => {
 	expectTypeOf<CommentBlockOptions>().toEqualTypeOf<{
 		indentation: string;
-		joinLines: boolean;
 		printWidth: number;
 		syntax: CommentSyntax;
 		tabWidth: number;

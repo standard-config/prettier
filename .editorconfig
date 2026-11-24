@@ -13,17 +13,12 @@ trim_trailing_whitespace = true
 indent_style = space
 
 # Shell
-[{.bash_aliases,.bash_functions,.bash_history,.bash_logout,.bash_profile,.bashrc,.cshrc,.envrc,.flaskenv,.kshrc,.login,.profile,.tmux.conf,.xinitrc,.xsession,.zlogin,.zlogout,.zprofile,.zshenv,.zshrc,*.bash,*.bats,*.cgi,*.command,*.fcgi,*.ksh,*.sbatch,*.sh,*.sh.in,*.slurm,*.tmux,*.tool,*.trigger,*.zsh,*.zsh-theme,9fs,bash_aliases,bash_logout,bash_profile,bashrc,cshrc,gradlew,kshrc,login,man,mvnw,PKGBUILD,profile,tmux.conf,xinitrc,xsession,zlogin,zlogout,zprofile,zshenv,zshrc}]
+[{.bash_aliases,.bash_functions,.bash_history,.bash_logout,.bash_profile,.bashrc,.cshrc,.envrc,.kshrc,.login,.profile,.tmux.conf,.xinitrc,.xsession,.zlogin,.zlogout,.zprofile,.zshenv,.zshrc,*.bash,*.bats,*.cgi,*.command,*.ebuild,*.eclass,*.fcgi,*.ksh,*.sbatch,*.sh,*.sh.in,*.slurm,*.tmux,*.tool,*.trigger,*.zsh,*.zsh-theme,9fs,APKBUILD,bash_aliases,bash_logout,bash_profile,bashrc,cshrc,gradlew,kshrc,login,man,mvnw,PKGBUILD,profile,tmux.conf,xinitrc,xsession,zlogin,zlogout,zprofile,zshenv,zshrc}]
 indent_size = 2
 indent_style = space
 
 # Shell hooks
 [{**/.hooks/*,**/.husky/*,**/.vite-hooks/*}]
-indent_size = 2
-indent_style = space
-
-# Shell properties
-[{.ackrc,.atomignore,.babelignore,.bzrignore,.coffeelintignore,.cvsignore,.dockerignore,.easignore,.eleventyignore,.env.*,.eslint-ignore,.eslintignore,.gitattributes,.gitignore,.ignore,.markdownlintignore,.node-version,.nodemonignore,.npmignore,.nvmrc,.prettierignore,.rspec,.stylelintignore,.tm_properties,.vercelignore,.vscodeignore,.yardopts,*.env,*.gitignore,*.ical,*.ics,*.node-version,*.nvmrc,*.pc,*.pc.in,*.properties,*.vcf,*.vmoptions,ackrc,CODEOWNERS,gitignore_global,gitignore-global,hosts,jvm.options,mocha.opts}]
 indent_size = 2
 indent_style = space
 

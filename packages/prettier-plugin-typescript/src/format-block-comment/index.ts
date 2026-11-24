@@ -115,7 +115,6 @@ export default function formatBlockComment(
 
 	const blockOptions: CommentBlockOptions = {
 		indentation: `${options.indentation} `,
-		joinLines: true,
 		printWidth: options.printWidth,
 		syntax: DOC_SYNTAX,
 		tabWidth: options.tabWidth,

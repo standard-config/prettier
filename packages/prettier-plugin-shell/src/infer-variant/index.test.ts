@@ -34,10 +34,6 @@ test('falls back to Bash', () => {
 	expect(inferVariant('foo\n', undefined)).toBe(BASH_VARIANT);
 });
 
-test('ignores shebangs in data files', () => {
-	expect(inferVariant('#!/bin/mksh\n', 'foo.properties')).toBe(BASH_VARIANT);
-});
-
 test('ignores interpreters whose names only start with a variant name', () => {
 	expect(inferVariant('#!/usr/bin/env batsman\n', 'foo.sh')).toBe(
 		BASH_VARIANT

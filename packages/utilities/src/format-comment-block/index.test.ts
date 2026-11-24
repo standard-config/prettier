@@ -20,7 +20,6 @@ function formatComment(
 	input: string,
 	{
 		indentation = '',
-		joinLines = true,
 		printWidth = 80,
 		syntax = TEST_SYNTAX,
 		tabWidth = 2,
@@ -28,7 +27,6 @@ function formatComment(
 ): string {
 	return formatCommentBlock(input.split('\n'), {
 		indentation,
-		joinLines,
 		printWidth,
 		syntax,
 		tabWidth,
@@ -357,20 +355,6 @@ test('keeps words that would open a code fence with the word before them', () =>
 	);
 });
 
-test('keeps lines apart when joining is off', () => {
-	const options = { joinLines: false, printWidth: 14 };
-
-	const output = formatComment(
-		'# foo\n# bar baz qux quux\n# - corge grault garply',
-		options
-	);
-
-	expect(output).toBe(
-		'# foo\n# bar baz qux\n# quux\n# - corge\n#   grault\n#   garply'
-	);
-	expect(formatComment(output, options)).toBe(output);
-});
-
 test('finds the lines of code fences', () => {
 	expect(
 		findFencedLines(['# foo', '# ```', '# bar', '# ```', '# baz'], '#')
@@ -381,7 +365,6 @@ test('fills text with a prefix and a continuation', () => {
 	expect(
 		fillCommentText('bar baz qux quux', '# foo ', '#     ', {
 			indentation: '',
-			joinLines: true,
 			printWidth: 14,
 			syntax: TEST_SYNTAX,
 			tabWidth: 2,

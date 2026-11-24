@@ -8,7 +8,6 @@ function formatComment(
 ): string {
 	return formatCommentBlock(input.split('\n'), {
 		indentation: '',
-		joinLines: true,
 		printWidth,
 		syntax: createCommentSyntax(isLeading),
 		tabWidth: 2,

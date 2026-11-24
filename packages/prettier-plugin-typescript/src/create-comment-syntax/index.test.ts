@@ -5,7 +5,6 @@ import createCommentSyntax from './index.ts';
 function formatComment(input: string, { printWidth = 80 } = {}): string {
 	return formatCommentBlock(input.split('\n'), {
 		indentation: '',
-		joinLines: true,
 		printWidth,
 		syntax: createCommentSyntax(),
 		tabWidth: 4,

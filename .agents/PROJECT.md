@@ -16,9 +16,15 @@ The shell and TypeScript plugins import shared patterns from `@standard-config/u
 
 `@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
 
+The config builds `GLOB_SET_SHELL` from the languages exported by `prettier-plugin-shell`. Moving that lookup into utilities would create a workspace dependency cycle because the shell plugin already depends on utilities.
+
 ### Shell Indentation
 
 Shell scripts can’t be reliably identified by file name alone because Prettier also recognizes them by their shebang. `prettier-plugin-shell` therefore applies `shTabWidth` and `shUseTabs` in its printer, allowing the config’s global indentation defaults to serve other languages without relying on file name overrides to identify shell scripts.
+
+### Shell Language Selection
+
+The shell plugin registers only languages that `sh-syntax` can format as shell scripts. `prettier-plugin-sh` also maps data formats and incompatible shells to its `sh` parser. Parsing them as Bash can reject valid Nushell or Tcsh syntax or silently change data. For example, Bash treats an unquoted `&` in a dotenv URL as a shell operator, so the formatter splits the value across lines.
 
 ## Compatibility
 
@@ -51,10 +57,6 @@ When joining a line to a paragraph or collapsing its spaces would create a direc
 ShellCheck directives are deliberately excluded from this pattern. `# shellcheck disable=…` continues to apply across intervening comment lines, so moving a comment between the directive and its command doesn’t change the suppression.
 
 Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ignore` in place. This preserves comment placement even though `prettier-plugin-sh` currently formats commands beneath that marker.
-
-### Shell Limitations
-
-The shell plugin deliberately retains its default behavior of simplifying Markdown and MDX data fences such as `dotenv`, `gitignore`, and `properties` and moving trailing comments. `prettier-plugin-sh` maps both data and shell languages to `sh`, and Prettier passes the parser and enclosing file path without the fence language. For example, `FOO=$(($BAR + 1))` becomes `FOO=$((BAR + 1))`, and `foo # bar` in a `gitignore` block becomes `# bar` above `foo`, changing the pattern because only a leading `#` starts a gitignore comment. Standalone data files avoid these changes because `isPropertyFile` recognizes their names. An affected block can be excluded with `prettier-ignore`, using `<!-- prettier-ignore -->` on the line before the block in Markdown.
 
 ### TypeScript Limitations
 

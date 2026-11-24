@@ -1,5 +1,8 @@
 import type { Options, Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
+import { mkdtempDisposableSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { format } from 'prettier';
 import * as pluginSh from 'prettier-plugin-sh';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
@@ -43,10 +46,24 @@ EOF
 test('exposes correct public API', () => {
 	expectTypeOf(pluginShell).toExtend<Plugin>();
 
-	expect(pluginShell).toHaveProperty(
-		'languages',
-		pluginSh.languages.filter(({ name }) => name !== 'Dockerfile')
+	const shLanguages = new Map(
+		pluginSh.languages.map((language) => [language.name, language])
 	);
+	const shell = shLanguages.get('Shell')!;
+
+	expect(pluginShell).toHaveProperty('languages', [
+		shLanguages.get('Alpine Abuild'),
+		shLanguages.get('Gentoo Ebuild'),
+		shLanguages.get('Gentoo Eclass'),
+		shLanguages.get('OpenRC runscript'),
+		{
+			...shell,
+			filenames: shell.filenames!.filter(
+				(filename) => filename !== '.flaskenv'
+			),
+		},
+		shLanguages.get('husky'),
+	]);
 
 	expect(pluginShell).toHaveProperty('options');
 	expect(pluginShell.options).toHaveProperty('shCommentWrap');
@@ -133,19 +150,36 @@ test('formats comments in shell scripts', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('formats comments in other files that use the `sh` parser', async () => {
-	const options = {
-		filepath: '.gitignore',
-		plugins: [pluginShell],
-		printWidth: 20,
-	};
+test.each(['.husky/foo', 'APKBUILD', 'foo.ebuild', 'foo.eclass'])(
+	'formats `%s` like shell scripts',
+	async (filepath) => {
+		const options = { filepath, plugins: [pluginShell], printWidth: 20 };
 
-	const output = await format(
-		'# foo bar baz qux quux corge\n# grault\nfoo\n',
-		options
+		const output = await format(
+			'# foo bar baz qux quux corge\n# grault\nfoo=$(( $bar ))\n',
+			options
+		);
+
+		expect(output).toBe(
+			'# foo bar baz qux\n# quux corge grault\nfoo=$((bar))\n'
+		);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('formats OpenRC runscripts like shell scripts', async () => {
+	using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+	const input =
+		'#!/usr/bin/env openrc-run\n# foo bar baz qux quux corge\n# grault\nfoo=$(( $bar ))\n';
+	const filepath = join(directory.path, 'foo');
+	writeFileSync(filepath, input);
+	const options = { filepath, plugins: [pluginShell], printWidth: 20 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'#!/usr/bin/env openrc-run\n\n# foo bar baz qux\n# quux corge grault\nfoo=$((bar))\n'
 	);
-
-	expect(output).toBe('# foo bar baz qux\n# quux corge\n# grault\nfoo\n');
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
@@ -234,12 +268,15 @@ test('simplifies shell scripts', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('keeps data files from being simplified', async () => {
-	const options = { filepath: '.env', plugins: [pluginShell] };
+test('formats shell scripts whose names start with `.env.`', async () => {
+	const options = { filepath: '.env.sh', plugins: [pluginShell] };
 
-	const output = await format('FOO=$(( $BAR + 1 ))\n', options);
+	const output = await format(
+		'#!/bin/sh\n# foo\n# bar\nbaz=$(( $qux )) # quux\n',
+		options
+	);
 
-	expect(output).toBe('FOO=$(($BAR + 1))\n');
+	expect(output).toBe('#!/bin/sh\n\n# foo bar\n#\n# quux\nbaz=$((qux))\n');
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
@@ -258,6 +295,74 @@ test('doesn’t format Dockerfiles', async () => {
 			filepath: 'foo.md',
 		})
 	).resolves.toBe('```dockerfile\nFROM   foo\n```\n');
+});
+
+test('doesn’t format data files or shells with incompatible syntax', async () => {
+	const options = { plugins: [pluginShell] };
+
+	await expect(
+		format('foo\n', { ...options, filepath: '.env' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.env.local' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.gitattributes' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.gitignore' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.nvmrc' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.rspec' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.tm_properties' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'CODEOWNERS' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.ics' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.nu' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.pc' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.properties' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.tcsh' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.vcf' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.vmoptions' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'hosts' })
+	).rejects.toThrow('No parser could be inferred');
+});
+
+test('doesn’t format `.flaskenv` files', async () => {
+	await expect(
+		format('foo\n', { filepath: '.flaskenv', plugins: [pluginShell] })
+	).rejects.toThrow('No parser could be inferred');
+});
+
+test('keeps data code blocks in Markdown as written', async () => {
+	const input =
+		'```dotenv\nFOO=$(($BAR + 1))\n```\n\n```gitignore\nfoo # bar\n```\n\n```properties\nfoo=bar # baz\n```\n';
+
+	await expect(
+		format(input, { filepath: 'foo.md', plugins: [pluginShell] })
+	).resolves.toBe(input);
 });
 
 test('formats shell code in Markdown like shell scripts', async () => {
@@ -324,17 +429,6 @@ test('adds an empty line after a shebang in shell code in Markdown', async () =>
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('keeps data files that start with `#!` as written', async () => {
-	const input = '#!foo\nbar=baz\n';
-
-	await expect(
-		format(input, {
-			filepath: 'foo.properties',
-			plugins: [pluginShell],
-		})
-	).resolves.toBe(input);
-});
-
 test('formats Bats files', async () => {
 	const options = {
 		filepath: 'foo.bats',
@@ -395,14 +489,6 @@ test('reflows full-line `@test` comments as text', async () => {
 
 	expect(output).toBe('# foo\n# @test\nfoo\n');
 	await expect(format(output, options)).resolves.toBe(output);
-});
-
-test('keeps data files that start with an mksh shebang from being parsed as mksh', async () => {
-	const input = '#!/bin/mksh\n[[ $foo =~ bar ]]\n';
-
-	await expect(
-		format(input, { filepath: 'foo.properties', plugins: [pluginShell] })
-	).resolves.toBe(input);
 });
 
 test('respects `checkIgnorePragma`', async () => {
@@ -503,15 +589,4 @@ test('supports `shCommentWrap`', async () => {
 			shCommentWrap: 'full-line',
 		})
 	).resolves.toBe(outputs['full-line']);
-});
-
-test('keeps trailing comments in property files', async () => {
-	const input = 'FOO=bar # baz\n';
-
-	await expect(
-		format(input, {
-			filepath: '.env',
-			plugins: [pluginShell],
-		})
-	).resolves.toBe(input);
 });

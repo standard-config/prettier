@@ -12,7 +12,6 @@ import {
 	GLOB_SET_MDX,
 	GLOB_SET_SHELL,
 	GLOB_SET_SHELL_HOOKS,
-	GLOB_SET_SHELL_PROPERTIES,
 	GLOB_SET_YAML,
 } from '../src/constants/index.ts';
 
@@ -55,7 +54,6 @@ const sections: EditorConfigSection[] = [
 	],
 	['Shell', GLOB_SET_SHELL, shellIndentation],
 	['Shell hooks', GLOB_SET_SHELL_HOOKS, shellIndentation],
-	['Shell properties', GLOB_SET_SHELL_PROPERTIES, shellIndentation],
 	[
 		'YAML',
 		GLOB_SET_YAML,

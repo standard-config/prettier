@@ -5,7 +5,6 @@ import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
 } from '../find-comments/index.ts';
-import isPropertyFile from '../is-property-file/index.ts';
 
 /**
  * Wraps comments on their own lines using the print width as a target.
@@ -28,7 +27,6 @@ export default async function wrapComments(
 		(line) => !/^\s*(?:#.*)?$/.test(line)
 	);
 	const leadingEnd = firstCodeIndex === -1 ? lines.length : firstCodeIndex;
-	const joinLines = !isPropertyFile(options.filepath);
 	const outputLines: string[] = [];
 	let index = 0;
 
@@ -57,7 +55,6 @@ export default async function wrapComments(
 		const syntax = createCommentSyntax(isLeading);
 		const formattedBlock = formatCommentBlock(block, {
 			indentation,
-			joinLines,
 			printWidth: options.printWidth,
 			// Keep the block’s first line as written when a directive on the
 			// line above covers it
