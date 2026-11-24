@@ -1,13 +1,12 @@
 import type { ParserOptions } from 'prettier';
-import { format } from 'prettier';
-import * as pluginSh from 'prettier-plugin-sh';
+import { print } from 'sh-syntax';
 import { expect, test } from 'vite-plus/test';
 import moveTrailingComments from './index.ts';
 
 const OPTIONS = { tabWidth: 2, useTabs: false } as unknown as ParserOptions;
 
 async function reprint(text: string): Promise<string> {
-	const output = await format(text, { parser: 'sh', plugins: [pluginSh] });
+	const output = await print(text);
 	return output;
 }
 
@@ -101,10 +100,18 @@ test('leaves comments in place when removing them would continue the line', asyn
 
 test('moves the other comments when one has to stay', async () => {
 	const input = 'foo="bar\nbaz" # qux\nquux # corge\n';
+	const inputWithArithmetic = 'foo=$((bar\n  + baz)) # qux\nquux # corge\n';
+	const inputWithContinuation = 'echo foo\\  # bar\nbaz\nqux # quux\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		'foo="bar\nbaz" # qux\n# corge\nquux\n'
 	);
+	await expect(
+		moveTrailingComments(inputWithArithmetic, OPTIONS, reprint)
+	).resolves.toBe('foo=$((bar\n  + baz)) # qux\n# corge\nquux\n');
+	await expect(
+		moveTrailingComments(inputWithContinuation, OPTIONS, reprint)
+	).resolves.toBe('echo foo\\  # bar\nbaz\n# quux\nqux\n');
 });
 
 test('keeps directives, pragmas, and `prettier-ignore` markers at the end of their lines', async () => {
@@ -165,7 +172,7 @@ test('moves comments on continued `elif` lines into their branches', async () =>
 		'if foo; then\n  bar\nelif [[ -n "$baz" &&\n  -n "$qux" ]]; then # quux\n  corge\nfi\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
-		'if foo; then\n  bar\nelif [[ -n "$baz" &&\n  -n "$qux" ]]; then\n  # quux\n  corge\nfi\n'
+		'if foo; then\n  bar\nelif [[ -n "$baz"\n  && -n "$qux" ]]; then\n  # quux\n  corge\nfi\n'
 	);
 });
 
@@ -214,8 +221,27 @@ test('moves comments on lines continued with `&&` above their first line', async
 	const input = 'if [[ -n "$foo" &&\n  -n "$bar" ]]; then # baz\n  qux\nfi\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
-		'# baz\nif [[ -n "$foo" &&\n  -n "$bar" ]]; then\n  qux\nfi\n'
+		'# baz\nif [[ -n "$foo"\n  && -n "$bar" ]]; then\n  qux\nfi\n'
 	);
+});
+
+test('moves comments on lines that start with `&&` or `||` above their first line', async () => {
+	await expect(
+		moveTrailingComments(
+			'if [[ -n "$foo"\n  && -n "$bar" ]]; then # baz\n  qux\nfi\n',
+			OPTIONS,
+			reprint
+		)
+	).resolves.toBe(
+		'# baz\nif [[ -n "$foo"\n  && -n "$bar" ]]; then\n  qux\nfi\n'
+	);
+	await expect(
+		moveTrailingComments(
+			'[[ -n "$foo"\n  || -n "$bar" ]] # baz\n',
+			OPTIONS,
+			reprint
+		)
+	).resolves.toBe('# baz\n[[ -n "$foo"\n  || -n "$bar" ]]\n');
 });
 
 test('stops reprinting before a pass that adds a comment', async () => {
@@ -238,4 +264,49 @@ test('keeps comments in place when reprinting puts one back at the end of its li
 	await expect(
 		moveTrailingComments('foo # bar\n', OPTIONS, restoreComment)
 	).resolves.toBe('foo # bar\n');
+});
+
+test('moves every other comment when one between them has to stay', async () => {
+	const input =
+		'foo # bar\nbaz=$((qux\n  + quux)) # corge\ngrault # garply\nwaldo # fred\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		'# bar\nfoo\nbaz=$((qux\n  + quux)) # corge\n# garply\ngrault\n# fred\nwaldo\n'
+	);
+});
+
+test('leaves comments in place when none of their moves can be validated', async () => {
+	const input =
+		'foo=$((bar\n  + baz)) # qux\nquux=$((corge\n  + grault)) # garply\n';
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		input
+	);
+});
+
+test('leaves comments in place when the moves that pass on their own fail together', async () => {
+	const input =
+		'foo # bar\nbaz # qux\nquux # corge\ngrault=$((garply\n  + waldo)) # fred\n';
+
+	const restoreComment = async (text: string): Promise<string> => {
+		await Promise.resolve();
+		return text.includes('# corge\nquux')
+			? text.replace('# bar\nfoo', 'foo  # bar')
+			: text;
+	};
+
+	await expect(
+		moveTrailingComments(input, OPTIONS, restoreComment)
+	).resolves.toBe(input);
+});
+
+test('moves the other comments when reprinting puts one back at the end of its line', async () => {
+	const restoreComment = async (text: string): Promise<string> => {
+		await Promise.resolve();
+		return text.replace('# bar\nfoo\n', 'foo  # bar\n');
+	};
+
+	await expect(
+		moveTrailingComments('foo # bar\nbaz # qux\n', OPTIONS, restoreComment)
+	).resolves.toBe('foo # bar\n# qux\nbaz\n');
 });

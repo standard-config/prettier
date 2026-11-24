@@ -15,3 +15,7 @@ test('returns `undefined` for code that can’t be parsed', async () => {
 		printWithoutComments('foo (', OPTIONS)
 	).resolves.toBeUndefined();
 });
+
+test('prints nothing for text that holds only whitespace', async () => {
+	await expect(printWithoutComments('\n\n', OPTIONS)).resolves.toBe('');
+});

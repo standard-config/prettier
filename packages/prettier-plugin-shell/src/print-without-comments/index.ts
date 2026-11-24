@@ -1,6 +1,5 @@
 import type { ParserOptions } from 'prettier';
-import { format } from 'prettier';
-import * as pluginSh from 'prettier-plugin-sh';
+import { processor } from 'sh-syntax';
 
 /**
  * Prints shell code without its comments, or returns `undefined` when the code
@@ -10,13 +9,17 @@ export default async function printWithoutComments(
 	text: string,
 	options: ParserOptions
 ): Promise<string | undefined> {
+	// Like Prettier, print nothing for text that holds only whitespace
+	if (text.trim() === '') {
+		return '';
+	}
+
 	try {
-		return await format(text, {
+		return await processor(text, {
 			filepath: options.filepath,
 			keepComments: false,
-			parser: 'sh',
-			plugins: [pluginSh],
-			variant: options.variant,
+			print: true,
+			variant: options.variant as number | undefined,
 		});
 	} catch {
 		return undefined;

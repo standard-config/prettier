@@ -1,18 +1,11 @@
 import { getSupportInfo } from 'prettier';
-import { languages as LANGUAGES_PLUGIN_SH } from 'prettier-plugin-sh';
 import createGlobSet from '../create-glob-set/index.ts';
 
-const { languages: LANGUAGES_CORE } = await getSupportInfo();
-
-const LANGUAGES = [
-	/* prettier-ignore */
-	...LANGUAGES_CORE,
-	...LANGUAGES_PLUGIN_SH,
-];
+const { languages: LANGUAGES } = await getSupportInfo();
 
 /**
- * Converts the extensions and file names Prettier associates with the given
- * languages into `overrides.files` patterns.
+ * Converts built-in Prettier language names to `overrides.files` patterns for
+ * their extensions and file names.
  */
 export default function getSupportedLanguagePatterns(
 	...names: ReadonlyArray<string>
@@ -28,7 +21,8 @@ export default function getSupportedLanguagePatterns(
 			);
 		}
 
-		for (const extension of language.extensions ?? []) {
+		// Prettier defines `extensions` for every built-in language
+		for (const extension of language.extensions!) {
 			patterns.push(`*${extension}`);
 		}
 

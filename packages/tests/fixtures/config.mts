@@ -1,7 +1,8 @@
 import type { Config } from 'prettier';
+import * as pluginShell from 'prettier-plugin-shell';
 
 export default {
-	plugins: ['prettier-plugin-sh'],
+	plugins: [pluginShell],
 	tabWidth: 0,
 	useTabs: false,
 	overrides: [
@@ -11,6 +12,12 @@ export default {
 				plugins: ['prettier-plugin-sort-json'],
 				parser: 'json',
 				jsonRecursiveSort: true,
+			},
+		},
+		{
+			files: ['*.sh', 'fixture'],
+			options: {
+				shUseTabs: true,
 			},
 		},
 	],

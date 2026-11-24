@@ -12,7 +12,7 @@
 	"exports": "./src/index.ts",
 	"dependencies": {
 		"@standard-config/utilities": "workspace:*",
-		"prettier-plugin-sh": "catalog:"
+		"sh-syntax": "catalog:"
 	},
 	"peerDependencies": {
 		"prettier": "*"

@@ -117,7 +117,7 @@ test('respects `variant`', async () => {
 });
 
 test('finds no comments when marking them breaks the code', async () => {
-	const input = ['# foo', "cat << '#EOF'", 'bar', '#EOF'];
+	const input = ['# foo', 'bar() {', "  cat << '#EOF'", 'baz', '#EOF', '}'];
 
 	await expect(findComments(input, OPTIONS)).resolves.toStrictEqual({
 		fullLine: new Set(),

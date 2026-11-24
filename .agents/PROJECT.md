@@ -14,7 +14,7 @@ When an override supplies a `plugins` list, even an empty one, the config prepen
 
 The shell and TypeScript plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.
 
-`@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load and imports `prettier-plugin-sh`. That plugin is only a development dependency of utilities, and the TypeScript plugin doesn’t depend on it. The `GLOB_SET_*` constants built with this helper therefore belong in `packages/prettier/src/constants`, within their only consuming package, rather than in shared constants.
+`@standard-config/utilities/get-supported-language-patterns` awaits Prettier’s `getSupportInfo()` at module load. The config defines the `GLOB_SET_*` constants that use this helper in `packages/prettier/src/constants`, so importing shared patterns doesn’t trigger that lookup.
 
 The config builds `GLOB_SET_SHELL` from the languages exported by `prettier-plugin-shell`. Moving that lookup into utilities would create a workspace dependency cycle because the shell plugin already depends on utilities.
 
@@ -24,7 +24,11 @@ Shell scripts can’t be reliably identified by file name alone because Prettier
 
 ### Shell Language Selection
 
-The shell plugin registers only languages that `sh-syntax` can format as shell scripts. `prettier-plugin-sh` also maps data formats and incompatible shells to its `sh` parser. Parsing them as Bash can reject valid Nushell or Tcsh syntax or silently change data. For example, Bash treats an unquoted `&` in a dotenv URL as a shell operator, so the formatter splits the value across lines.
+The shell plugin maintains its own [`Shell` language entry](../packages/prettier-plugin-shell/src/index.ts) independently of GitHub Linguist. Its file names, extensions, and interpreters must reliably identify shell scripts. Formatting data files as Bash can silently change their contents. For example, Bash treats an unquoted `&` in a dotenv URL as a shell operator, so the formatter splits the value across lines.
+
+The plugin omits Nushell and Tcsh because their syntax is incompatible with the Bash parser in `sh-syntax`. Because ksh and Zsh scripts mostly use syntax that Bash also accepts, the plugin keeps their names and [defaults to parsing them as Bash](../packages/prettier-plugin-shell/src/infer-variant/index.ts), though a `#!/bin/mksh` shebang selects mksh for a `.ksh` file. Shell-specific syntax can stop formatting before the script is rewritten. For example, the Bash parser reports a syntax error for Zsh’s `${(j: :)parts}` expansion.
+
+The plugin omits ambiguous extensions such as `.cgi`, which can also identify Perl or Python scripts. It omits generated wrappers such as `gradlew` by name because regeneration overwrites formatting changes. The Husky rule matches only files directly inside `.husky` whose names contain no dot. Matching the whole directory would let shell formatting change patterns in `.husky/.gitignore`. Tool names such as `husky` serve as aliases so existing Markdown code fences still format as shell scripts.
 
 ## Compatibility
 
@@ -56,7 +60,7 @@ When joining a line to a paragraph or collapsing its spaces would create a direc
 
 ShellCheck directives are deliberately excluded from this pattern. `# shellcheck disable=…` continues to apply across intervening comment lines, so moving a comment between the directive and its command doesn’t change the suppression.
 
-Like the TypeScript plugin, the shell plugin keeps comments below `# prettier-ignore` in place. This preserves comment placement even though `prettier-plugin-sh` currently formats commands beneath that marker.
+The shell plugin keeps comments below `# prettier-ignore` in place, as the TypeScript plugin does for its ignore marker. `sh-syntax` still formats the command beneath the marker.
 
 ### TypeScript Limitations
 

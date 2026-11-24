@@ -14,7 +14,7 @@
 		"@standard-config/tsconfig": "catalog:",
 		"@types/node": "catalog:",
 		"prettier": "catalog:",
-		"prettier-plugin-sh": "catalog:",
+		"prettier-plugin-shell": "workspace:*",
 		"prettier-plugin-sort-json": "catalog:",
 		"typescript": "catalog:",
 		"vite-plus": "catalog:"

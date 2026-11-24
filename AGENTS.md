@@ -3,7 +3,7 @@
 ## Overview
 
 - **Repository:** Contains the shareable Prettier config.
-- **Layout:** `packages/prettier` publishes `@standard-config/prettier`. `packages/prettier-plugin-shell` is a private wrapper around `prettier-plugin-sh`, and `packages/prettier-plugin-typescript` is a private Prettier plugin. `packages/utilities` contains the private `@standard-config/utilities` package, and `packages/tests` holds fixtures.
+- **Layout:** `packages/prettier` publishes `@standard-config/prettier`. `packages/prettier-plugin-shell` and `packages/prettier-plugin-typescript` are private Prettier plugins. `packages/utilities` contains the private `@standard-config/utilities` package, and `packages/tests` holds fixtures.
 - **Disclosure:** The repository is public and open source.
 
 ## Agent Documentation

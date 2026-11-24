@@ -7,8 +7,8 @@ catalog:
   '@standard-config/tsconfig': ^3.2.0
   '@types/node': ^26.6.6
   prettier: ^3.10.1
-  prettier-plugin-sh: ^0.20.2
   prettier-plugin-sort-json: ^4.2.0
+  sh-syntax: ^0.8.7
   typescript: ^6.0.3
   vite-plus: ^1.7.0
 

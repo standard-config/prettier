@@ -13,7 +13,7 @@ trim_trailing_whitespace = true
 indent_style = space
 
 # Shell
-[{.bash_aliases,.bash_functions,.bash_history,.bash_logout,.bash_profile,.bashrc,.cshrc,.envrc,.kshrc,.login,.profile,.tmux.conf,.xinitrc,.xsession,.zlogin,.zlogout,.zprofile,.zshenv,.zshrc,*.bash,*.bats,*.cgi,*.command,*.ebuild,*.eclass,*.fcgi,*.ksh,*.sbatch,*.sh,*.sh.in,*.slurm,*.tmux,*.tool,*.trigger,*.zsh,*.zsh-theme,9fs,APKBUILD,bash_aliases,bash_logout,bash_profile,bashrc,cshrc,gradlew,kshrc,login,man,mvnw,PKGBUILD,profile,tmux.conf,xinitrc,xsession,zlogin,zlogout,zprofile,zshenv,zshrc}]
+[{.bash_aliases,.bash_functions,.bash_logout,.bash_profile,.bashrc,.envrc,.kshrc,.profile,.xinitrc,.xsession,.zlogin,.zlogout,.zprofile,.zshenv,.zshrc,*.bash,*.bats,*.command,*.ebuild,*.eclass,*.ksh,*.mksh,*.sbatch,*.sh,*.sh.in,*.slurm,*.tmux,*.tool,*.zsh,*.zsh-theme,APKBUILD,bash_aliases,bash_logout,bash_profile,bashrc,kshrc,PKGBUILD,xinitrc,xsession,zlogin,zlogout,zprofile,zshenv,zshrc}]
 indent_size = 2
 indent_style = space
 

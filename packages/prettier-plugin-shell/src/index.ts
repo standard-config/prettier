@@ -1,64 +1,72 @@
-import type { ParserOptions, Plugin } from 'prettier';
+import type { Parser, ParserOptions, Plugin, Printer } from 'prettier';
+import type { File } from 'sh-syntax';
 import type { PluginOptions } from './types/index.d.ts';
 import separateShebang from '@standard-config/utilities/separate-shebang';
-import * as pluginSh from 'prettier-plugin-sh';
+import { basename, dirname } from 'node:path';
+import { processor } from 'sh-syntax';
+import { PRAGMA_PATTERN } from './constants/index.ts';
 import inferVariant from './infer-variant/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
 
-const { parsers: shParsers, printers: shPrinters } = pluginSh;
-
-type ShPrint = typeof shPrinters.sh.print;
-
-// `sh-syntax` can parse these languages. The others that `prettier-plugin-sh`
-// assigns to the `sh` parser are data formats or shells with incompatible
-// syntax, such as Nushell and Tcsh
-const LANGUAGE_NAMES = new Set([
-	'Alpine Abuild',
-	'Gentoo Ebuild',
-	'Gentoo Eclass',
-	'husky',
-	'OpenRC runscript',
-	'Shell',
-]);
+type ShellOptions = ParserOptions & { variant: number };
 
 /**
- * Returns the options for `prettier-plugin-sh`, with `shTabWidth` and
- * `shUseTabs` taking precedence over Prettier’s indentation settings.
+ * Checks whether the comments and blank lines that start the text include a
+ * `@format` or `@prettier` pragma.
+ */
+function hasPragma(text: string): boolean {
+	const commentLinePattern = /^\s*(#(?<comment>.*))?$/gm;
+	let lastIndex = -1;
+
+	for (;;) {
+		const match = commentLinePattern.exec(text);
+
+		if (match?.index !== lastIndex + 1) {
+			return false;
+		}
+
+		({ lastIndex } = commentLinePattern);
+		const comment = match.groups?.comment?.trim();
+
+		if (comment !== undefined && PRAGMA_PATTERN.test(comment)) {
+			return true;
+		}
+	}
+}
+
+/**
+ * Returns the options with `shTabWidth` and `shUseTabs` taking precedence over
+ * Prettier’s indentation settings.
  */
 function getShOptions<T>(options: ParserOptions<T>): ParserOptions<T> {
 	const { shTabWidth, shUseTabs } = options as ParserOptions<T> &
 		PluginOptions;
 
-	return {
-		...options,
-		simplify: true,
-		tabWidth: shTabWidth!,
-		useTabs: shUseTabs!,
-	};
+	return { ...options, tabWidth: shTabWidth!, useTabs: shUseTabs! };
 }
 
 /**
- * Prints shell code with `prettier-plugin-sh`, separating a shebang from what
- * follows and wrapping comments as `shCommentWrap` selects.
+ * Prints shell code with `sh-syntax`, separating a shebang from what follows
+ * and wrapping comments as `shCommentWrap` selects.
  */
 async function printShell(
-	...[path, options, print, args]: Parameters<ShPrint>
+	...[, options]: Parameters<Printer<File>['print']>
 ): Promise<string> {
-	const shOptions = {
+	const shOptions: ShellOptions = {
 		...getShOptions(options),
 		variant: inferVariant(options.originalText, options.filepath),
 	};
 
-	// `prettier-plugin-sh` prints a string asynchronously despite its `Doc`
-	// return type
 	const printText = async (text: string) =>
-		shPrinters.sh.print(
-			path,
-			{ ...shOptions, originalText: text },
-			print,
-			args
-		) as unknown as Promise<string>;
+		processor(text, {
+			filepath: shOptions.filepath,
+			print: true,
+			simplify: true,
+			tabWidth: shOptions.tabWidth,
+			useTabs: shOptions.useTabs,
+			variant: shOptions.variant,
+		});
 
 	const printed = await printText(options.originalText);
 
@@ -79,18 +87,92 @@ async function printShell(
 	return wrapComments(text, shOptions);
 }
 
-export const languages: Plugin['languages'] = pluginSh.languages
-	.filter(({ name }) => LANGUAGE_NAMES.has(name))
-	/* oxlint-disable-next-line oxc/no-map-spread */
-	.map((language) => ({
-		...language,
-		// `prettier-plugin-sh` classifies the dotenv file `.flaskenv` as shell
-		...(language.filenames && {
-			filenames: language.filenames.filter(
-				(filename) => filename !== '.flaskenv'
-			),
-		}),
-	}));
+// One language holds the curated file names, extensions, and interpreters of
+// scripts that `sh-syntax` can format, with aliases for code blocks that name a
+// tool, such as `abuild` or `husky`
+export const languages: Plugin['languages'] = [
+	{
+		name: 'Shell',
+		aliases: [
+			'abuild',
+			'apkbuild',
+			'bash',
+			'envrc',
+			'husky',
+			'openrc',
+			'sh',
+			'shell-script',
+			'zsh',
+		],
+		extensions: [
+			'.bash',
+			'.bats',
+			'.command',
+			'.ebuild',
+			'.eclass',
+			'.ksh',
+			'.mksh',
+			'.sbatch',
+			'.sh',
+			'.sh.in',
+			'.slurm',
+			'.tmux',
+			'.tool',
+			'.zsh',
+			'.zsh-theme',
+		],
+		filenames: [
+			'.bash_aliases',
+			'.bash_functions',
+			'.bash_logout',
+			'.bash_profile',
+			'.bashrc',
+			'.envrc',
+			'.kshrc',
+			'.profile',
+			'.xinitrc',
+			'.xsession',
+			'.zlogin',
+			'.zlogout',
+			'.zprofile',
+			'.zshenv',
+			'.zshrc',
+			'APKBUILD',
+			'bash_aliases',
+			'bash_logout',
+			'bash_profile',
+			'bashrc',
+			'kshrc',
+			'PKGBUILD',
+			'xinitrc',
+			'xsession',
+			'zlogin',
+			'zlogout',
+			'zprofile',
+			'zshenv',
+			'zshrc',
+		],
+		interpreters: [
+			'ash',
+			'bash',
+			'bats',
+			'dash',
+			'ksh',
+			'mksh',
+			'openrc-run',
+			'pdksh',
+			'sh',
+			'zsh',
+		],
+		// Hooks are files without an extension directly inside `.husky`, which
+		// can also hold files such as `.gitignore`
+		isSupported: ({ filepath }) =>
+			basename(dirname(filepath)) === '.husky' &&
+			!basename(filepath).includes('.'),
+		parsers: ['sh'],
+		vscodeLanguageIds: ['shellscript'],
+	},
+];
 
 export const options: Plugin['options'] = {
 	shCommentWrap: {
@@ -130,20 +212,24 @@ export const options: Plugin['options'] = {
 // Prettier prints with the printer of the plugin that supplies the parser
 export const parsers: Plugin['parsers'] = {
 	sh: {
-		...shParsers.sh,
+		astFormat: 'sh',
+		hasPragma,
+		locEnd: (node) => node.end,
+		locStart: (node) => node.start,
+		// The printer formats the original text, so a syntax error surfaces
+		// here
 		parse: async (text, options) =>
-			shParsers.sh.parse(text, {
-				...options,
+			processor(text, {
+				filepath: options.filepath,
 				variant: inferVariant(text, options.filepath),
 			}),
-	},
+	} satisfies Parser<File>,
 };
 
 export const printers: Plugin['printers'] = {
 	sh: {
-		...shPrinters.sh,
-		// Prettier awaits the root print here and in `prettier-plugin-sh`
-		print: printShell as unknown as ShPrint,
+		// Prettier awaits the root print
+		print: printShell as unknown as Printer<File>['print'],
 	},
 };
 

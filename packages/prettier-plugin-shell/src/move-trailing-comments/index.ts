@@ -27,6 +27,7 @@ const BRANCH_LINE_PATTERN = /^(?:elif[ \t].*;[ \t]*then|else)$/;
 const CLOSING_LINE_PATTERN = /^(?:\)|(?:done|esac|fi|\})(?=$|[\t ;&|()<>]))/;
 const COMMENT_LINE_PATTERN = /^[ \t]*#/;
 const CONTINUED_LINE_PATTERN = /(?<!\\)(?:\\\\)*(?:&&|\\|\|\|?)$/;
+const CONTINUING_LINE_PATTERN = /^[ \t]*(?:&&|\|\|)/;
 const MAX_REPRINTS = 3;
 
 /**
@@ -42,11 +43,14 @@ export default async function moveTrailingComments(
 	const { fullLine, trailing } = found;
 	const moves: Move[] = [];
 
-	// A backslash in a comment doesn’t continue a command
+	// A backslash in a comment doesn’t continue a command. In test and
+	// arithmetic expressions, `sh-syntax` starts continued lines with `&&` or
+	// `||` instead
 	const continuesOnNextLine = (index: number) =>
-		!fullLine.has(index) &&
-		!trailing.has(index) &&
-		CONTINUED_LINE_PATTERN.test(lines[index]!);
+		(!fullLine.has(index) &&
+			!trailing.has(index) &&
+			CONTINUED_LINE_PATTERN.test(lines[index]!)) ||
+		CONTINUING_LINE_PATTERN.test(lines[index + 1]!);
 
 	for (const [index, column] of trailing) {
 		const line = lines[index]!;
@@ -130,79 +134,131 @@ export default async function moveTrailingComments(
 		return text;
 	}
 
-	// A moved comment can land inside a string or heredoc and become part of
-	// the code. Marked comments that survive printing without comments did, so
-	// those stay where they are
 	const markPrefix = createMarkPrefix(lines.join('\n'), MARK_PREFIX);
-	const markedCode = await printWithoutComments(
-		buildText(
-			lines,
-			moves,
-			(move, number) => `#${markPrefix}${number}_${move.comment.slice(1)}`
-		),
-		options
-	);
+	let codePromise: Promise<string | undefined> | undefined;
 
-	/* v8 ignore next -- @preserve */
-	if (markedCode === undefined) {
-		return text;
-	}
+	// Returns the text with the moves applied, or `undefined` when they can’t
+	// be validated together
+	const applyMoves = async (
+		candidates: ReadonlyArray<Move>
+	): Promise<string | undefined> => {
+		// A moved comment can land inside a string or heredoc and become part
+		// of the code. Marked comments that survive printing without comments
+		// did, so those stay where they are
+		const markedCode = await printWithoutComments(
+			buildText(
+				lines,
+				candidates,
+				(move, number) =>
+					`#${markPrefix}${number}_${move.comment.slice(1)}`
+			),
+			options
+		);
 
-	const safeMoves = moves.filter(
-		(_move, number) => !markedCode.includes(`${markPrefix}${number}_`)
-	);
-
-	if (safeMoves.length === 0) {
-		return text;
-	}
-
-	const movedText = buildText(lines, safeMoves, (move) => move.comment);
-
-	// Removed comments leave blank lines, and moving only ever adds lines that
-	// aren’t blank
-	const [code, movedCode] = await Promise.all([
-		printWithoutComments(text, options),
-		printWithoutComments(movedText, options),
-	]);
-
-	if (
-		code === undefined ||
-		movedCode === undefined ||
-		removeBlankLines(code) !== removeBlankLines(movedCode)
-	) {
-		return text;
-	}
-
-	// `prettier-plugin-sh` can take more than one pass to settle the
-	// indentation of a moved comment. A change in the number of `#` characters
-	// can indicate duplicated or lost comment text, so keep the previous result
-	let result = movedText;
-
-	for (let pass = 0; pass < MAX_REPRINTS; pass += 1) {
-		const reprinted = await reprint(result);
-
-		if (
-			reprinted === result ||
-			countHashes(reprinted) !== countHashes(result)
-		) {
-			break;
+		if (markedCode === undefined) {
+			return undefined;
 		}
 
-		result = reprinted;
+		const safeMoves = candidates.filter(
+			(_move, number) => !markedCode.includes(`${markPrefix}${number}_`)
+		);
+
+		if (safeMoves.length === 0) {
+			return undefined;
+		}
+
+		const movedText = buildText(lines, safeMoves, (move) => move.comment);
+
+		// Removed comments leave blank lines, and moving only ever adds lines
+		// that aren’t blank
+		codePromise ??= printWithoutComments(text, options);
+		const [code, movedCode] = await Promise.all([
+			codePromise,
+			printWithoutComments(movedText, options),
+		]);
+
+		if (
+			code === undefined ||
+			movedCode === undefined ||
+			removeBlankLines(code) !== removeBlankLines(movedCode)
+		) {
+			return undefined;
+		}
+
+		// `sh-syntax` can take more than one pass to settle the indentation of
+		// a moved comment. A change in the number of `#` characters can
+		// indicate duplicated or lost comment text, so keep the previous result
+		let result = movedText;
+
+		for (let pass = 0; pass < MAX_REPRINTS; pass += 1) {
+			const reprinted = await reprint(result);
+
+			if (
+				reprinted === result ||
+				countHashes(reprinted) !== countHashes(result)
+			) {
+				break;
+			}
+
+			result = reprinted;
+		}
+
+		// A comment that `sh-syntax` puts back at the end of its line didn’t
+		// move, and its attempted move can leave a blank line behind
+		const { trailing: remainingTrailing } = await findComments(
+			result.split('\n'),
+			options
+		);
+
+		if (remainingTrailing.size > trailing.size - safeMoves.length) {
+			return undefined;
+		}
+
+		return result;
+	};
+
+	// Narrows down the moves that can’t be validated by halves, so that a few
+	// of them cost a few validations each rather than one per comment
+	const findValidMoves = async (
+		candidates: ReadonlyArray<Move>,
+		isInvalid = false
+	): Promise<Move[]> => {
+		if (!isInvalid && (await applyMoves(candidates)) !== undefined) {
+			return [...candidates];
+		}
+
+		if (candidates.length === 1) {
+			return [];
+		}
+
+		const middle = Math.ceil(candidates.length / 2);
+		const firstMoves = await findValidMoves(candidates.slice(0, middle));
+
+		// When the first half passes, the moves that failed together are in the
+		// second half
+		const secondMoves = await findValidMoves(
+			candidates.slice(middle),
+			firstMoves.length === middle
+		);
+
+		return [...firstMoves, ...secondMoves];
+	};
+
+	const result = await applyMoves(moves);
+
+	if (result !== undefined || moves.length === 1) {
+		return result ?? text;
 	}
 
-	// A comment that `prettier-plugin-sh` puts back at the end of its line
-	// didn’t move, and its attempted move can leave a blank line behind
-	const { trailing: remainingTrailing } = await findComments(
-		result.split('\n'),
-		options
-	);
+	// A move that can’t be validated, such as one into an arithmetic
+	// expression, stays out without keeping the other comments in place
+	const validMoves = await findValidMoves(moves, true);
 
-	if (remainingTrailing.size > trailing.size - safeMoves.length) {
+	if (validMoves.length === 0) {
 		return text;
 	}
 
-	return result;
+	return (await applyMoves(validMoves)) ?? text;
 }
 
 /**

@@ -8,12 +8,6 @@ test('converts Prettier languages to file patterns', () => {
 	expect(getSupportedLanguagePatterns('Markdown')).toStrictEqual(
 		expect.arrayContaining(['*.md', 'README'])
 	);
-	expect(getSupportedLanguagePatterns('Shell')).toStrictEqual(
-		expect.arrayContaining(['*.sh', '.bashrc'])
-	);
-	expect(getSupportedLanguagePatterns('CODEOWNERS')).toStrictEqual([
-		'CODEOWNERS',
-	]);
 });
 
 test('throws when Prettier doesn’t define a language', () => {

@@ -1,10 +1,10 @@
-import type { Options, Plugin } from 'prettier';
+import type { Options, ParserOptions, Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import { mkdtempDisposableSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { format } from 'prettier';
-import * as pluginSh from 'prettier-plugin-sh';
+import { ParseError, print } from 'sh-syntax';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import * as pluginShell from './index.ts';
 
@@ -46,24 +46,92 @@ EOF
 test('exposes correct public API', () => {
 	expectTypeOf(pluginShell).toExtend<Plugin>();
 
-	const shLanguages = new Map(
-		pluginSh.languages.map((language) => [language.name, language])
-	);
-	const shell = shLanguages.get('Shell')!;
-
-	expect(pluginShell).toHaveProperty('languages', [
-		shLanguages.get('Alpine Abuild'),
-		shLanguages.get('Gentoo Ebuild'),
-		shLanguages.get('Gentoo Eclass'),
-		shLanguages.get('OpenRC runscript'),
-		{
-			...shell,
-			filenames: shell.filenames!.filter(
-				(filename) => filename !== '.flaskenv'
-			),
-		},
-		shLanguages.get('husky'),
-	]);
+	expect(pluginShell).toHaveProperty('languages');
+	expect(pluginShell.languages).toMatchInlineSnapshot(`
+		[
+		  {
+		    "aliases": [
+		      "abuild",
+		      "apkbuild",
+		      "bash",
+		      "envrc",
+		      "husky",
+		      "openrc",
+		      "sh",
+		      "shell-script",
+		      "zsh",
+		    ],
+		    "extensions": [
+		      ".bash",
+		      ".bats",
+		      ".command",
+		      ".ebuild",
+		      ".eclass",
+		      ".ksh",
+		      ".mksh",
+		      ".sbatch",
+		      ".sh",
+		      ".sh.in",
+		      ".slurm",
+		      ".tmux",
+		      ".tool",
+		      ".zsh",
+		      ".zsh-theme",
+		    ],
+		    "filenames": [
+		      ".bash_aliases",
+		      ".bash_functions",
+		      ".bash_logout",
+		      ".bash_profile",
+		      ".bashrc",
+		      ".envrc",
+		      ".kshrc",
+		      ".profile",
+		      ".xinitrc",
+		      ".xsession",
+		      ".zlogin",
+		      ".zlogout",
+		      ".zprofile",
+		      ".zshenv",
+		      ".zshrc",
+		      "APKBUILD",
+		      "bash_aliases",
+		      "bash_logout",
+		      "bash_profile",
+		      "bashrc",
+		      "kshrc",
+		      "PKGBUILD",
+		      "xinitrc",
+		      "xsession",
+		      "zlogin",
+		      "zlogout",
+		      "zprofile",
+		      "zshenv",
+		      "zshrc",
+		    ],
+		    "interpreters": [
+		      "ash",
+		      "bash",
+		      "bats",
+		      "dash",
+		      "ksh",
+		      "mksh",
+		      "openrc-run",
+		      "pdksh",
+		      "sh",
+		      "zsh",
+		    ],
+		    "isSupported": [Function],
+		    "name": "Shell",
+		    "parsers": [
+		      "sh",
+		    ],
+		    "vscodeLanguageIds": [
+		      "shellscript",
+		    ],
+		  },
+		]
+	`);
 
 	expect(pluginShell).toHaveProperty('options');
 	expect(pluginShell.options).toHaveProperty('shCommentWrap');
@@ -120,14 +188,10 @@ test('keeps wrapped comments from starting lines with directives that cover the 
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('leaves code formatting to `prettier-plugin-sh`', async () => {
+test('leaves code formatting to `sh-syntax`', async () => {
 	const input = 'if [ -n "$foo" ]\nthen\n    # bar\n    baz    qux\nfi\n';
 
-	const expectedOutput = await format(input, {
-		parser: 'sh',
-		plugins: [pluginSh],
-		simplify: true,
-	});
+	const expectedOutput = await print(input, { simplify: true });
 
 	const options = { parser: 'sh', plugins: [pluginShell] };
 
@@ -135,6 +199,23 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 
 	expect(output).toBe(expectedOutput);
 	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('reports syntax errors with their position', async () => {
+	let result: unknown;
+
+	try {
+		await format('foo )\n', { filepath: 'foo.sh', plugins: [pluginShell] });
+	} catch (error) {
+		result = error;
+	}
+
+	expect(result).toBeInstanceOf(ParseError);
+	expect(result).toHaveProperty(
+		'message',
+		'a command can only contain words and redirects; encountered `)`'
+	);
+	expect(result).toHaveProperty('pos', { column: 4, line: 1, offset: 4 });
 });
 
 test('formats comments in shell scripts', async () => {
@@ -181,6 +262,99 @@ test('formats OpenRC runscripts like shell scripts', async () => {
 		'#!/usr/bin/env openrc-run\n\n# foo bar baz qux\n# quux corge grault\nfoo=$((bar))\n'
 	);
 	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('formats Bats files without an extension', async () => {
+	using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+	const input = '#!/usr/bin/env bats\n@test "foo" {\n  run bar # baz\n}\n';
+	const filepath = join(directory.path, 'foo');
+	writeFileSync(filepath, input);
+	const options = { filepath, plugins: [pluginShell] };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'#!/usr/bin/env bats\n\n@test "foo" {\n  # baz\n  run bar\n}\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('doesn’t format rc scripts', async () => {
+	using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+	const input = '#!/usr/bin/env rc\nfoo\n';
+	const filepath = join(directory.path, 'foo');
+	writeFileSync(filepath, input);
+
+	await expect(
+		format(input, { filepath, plugins: [pluginShell] })
+	).rejects.toThrow('No parser could be inferred');
+});
+
+test.each([
+	{
+		input: 'if [[ -n $foo &&\n  -n $bar ]]; then # baz\n  qux\nfi\n',
+		output: '# baz\nif [[ -n $foo\n  && -n $bar ]]; then\n  qux\nfi\n',
+	},
+	{
+		input: 'if foo; then\n  bar\nelif [[ -n $baz &&\n  -n $qux ]]; then # quux\n  corge\nfi\n',
+		output: 'if foo; then\n  bar\nelif [[ -n $baz\n  && -n $qux ]]; then\n  # quux\n  corge\nfi\n',
+	},
+	{
+		input: 'if (( foo &&\n  bar )); then # baz\n  qux\nfi\n',
+		output: '# baz\nif ((foo\n  && bar)); then\n  qux\nfi\n',
+	},
+	{
+		input: 'while [[ -n $foo ||\n  -n $bar ]]; do # baz\n  qux\ndone\n',
+		output: '# baz\nwhile [[ -n $foo\n  || -n $bar ]]; do\n  qux\ndone\n',
+	},
+])(
+	'moves trailing comments on conditions continued with `&&` or `||`',
+	async ({ input, output: expectedOutput }) => {
+		const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('keeps trailing comments on arithmetic continued with other operators', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format('foo=$(( bar +\n  baz )) # qux\n', options);
+
+	expect(output).toBe('foo=$((bar\n  + baz)) # qux\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('moves other trailing comments past one that stays on continued arithmetic', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format(
+		'foo=$((bar +\n  baz)) # qux\nquux # corge\n',
+		options
+	);
+
+	expect(output).toBe('foo=$((bar\n  + baz)) # qux\n# corge\nquux\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('moves comments on string lines that start with `&&` above the command', async () => {
+	const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+	const output = await format('echo "foo\n&& bar" # baz\n', options);
+
+	expect(output).toBe('# baz\necho "foo\n&& bar"\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps comments out of strings with lines that start with `&&`', async () => {
+	const input = 'echo "foo\nbar\n&& baz" # qux\n';
+
+	await expect(
+		format(input, { filepath: 'foo.sh', plugins: [pluginShell] })
+	).resolves.toBe(input);
 });
 
 test('keeps code fences in comments as written', async () => {
@@ -350,6 +524,70 @@ test('doesn’t format data files or shells with incompatible syntax', async () 
 	).rejects.toThrow('No parser could be inferred');
 });
 
+test('doesn’t format files outside the supported shell names', async () => {
+	const options = { plugins: [pluginShell] };
+
+	await expect(
+		format('foo\n', { ...options, filepath: '.bash_history' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.cshrc' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.login' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.tmux.conf' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '9fs' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'cshrc' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.cgi' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.fcgi' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'foo.trigger' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'gradlew' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'login' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'man' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'mvnw' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'profile' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: 'tmux.conf' })
+	).rejects.toThrow('No parser could be inferred');
+});
+
+test('doesn’t format other files in `.husky` directories', async () => {
+	const options = { plugins: [pluginShell] };
+
+	await expect(
+		format('foo\n', { ...options, filepath: '.husky/.gitignore' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.husky/foo.bar' })
+	).rejects.toThrow('No parser could be inferred');
+	await expect(
+		format('foo\n', { ...options, filepath: '.husky/foo/bar' })
+	).rejects.toThrow('No parser could be inferred');
+});
+
 test('doesn’t format `.flaskenv` files', async () => {
 	await expect(
 		format('foo\n', { filepath: '.flaskenv', plugins: [pluginShell] })
@@ -470,6 +708,15 @@ test('formats mksh scripts', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
+test('formats `.mksh` files as mksh', async () => {
+	const options = { filepath: 'foo.mksh', plugins: [pluginShell] };
+
+	const output = await format('foo |& # bar\n', options);
+
+	expect(output).toBe('# bar\nfoo |&\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
 test('keeps Bats `@test` comments on their function lines', async () => {
 	const input = 'foo() { # @test\n  run bar\n}\n';
 
@@ -495,9 +742,8 @@ test('respects `checkIgnorePragma`', async () => {
 	const input = '# @noformat\nfoo    bar\n';
 
 	const expectedOutput = await format(input, {
-		checkIgnorePragma: true,
 		parser: 'sh',
-		plugins: [pluginSh],
+		plugins: [pluginShell],
 	});
 
 	const options = {
@@ -516,9 +762,8 @@ test('respects `insertPragma`', async () => {
 	const input = 'foo    bar\n';
 
 	const expectedOutput = await format(input, {
-		insertPragma: true,
 		parser: 'sh',
-		plugins: [pluginSh],
+		plugins: [pluginShell],
 	});
 
 	const options = {
@@ -548,6 +793,18 @@ test('respects `requirePragma`', async () => {
 	await expect(
 		format(output.replace('bar baz', 'bar    baz'), options)
 	).resolves.toBe(output);
+	await expect(format('foo    bar\n', options)).resolves.toBe('foo    bar\n');
+});
+
+test('locates syntax tree nodes', async () => {
+	const parser = pluginShell.parsers!.sh!;
+
+	const ast = await parser.parse('foo\nbar\n', {
+		filepath: 'foo.sh',
+	} as ParserOptions);
+
+	expect(parser.locStart(ast)).toBe(0);
+	expect(parser.locEnd(ast)).toBe(7);
 });
 
 test('supports `shCommentWrap`', async () => {
@@ -576,11 +833,7 @@ test('supports `shCommentWrap`', async () => {
 	expect(outputs).toStrictEqual({
 		'all': '# foo bar baz qux\n#\n# grault\ncorge\n',
 		'full-line': '# foo bar baz qux\ncorge # grault\n',
-		'none': await format(input, {
-			parser: 'sh',
-			plugins: [pluginSh],
-			printWidth: 20,
-		}),
+		'none': await print(input, { simplify: true }),
 	});
 	await expect(format(outputs.all, options)).resolves.toBe(outputs.all);
 	await expect(
