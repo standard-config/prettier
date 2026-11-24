@@ -53,7 +53,7 @@ const sections: EditorConfigSection[] = [
 		},
 	],
 	['Shell', GLOB_SET_SHELL, shellIndentation],
-	['Shell hooks', GLOB_SET_SHELL_HOOKS, shellIndentation],
+	['Shell Hooks', GLOB_SET_SHELL_HOOKS, shellIndentation],
 	[
 		'YAML',
 		GLOB_SET_YAML,

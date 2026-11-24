@@ -17,7 +17,7 @@ indent_style = space
 indent_size = 2
 indent_style = space
 
-# Shell hooks
+# Shell Hooks
 [{**/.hooks/*,**/.husky/*,**/.vite-hooks/*}]
 indent_size = 2
 indent_style = space
