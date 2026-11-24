@@ -57,6 +57,10 @@ export interface PluginOptions {
 	tsCommentWrap?: 'all' | 'full-line' | 'none' | undefined;
 }
 
+declare module 'prettier' {
+	interface Options extends PluginOptions {}
+}
+
 export type PluginWithParsers = Omit<Plugin, 'parsers'> & {
 	parsers: Record<string, Parser | ParserInitializer>;
 };
@@ -73,9 +77,6 @@ export type ResolvedPriorParser = {
 
 export type TextEdit = {
 	end: number;
-	/**
-	 * Original range whose text and cursor positions move with this edit.
-	 */
 	source?: TextRange;
 	start: number;
 	text: string;
@@ -85,7 +86,3 @@ export type TextRange = {
 	end: number;
 	start: number;
 };
-
-declare module 'prettier' {
-	interface Options extends PluginOptions {}
-}

@@ -43,7 +43,10 @@ EOF
 test('exposes correct public API', () => {
 	expectTypeOf(pluginShell).toExtend<Plugin>();
 
-	expect(pluginShell).toHaveProperty('languages', pluginSh.languages);
+	expect(pluginShell).toHaveProperty(
+		'languages',
+		pluginSh.languages.filter(({ name }) => name !== 'Dockerfile')
+	);
 
 	expect(pluginShell).toHaveProperty('options');
 	expect(pluginShell.options).toHaveProperty('shCommentWrap');
@@ -51,11 +54,9 @@ test('exposes correct public API', () => {
 	expect(pluginShell.options).toHaveProperty('shUseTabs.default', false);
 
 	expect(pluginShell).toHaveProperty('parsers');
-	expect(pluginShell.parsers).toHaveProperty('dockerfile');
 	expect(pluginShell.parsers).toHaveProperty('sh');
 
 	expect(pluginShell).toHaveProperty('printers');
-	expect(pluginShell.printers).toHaveProperty('dockerfile');
 	expect(pluginShell.printers).toHaveProperty('sh');
 
 	expectTypeOf<PluginOptions>().toBeObject();
@@ -119,7 +120,7 @@ test('leaves code formatting to `prettier-plugin-sh`', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('formats files that `prettier-plugin-sh` supports', async () => {
+test('formats comments in shell scripts', async () => {
 	const options = {
 		filepath: 'foo.sh',
 		plugins: [pluginShell],
@@ -242,44 +243,21 @@ test('keeps data files from being simplified', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('formats Dockerfiles like `prettier-plugin-sh`', async () => {
-	const input = 'FROM foo\nRUN bar > baz && \\\n qux < quux\n';
-	const options = { filepath: 'Dockerfile', plugins: [pluginShell] };
+test('doesn’t format Dockerfiles', async () => {
+	const options = { plugins: [pluginShell] };
 
-	const output = await format(input, options);
-
-	expect(output).toBe(
-		await format(input, { filepath: 'Dockerfile', plugins: [pluginSh] })
-	);
-	await expect(format(output, options)).resolves.toBe(output);
-});
-
-test('formats Dockerfiles with `shTabWidth` and `shUseTabs`', async () => {
-	const input = 'FROM foo\nRUN bar && \\\n baz\n';
-	const options = {
-		filepath: 'Dockerfile',
-		plugins: [pluginShell],
-		tabWidth: 8,
-		useTabs: true,
-	};
-
-	const output = await format(input, options);
-	const outputWithTabWidth = await format(input, {
-		...options,
-		shTabWidth: 4,
-	});
-	const outputWithTabs = await format(input, { ...options, shUseTabs: true });
-
-	expect(output).toBe('FROM foo\nRUN bar \\\n  && baz\n');
-	expect(outputWithTabWidth).toBe('FROM foo\nRUN bar \\\n    && baz\n');
-	expect(outputWithTabs).toBe('FROM foo\nRUN bar \\\n\t&& baz\n');
-	await expect(format(output, options)).resolves.toBe(output);
 	await expect(
-		format(outputWithTabWidth, { ...options, shTabWidth: 4 })
-	).resolves.toBe(outputWithTabWidth);
+		format('FROM foo\n', { ...options, filepath: 'Dockerfile' })
+	).rejects.toThrow('No parser could be inferred');
 	await expect(
-		format(outputWithTabs, { ...options, shUseTabs: true })
-	).resolves.toBe(outputWithTabs);
+		format('FROM foo\n', { ...options, parser: 'dockerfile' })
+	).rejects.toThrow('resolve parser "dockerfile"');
+	await expect(
+		format('```dockerfile\nFROM   foo\n```\n', {
+			...options,
+			filepath: 'foo.md',
+		})
+	).resolves.toBe('```dockerfile\nFROM   foo\n```\n');
 });
 
 test('formats shell code in Markdown like shell scripts', async () => {

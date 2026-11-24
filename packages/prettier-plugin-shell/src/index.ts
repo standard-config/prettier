@@ -9,7 +9,6 @@ import wrapComments from './wrap-comments/index.ts';
 
 const { parsers: shParsers, printers: shPrinters } = pluginSh;
 
-type DockerfilePrint = typeof shPrinters.dockerfile.print;
 type ShPrint = typeof shPrinters.sh.print;
 
 /**
@@ -71,7 +70,9 @@ async function printShell(
 	return wrapComments(text, shOptions);
 }
 
-export const languages: Plugin['languages'] = pluginSh.languages;
+export const languages: Plugin['languages'] = pluginSh.languages.filter(
+	({ parsers }) => parsers.every((parser) => parser === 'sh')
+);
 
 export const options: Plugin['options'] = {
 	shCommentWrap: {
@@ -110,7 +111,6 @@ export const options: Plugin['options'] = {
 
 // Prettier prints with the printer of the plugin that supplies the parser
 export const parsers: Plugin['parsers'] = {
-	dockerfile: shParsers.dockerfile,
 	sh: {
 		...shParsers.sh,
 		parse: async (text, options) =>
@@ -122,18 +122,6 @@ export const parsers: Plugin['parsers'] = {
 };
 
 export const printers: Plugin['printers'] = {
-	dockerfile: {
-		...shPrinters.dockerfile,
-		print: (...[path, options, print, args]: Parameters<DockerfilePrint>) =>
-			shPrinters.dockerfile.print(
-				path,
-				// `prettier-plugin-sh` turns this on for Dockerfiles only
-				// through the default of an option this plugin doesn’t declare
-				{ ...getShOptions(options, false), spaceRedirects: true },
-				print,
-				args
-			),
-	},
 	sh: {
 		...shPrinters.sh,
 		// Prettier awaits the root print here and in `prettier-plugin-sh`

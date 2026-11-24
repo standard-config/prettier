@@ -40,7 +40,6 @@ export const GLOB_SET_SHELL_HOOKS = createGlobSet(
 export const GLOB_SET_SHELL_PROPERTIES = createGlobSet(
 	getSupportedLanguagePatterns(
 		'CODEOWNERS',
-		'Dockerfile',
 		'dotenv',
 		'Git Attributes',
 		'hosts',
@@ -54,8 +53,7 @@ export const GLOB_SET_SHELL_PROPERTIES = createGlobSet(
 		'TextMate Properties',
 		'vCard'
 	),
-	'.env.*',
-	'*.Dockerfile'
+	'.env.*'
 );
 
 export const GLOB_SET_TYPESCRIPT = getSupportedLanguagePatterns(

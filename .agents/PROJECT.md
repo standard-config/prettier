@@ -18,7 +18,7 @@ The shell and TypeScript plugins import shared patterns from `@standard-config/u
 
 ### Shell Indentation
 
-Shell scripts can’t be reliably identified by file name alone because Prettier also recognizes them by their shebang. `prettier-plugin-shell` therefore applies `shTabWidth` and `shUseTabs` in its printers, allowing the config’s global indentation defaults to serve other languages without relying on file name overrides to identify shell scripts.
+Shell scripts can’t be reliably identified by file name alone because Prettier also recognizes them by their shebang. `prettier-plugin-shell` therefore applies `shTabWidth` and `shUseTabs` in its printer, allowing the config’s global indentation defaults to serve other languages without relying on file name overrides to identify shell scripts.
 
 ## Compatibility
 
