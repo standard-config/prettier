@@ -6,7 +6,7 @@ import {
 	PRAGMA_PATTERN,
 	SCHEDULER_DIRECTIVE_PATTERN,
 } from '../constants/index.ts';
-import continuesPbsDirective from '../continues-pbs-directive/index.ts';
+import hasTrailingDirectiveMarker from '../has-trailing-directive-marker/index.ts';
 
 // The scheduler entries match a scheduler name or `$` that the next word could
 // complete into a directive, and words that already start one, such as `$-cwd`,
@@ -47,8 +47,7 @@ export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 }
 
 /**
- * Checks whether a line holds a scheduler directive or continues a PBS
- * directive.
+ * Checks for a scheduler directive or a PBS continuation line.
  */
 export function isSchedulerDirectiveLine(
 	lines: ReadonlyArray<string>,
@@ -56,6 +55,6 @@ export function isSchedulerDirectiveLine(
 ): boolean {
 	return (
 		SCHEDULER_DIRECTIVE_PATTERN.test(lines[index]!) ||
-		continuesPbsDirective(lines, index - 1)
+		hasTrailingDirectiveMarker(lines, index - 1)
 	);
 }

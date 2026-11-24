@@ -1,11 +1,11 @@
 import type { ParserOptions } from 'prettier';
 import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
-import continuesPbsDirective from '../continues-pbs-directive/index.ts';
 import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
 } from '../find-comments/index.ts';
+import hasTrailingDirectiveMarker from '../has-trailing-directive-marker/index.ts';
 
 /**
  * Wraps comments on their own lines using the print width as a target.
@@ -96,7 +96,10 @@ export default async function wrapComments(
 		// the directive
 		if (
 			/^#+[ \t]*$/.test(block.at(-1)!) &&
-			continuesPbsDirective(formattedBlock, formattedBlock.length - 1)
+			hasTrailingDirectiveMarker(
+				formattedBlock,
+				formattedBlock.length - 1
+			)
 		) {
 			formattedBlock.push('#');
 		}

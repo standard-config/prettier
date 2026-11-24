@@ -11,11 +11,11 @@ import {
 	PRAGMA_PATTERN,
 	SCHEDULER_DIRECTIVE_PATTERN,
 } from '../constants/index.ts';
-import continuesPbsDirective from '../continues-pbs-directive/index.ts';
 import { isSchedulerDirectiveLine } from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
 } from '../find-comments/index.ts';
+import hasTrailingDirectiveMarker from '../has-trailing-directive-marker/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
 
 type Move = {
@@ -115,7 +115,7 @@ export default async function moveTrailingComments(
 		// in a backslash would continue the directive
 		if (
 			isBelowNextLineDirective(lines, target, found) ||
-			continuesPbsDirective(lines, target - 1)
+			hasTrailingDirectiveMarker(lines, target - 1)
 		) {
 			continue;
 		}

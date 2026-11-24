@@ -1,10 +1,9 @@
 import { PBS_DIRECTIVE_PATTERN } from '../constants/index.ts';
 
 /**
- * Checks whether a line ends a PBS directive, or a line that continues one,
- * with a backslash, so Torque reads the next line as part of the directive.
+ * Checks whether a backslash continues a PBS directive onto the next line.
  */
-export default function continuesPbsDirective(
+export default function hasTrailingDirectiveMarker(
 	lines: ReadonlyArray<string>,
 	index: number
 ): boolean {

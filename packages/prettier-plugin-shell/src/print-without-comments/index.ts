@@ -2,8 +2,7 @@ import type { ParserOptions } from 'prettier';
 import { processor } from 'sh-syntax';
 
 /**
- * Prints shell code without its comments, or returns `undefined` when the code
- * can’t be parsed.
+ * Prints shell code without comments, or returns `undefined` if printing fails.
  */
 export default async function printWithoutComments(
 	text: string,

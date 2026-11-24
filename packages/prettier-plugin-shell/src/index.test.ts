@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { format } from 'prettier';
 import { ParseError, print } from 'sh-syntax';
-import { expect, expectTypeOf, test } from 'vite-plus/test';
+import { expect, expectTypeOf, onTestFinished, test, vi } from 'vite-plus/test';
 import * as pluginShell from './index.ts';
 
 const TEST_SHELL = `#!/bin/sh
@@ -202,20 +202,52 @@ test('leaves code formatting to `sh-syntax`', async () => {
 });
 
 test('reports syntax errors with their position', async () => {
+	const input = 'echo é\necho 😀 )\n';
 	let result: unknown;
 
 	try {
-		await format('foo )\n', { filepath: 'foo.sh', plugins: [pluginShell] });
+		await format(input, { filepath: 'foo.sh', plugins: [pluginShell] });
 	} catch (error) {
 		result = error;
 	}
 
 	expect(result).toBeInstanceOf(ParseError);
 	expect(result).toHaveProperty(
-		'message',
+		'text',
 		'a command can only contain words and redirects; encountered `)`'
 	);
-	expect(result).toHaveProperty('pos', { column: 4, line: 1, offset: 4 });
+	expect(result).toHaveProperty('pos', { column: 10, line: 2, offset: 18 });
+	expect(result).toHaveProperty('loc', { start: { column: 9, line: 2 } });
+	expect(result).toHaveProperty('codeFrame', expect.stringContaining('^'));
+});
+
+test.each([
+	[
+		'parse errors without a position',
+		new ParseError({ incomplete: false, text: 'foo' }),
+	],
+	[
+		'other errors with a position',
+		Object.assign(new Error('foo'), {
+			pos: { column: 0, line: 1, offset: 0 },
+		}),
+	],
+])('preserves %s from `sh-syntax`', async (_description, error) => {
+	vi.resetModules();
+	vi.doMock('sh-syntax', async (importOriginal) => ({
+		...(await importOriginal()),
+		processor: vi.fn().mockRejectedValue(error),
+	}));
+	onTestFinished(() => {
+		vi.doUnmock('sh-syntax');
+		vi.resetModules();
+	});
+	const plugin = await import('./index.ts');
+
+	await expect(
+		format('foo\n', { filepath: 'foo.sh', plugins: [plugin] })
+	).rejects.toBe(error);
+	expect(error).not.toHaveProperty('loc');
 });
 
 test('formats comments in shell scripts', async () => {

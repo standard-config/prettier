@@ -3,7 +3,7 @@ import type { File } from 'sh-syntax';
 import type { PluginOptions } from './types/index.d.ts';
 import separateShebang from '@standard-config/utilities/separate-shebang';
 import { basename, dirname } from 'node:path';
-import { processor } from 'sh-syntax';
+import { createSourceIndex, ParseError, processor } from 'sh-syntax';
 import { PRAGMA_PATTERN } from './constants/index.ts';
 import inferVariant from './infer-variant/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
@@ -12,8 +12,7 @@ import wrapComments from './wrap-comments/index.ts';
 type ShellOptions = ParserOptions & { variant: number };
 
 /**
- * Checks whether the comments and blank lines that start the text include a
- * `@format` or `@prettier` pragma.
+ * Checks the leading comments for `@format` or `@prettier`.
  */
 function hasPragma(text: string): boolean {
 	const commentLinePattern = /^\s*(#(?<comment>.*))?$/gm;
@@ -216,13 +215,32 @@ export const parsers: Plugin['parsers'] = {
 		hasPragma,
 		locEnd: (node) => node.end,
 		locStart: (node) => node.start,
-		// The printer formats the original text, so a syntax error surfaces
-		// here
-		parse: async (text, options) =>
-			processor(text, {
-				filepath: options.filepath,
-				variant: inferVariant(text, options.filepath),
-			}),
+		// The printer uses the original text, so report syntax errors here
+		parse: async (text, options) => {
+			try {
+				return await processor(text, {
+					filepath: options.filepath,
+					variant: inferVariant(text, options.filepath),
+				});
+			} catch (error) {
+				if (error instanceof ParseError && error.pos) {
+					const { column, line, offset } = error.pos;
+					const sourceIndex = createSourceIndex(text);
+
+					// Convert the byte offsets to UTF-16 before measuring
+					// Prettier’s one-based column
+					const lineStart = sourceIndex(offset - column);
+					const start = {
+						column: sourceIndex(offset) - lineStart + 1,
+						line,
+					};
+
+					Object.assign(error, { loc: { start } });
+				}
+
+				throw error;
+			}
+		},
 	} satisfies Parser<File>,
 };
 
