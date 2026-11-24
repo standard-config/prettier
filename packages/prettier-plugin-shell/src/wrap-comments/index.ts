@@ -1,6 +1,7 @@
 import type { ParserOptions } from 'prettier';
 import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
+import continuesPbsDirective from '../continues-pbs-directive/index.ts';
 import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
@@ -86,6 +87,16 @@ export default async function wrapComments(
 			NEXT_LINE_DIRECTIVE_PATTERN.test(
 				formattedBlock.at(-1)!.replace(/^#+[ \t]*/, '')
 			)
+		) {
+			formattedBlock.push('#');
+		}
+
+		// Keep an empty `#` line after a PBS directive or continuation line
+		// that ends in a backslash, since Torque reads the next line as part of
+		// the directive
+		if (
+			/^#+[ \t]*$/.test(block.at(-1)!) &&
+			continuesPbsDirective(formattedBlock, formattedBlock.length - 1)
 		) {
 			formattedBlock.push('#');
 		}

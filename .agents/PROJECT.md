@@ -62,6 +62,14 @@ ShellCheck directives are deliberately excluded from this pattern. `# shellcheck
 
 The shell plugin keeps comments below `# prettier-ignore` in place, as the TypeScript plugin does for its ignore marker. `sh-syntax` still formats the command beneath the marker.
 
+### Scheduler Directives
+
+The shell plugin preserves lines matched by [`SCHEDULER_DIRECTIVE_PATTERN`](../packages/prettier-plugin-shell/src/constants/index.ts), including Slurm’s `#SBATCH hetjob` separator. Joining that line to an option would erase the boundary between job components. Disabled directives also keep their spacing and line breaks so an author can re-enable a single option, for example by removing the space in `# SBATCH --time=01:00:00`.
+
+Torque reads the line after a PBS directive’s trailing backslash as part of the directive, even when that line has no `#PBS` marker. The plugin preserves every comment line in the continuation and avoids moving a trailing comment into it.
+
+Flux requires the same directive sentinel on every line of a triple-quoted value, including the closing line. Recognizing the `flux:` or `FLUX:` tag on each line therefore preserves the entire value. See the [Flux submission directive specification](https://flux-framework.readthedocs.io/projects/flux-rfc/en/latest/spec_36.html).
+
 ### TypeScript Limitations
 
 The following limitations are accepted:

@@ -118,6 +118,8 @@ test('keeps directives, pragmas, and `prettier-ignore` markers at the end of the
 	const input =
 		'foo # shellcheck disable=SC2086\nbar # @format\nbaz # prettier-ignore\n';
 	const inputWithNextLineDirective = 'foo # cspell:disable-next-line\nbar\n';
+	const inputWithSchedulerDirectives =
+		'foo # SBATCH --time=1\nbar #$ -cwd\nbaz # PBS -N qux\nquux #SBATCH--mem=1G\ncorge # flux: -N 4\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		input
@@ -125,6 +127,9 @@ test('keeps directives, pragmas, and `prettier-ignore` markers at the end of the
 	await expect(
 		moveTrailingComments(inputWithNextLineDirective, OPTIONS, reprint)
 	).resolves.toBe(inputWithNextLineDirective);
+	await expect(
+		moveTrailingComments(inputWithSchedulerDirectives, OPTIONS, reprint)
+	).resolves.toBe(inputWithSchedulerDirectives);
 });
 
 test('keeps comments below directives that cover the next line in place', async () => {
@@ -156,6 +161,50 @@ test('moves comments on branch lines below directives that cover the next line',
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
 		'if foo; then\n  bar\n# cspell:disable-next-line\nelif baz; then\n  # qux\n  quux\nfi\n'
 	);
+});
+
+test('doesn’t separate moved comments from scheduler directives next to them', async () => {
+	await expect(
+		moveTrailingComments('#SBATCH --time=1\nfoo # bar\n', OPTIONS, reprint)
+	).resolves.toBe('#SBATCH --time=1\n# bar\nfoo\n');
+	await expect(
+		moveTrailingComments(
+			'if foo; then\n  bar\nelse # baz\n  #SBATCH --time=1\n  qux\nfi\n',
+			OPTIONS,
+			reprint
+		)
+	).resolves.toBe(
+		'if foo; then\n  bar\nelse\n  # baz\n  #SBATCH --time=1\n  qux\nfi\n'
+	);
+	await expect(
+		moveTrailingComments(
+			"#PBS -v 'FOO=foo \\\n#bar baz'\nqux # quux\n",
+			OPTIONS,
+			reprint
+		)
+	).resolves.toBe("#PBS -v 'FOO=foo \\\n#bar baz'\n# quux\nqux\n");
+});
+
+test('keeps comments in place when moving them would continue a PBS directive', async () => {
+	const input = "#PBS -v 'FOO=foo \\\nbar # baz\n";
+	const inputWithContinuedLine = "#PBS -v 'FOO=foo \\\n#bar \\\nbaz # qux\n";
+
+	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
+		input
+	);
+	await expect(
+		moveTrailingComments(inputWithContinuedLine, OPTIONS, reprint)
+	).resolves.toBe(inputWithContinuedLine);
+	await expect(
+		moveTrailingComments('# foo \\\nbar # baz\n', OPTIONS, reprint)
+	).resolves.toBe('# foo \\\n#\n# baz\nbar\n');
+	await expect(
+		moveTrailingComments(
+			'#SBATCH --time=1 # foo \\\nbar # baz\n',
+			OPTIONS,
+			reprint
+		)
+	).resolves.toBe('#SBATCH --time=1 # foo \\\n# baz\nbar\n');
 });
 
 test('moves comments on `elif` and `else` lines into their branches', async () => {

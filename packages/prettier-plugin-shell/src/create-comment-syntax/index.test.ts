@@ -38,6 +38,36 @@ test('keeps words that would read as markup with the word before them', () => {
 	expect(formatComment('# foo bar baz nosemgrep qux', options)).toBe(
 		'# foo bar baz nosemgrep\n# qux'
 	);
+	expect(formatComment('# foo bar baz SBATCH --qux', options)).toBe(
+		'# foo bar baz SBATCH\n# --qux'
+	);
+	expect(formatComment('# foo bar baz PBS -qux', options)).toBe(
+		'# foo bar baz PBS\n# -qux'
+	);
+	expect(formatComment('# foo bar baz BSUB -qux', options)).toBe(
+		'# foo bar baz BSUB\n# -qux'
+	);
+	expect(formatComment('# foo bar baz $ -qux', options)).toBe(
+		'# foo bar baz $\n# -qux'
+	);
+	expect(formatComment('# foo bar baz $-qux quux', options)).toBe(
+		'# foo bar baz $-qux\n# quux'
+	);
+	expect(formatComment('# foo bar baz SBATCH--qux quux', options)).toBe(
+		'# foo bar baz SBATCH--qux\n# quux'
+	);
+	expect(formatComment('# foo bar baz PBS"-qux quux', options)).toBe(
+		'# foo bar baz PBS"-qux\n# quux'
+	);
+	expect(formatComment('# foo bar baz flux: qux', options)).toBe(
+		'# foo bar baz flux:\n# qux'
+	);
+	expect(formatComment('# foo bar baz FLUX: qux', options)).toBe(
+		'# foo bar baz FLUX:\n# qux'
+	);
+	expect(formatComment('# foo bar baz $- qux', options)).toBe(
+		'# foo bar baz\n# $- qux'
+	);
 	expect(formatComment('# foo bar baz pragma: qux', options)).toBe(
 		'# foo bar baz pragma:\n# qux'
 	);
@@ -81,6 +111,16 @@ test('keeps lines from joining into a directive', () => {
 	).toBe('# pragma: allowlist\n# nextline secret');
 	expect(formatComment('# cspell:\n# disable-next-line', options)).toBe(
 		'# cspell:\n# disable-next-line'
+	);
+	expect(formatComment('# SBATCH\n# --time=1', options)).toBe(
+		'# SBATCH\n# --time=1'
+	);
+	expect(formatComment('# $\n# -cwd', options)).toBe('# $\n# -cwd');
+	expect(formatComment('# SBATCH\n# hetjob', options)).toBe(
+		'# SBATCH\n# hetjob'
+	);
+	expect(formatComment('# #SBATCH\n# --time=1', options)).toBe(
+		'# #SBATCH\n# --time=1'
 	);
 });
 
@@ -151,6 +191,64 @@ test('treats other tool directives like `shellcheck` directives', () => {
 	);
 });
 
+test('keeps scheduler directives as written', () => {
+	const options = { printWidth: 20 };
+	const slurm = '#SBATCH --job-name=foo\n#SBATCH --time=01:00:00';
+	const pbs = '#PBS -N foo\n#PBS -l walltime=01:00:00';
+	const lsf = '#BSUB -J foo\n#BSUB -W 01:00';
+	const gridEngine = '#$ -cwd\n#$-N foo';
+	const attached = '#SBATCH--time=01:00:00\n#PBS-N foo';
+	const quoted = '#SBATCH "--time=01:00:00"\n#SBATCH \'--job-name=foo bar\'';
+	const heterogeneousJob =
+		'#SBATCH --nodes=1\n#SBATCH hetjob\n#SBATCH --nodes=2\n#SBATCH hetjob # foo\n#SBATCH hetjob --nodes=3';
+	const flux =
+		'# flux: -N 4\n#FLUX: --queue=batch\n# flux: --setattr=user.conf="""\n# flux:   item = "foo"\n# flux: """';
+
+	expect(formatComment(slurm, options)).toBe(slurm);
+	expect(formatComment(pbs, options)).toBe(pbs);
+	expect(formatComment(lsf, options)).toBe(lsf);
+	expect(formatComment(gridEngine, options)).toBe(gridEngine);
+	expect(formatComment(attached, options)).toBe(attached);
+	expect(formatComment(quoted, options)).toBe(quoted);
+	expect(formatComment(heterogeneousJob, options)).toBe(heterogeneousJob);
+	expect(formatComment(flux, options)).toBe(flux);
+});
+
+test('keeps disabled scheduler directives as written', () => {
+	const input =
+		'# SBATCH --time=01:00:00\n##SBATCH --mem=1G\n# $ -cwd\n# #SBATCH --time=01:00:00\n## # PBS -N foo';
+
+	expect(formatComment(input, { printWidth: 20 })).toBe(input);
+});
+
+test('keeps lines that continue a PBS directive as written', () => {
+	expect(
+		formatComment(
+			"#PBS -v 'FOO=foo \\\n#bar baz qux \\\n#quux corge'\n# grault garply",
+			{ printWidth: 14 }
+		)
+	).toBe(
+		"#PBS -v 'FOO=foo \\\n#bar baz qux \\\n#quux corge'\n# grault\n# garply"
+	);
+});
+
+test('reflows comments after other scheduler directives that end in a backslash', () => {
+	expect(
+		formatComment('#SBATCH --time=1 # foo \\\n# bar baz qux quux', {
+			printWidth: 14,
+		})
+	).toBe('#SBATCH --time=1 # foo \\\n# bar baz qux\n# quux');
+});
+
+test('wraps comments next to scheduler directives without separating them', () => {
+	expect(
+		formatComment(
+			'# foo bar baz qux\n#SBATCH --job-name=quux\n# corge\n# grault',
+			{ printWidth: 14 }
+		)
+	).toBe('# foo bar baz\n# qux\n#SBATCH --job-name=quux\n# corge grault');
+});
+
 test('keeps directives that cover the next line right above it', () => {
 	const input =
 		'# foo\n# nosemgrep: bar\n# cspell:disable-next-line\n# Bazqux';
@@ -174,6 +272,13 @@ test('keeps directives that cover the next line right above it', () => {
 test('treats lines that only resemble directives as text', () => {
 	expect(formatComment('# foo\n# ex: bar')).toBe('# foo ex: bar');
 	expect(formatComment('# foo\n# bats bar')).toBe('# foo bats bar');
+	expect(formatComment('# foo\n# SBATCH bar')).toBe('# foo SBATCH bar');
+	expect(formatComment('# foo\n# $HOME bar')).toBe('# foo $HOME bar');
+	expect(formatComment('# foo\n# $- bar')).toBe('# foo $- bar');
+	expect(formatComment('# foo\n# SBATCH hetjobs bar')).toBe(
+		'# foo SBATCH hetjobs bar'
+	);
+	expect(formatComment('# foo\n# Flux: bar')).toBe('# foo Flux: bar');
 });
 
 test('keeps consecutive directives together', () => {

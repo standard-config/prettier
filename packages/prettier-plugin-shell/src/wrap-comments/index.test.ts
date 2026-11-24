@@ -8,6 +8,12 @@ test('leaves text without comments unchanged', async () => {
 	await expect(wrapComments('foo\n', OPTIONS)).resolves.toBe('foo\n');
 });
 
+test('removes empty lines that end comments after prose that ends in a backslash', async () => {
+	await expect(wrapComments('# see C:\\\n#\nx\n', OPTIONS)).resolves.toBe(
+		'# see C:\\\nx\n'
+	);
+});
+
 test('formats comment blocks at their indentation', async () => {
 	const input = 'foo() {\n  # bar baz qux\n  # quux\n  corge\n}\n';
 

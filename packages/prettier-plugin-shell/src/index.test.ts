@@ -357,6 +357,172 @@ test('keeps comments out of strings with lines that start with `&&`', async () =
 	).resolves.toBe(input);
 });
 
+test('keeps scheduler directives as written', async () => {
+	const options = {
+		filepath: 'foo.sh',
+		plugins: [pluginShell],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'#!/bin/bash\n#SBATCH --job-name=foo\n#SBATCH --time=01:00:00\n# SBATCH --mem=1G\nbar\n',
+		options
+	);
+
+	expect(output).toBe(
+		'#!/bin/bash\n\n#SBATCH --job-name=foo\n#SBATCH --time=01:00:00\n# SBATCH --mem=1G\nbar\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each([
+	{
+		output: '# foo bar SBATCH\n# baz qux $\n# quux SBATCH\n# --corge $\n# -grault\n# garply\nwaldo\n',
+		printWidth: 12,
+	},
+	{
+		output: '# foo bar SBATCH\n# baz qux $ quux SBATCH\n# --corge $\n# -grault garply\nwaldo\n',
+		printWidth: 16,
+	},
+	{
+		output: '# foo bar SBATCH baz qux $ quux SBATCH\n# --corge $ -grault garply\nwaldo\n',
+		printWidth: 32,
+	},
+])(
+	'keeps wrapped comments from starting lines with scheduler directives at a width of $printWidth',
+	async ({ output: expectedOutput, printWidth }) => {
+		const options = {
+			filepath: 'foo.sh',
+			plugins: [pluginShell],
+			printWidth,
+		};
+
+		const output = await format(
+			'# foo bar SBATCH baz qux $ quux SBATCH --corge $ -grault garply\nwaldo\n',
+			options
+		);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('keeps trailing scheduler directives at the end of their lines', async () => {
+	const input = 'foo # SBATCH --time=1\nbar #$ -cwd\n';
+
+	await expect(
+		format(input, { filepath: 'foo.sh', plugins: [pluginShell] })
+	).resolves.toBe(input);
+});
+
+test('keeps other forms of scheduler directives as written', async () => {
+	const options = {
+		filepath: 'foo.sh',
+		plugins: [pluginShell],
+		printWidth: 20,
+	};
+	const attached = '#SBATCH--time=01:00:00\n#PBS-N foo\nbar\n';
+	const quoted = '#SBATCH "--time=01:00:00"\nfoo\n';
+	const continued = "#PBS -v 'FOO=foo \\\n#bar baz qux quux corge'\nfoo\n";
+	const disabled = '# #SBATCH --time=01:00:00\nfoo\n';
+	const heterogeneousJob =
+		'#SBATCH --nodes=1\n#SBATCH hetjob # second component\n#SBATCH --nodes=2\n#SBATCH hetjob --nodes=3\nfoo\n';
+	const flux =
+		'# flux: --setattr=user.conf="""\n# flux: [config]\n# flux:   item = "foo"\n# flux: """\nfoo\n';
+
+	await expect(format(attached, options)).resolves.toBe(attached);
+	await expect(format(quoted, options)).resolves.toBe(quoted);
+	await expect(format(continued, options)).resolves.toBe(continued);
+	await expect(format(disabled, options)).resolves.toBe(disabled);
+	await expect(format(heterogeneousJob, options)).resolves.toBe(
+		heterogeneousJob
+	);
+	await expect(format(flux, options)).resolves.toBe(flux);
+});
+
+test.each([
+	{
+		input: '#SBATCH --time=01:00:00\ntrue # a trailing prose comment to move\n',
+		output: '#SBATCH --time=01:00:00\n# a trailing prose comment to move\ntrue\n',
+	},
+	{
+		input: 'if foo; then\n  true\nelse # a prose comment to move\n  #SBATCH --time=01:00:00\n  bar\nfi\n',
+		output: 'if foo; then\n  true\nelse\n  # a prose comment to move\n  #SBATCH --time=01:00:00\n  bar\nfi\n',
+	},
+	{
+		input: "#PBS -v 'FOO=foo \\\n#bar baz quux'\ntrue # a trailing prose comment to move\n",
+		output: "#PBS -v 'FOO=foo \\\n#bar baz quux'\n# a trailing prose comment to move\ntrue\n",
+	},
+])(
+	'doesn’t separate moved comments from scheduler directives',
+	async ({ input, output: expectedOutput }) => {
+		const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('reflows comments that start with `$-` and no option', async () => {
+	const options = {
+		filepath: 'foo.sh',
+		plugins: [pluginShell],
+		printWidth: 20,
+	};
+
+	const output = await format(
+		'# $- holds the current shell flags\nfoo\n',
+		options
+	);
+
+	expect(output).toBe('# $- holds the\n# current shell\n# flags\nfoo\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each([
+	{
+		input: '#PBS -N foo \\\n#\nbar    baz\n',
+		output: '#PBS -N foo \\\n#\nbar baz\n',
+	},
+	{
+		input: '#PBS -N foo \\\n#bar \\\n#\nbaz    qux\n',
+		output: '#PBS -N foo \\\n#bar \\\n#\nbaz qux\n',
+	},
+])(
+	'keeps empty lines that continue PBS directives',
+	async ({ input, output: expectedOutput }) => {
+		const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each([
+	{
+		input: '#PBS -N foo\n#\nbar    baz\n',
+		output: '#PBS -N foo\nbar baz\n',
+	},
+	{
+		input: '#SBATCH --time=1 \\\n#\nbar    baz\n',
+		output: '#SBATCH --time=1 \\\nbar baz\n',
+	},
+])(
+	'removes empty lines that end comments after scheduler directives that don’t continue',
+	async ({ input, output: expectedOutput }) => {
+		const options = { filepath: 'foo.sh', plugins: [pluginShell] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
 test('keeps code fences in comments as written', async () => {
 	const options = {
 		parser: 'sh',

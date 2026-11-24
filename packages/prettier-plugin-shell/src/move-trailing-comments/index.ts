@@ -9,7 +9,10 @@ import {
 	IGNORE_MARKER_PATTERN,
 	MARK_PREFIX,
 	PRAGMA_PATTERN,
+	SCHEDULER_DIRECTIVE_PATTERN,
 } from '../constants/index.ts';
+import continuesPbsDirective from '../continues-pbs-directive/index.ts';
+import { isSchedulerDirectiveLine } from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
 } from '../find-comments/index.ts';
@@ -69,6 +72,7 @@ export default async function moveTrailingComments(
 			IGNORE_MARKER_PATTERN.test(comment) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||
 			PRAGMA_PATTERN.test(commentText) ||
+			SCHEDULER_DIRECTIVE_PATTERN.test(commentText) ||
 			SUPPRESSION_PATTERN.test(comment)
 		) {
 			continue;
@@ -107,8 +111,12 @@ export default async function moveTrailingComments(
 		}
 
 		// A comment moved below a directive that covers the next line would
-		// take that line’s place
-		if (isBelowNextLineDirective(lines, target, found)) {
+		// take that line’s place, and one moved below a PBS directive that ends
+		// in a backslash would continue the directive
+		if (
+			isBelowNextLineDirective(lines, target, found) ||
+			continuesPbsDirective(lines, target - 1)
+		) {
 			continue;
 		}
 
@@ -290,10 +298,12 @@ function buildText(
 			const previousLine = movedLines.at(-1);
 
 			// An empty comment line keeps a moved comment from joining the
-			// comment above it
+			// comment above it. Scheduler directives and the lines that
+			// continue them never join
 			if (
 				previousLine !== undefined &&
-				COMMENT_LINE_PATTERN.test(previousLine)
+				COMMENT_LINE_PATTERN.test(previousLine) &&
+				!isSchedulerDirectiveLine(movedLines, movedLines.length - 1)
 			) {
 				movedLines.push(`${getIndentation(comment)}#`);
 			}
@@ -301,8 +311,13 @@ function buildText(
 			movedLines.push(comment);
 		}
 
-		// A comment moved into a branch can also land above a comment
-		if (comments.length > 0 && COMMENT_LINE_PATTERN.test(line)) {
+		// A comment moved into a branch can also land above a comment, which
+		// needs the same separation unless it’s a scheduler directive
+		if (
+			comments.length > 0 &&
+			COMMENT_LINE_PATTERN.test(line) &&
+			!isSchedulerDirectiveLine(codeLines, index)
+		) {
 			movedLines.push(`${getIndentation(line)}#`);
 		}
 
