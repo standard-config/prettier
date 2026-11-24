@@ -10,7 +10,21 @@ const IGNORE_PATTERNS = [
 export default defineConfig({
 	test: {
 		coverage: {
-			exclude: IGNORE_PATTERNS,
+			exclude: [
+				/* prettier-ignore */
+				...IGNORE_PATTERNS,
+				'**/coverage/**',
+				'**/dist/**',
+			],
+			enabled: true,
+			reporter: [
+				/* prettier-ignore */
+				'json',
+				['text', { skipFull: true }],
+			],
+			thresholds: {
+				100: true,
+			},
 		},
 		projects: [
 			/* prettier-ignore */
