@@ -1,6 +1,8 @@
 import type { Config as PrettierConfig } from 'prettier';
-import { isAbsolute } from 'node:path';
-import { getSupportInfo } from 'prettier';
+import { mkdtempDisposableSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { isAbsolute, join } from 'node:path';
+import { getFileInfo, getSupportInfo } from 'prettier';
 import * as pluginShell from 'prettier-plugin-shell';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
@@ -47,6 +49,53 @@ test('resolves every plugin name in the base config', () => {
 
 	expect(names).toStrictEqual([]);
 });
+
+test.each([
+	{ filepath: 'foo.cjs', parser: 'oxc' },
+	{ filepath: 'foo.js', parser: 'oxc' },
+	{ filepath: 'foo.jsx', parser: 'oxc' },
+	{ filepath: 'foo.mjs', parser: 'oxc' },
+	{ filepath: 'Jakefile', parser: 'oxc' },
+	{ filepath: 'foo.cts', parser: 'oxc-ts' },
+	{ filepath: 'foo.d.ts', parser: 'oxc-ts' },
+	{ filepath: 'foo.mts', parser: 'oxc-ts' },
+	{ filepath: 'foo.ts', parser: 'oxc-ts' },
+	{ filepath: 'foo.tsx', parser: 'oxc-ts' },
+	{ filepath: 'foo.js.flow', parser: 'flow' },
+	{ filepath: 'foo.json', parser: 'json' },
+])(
+	'infers the `$parser` parser for `$filepath` from the plugins alone',
+	async ({ filepath, parser }) => {
+		const { plugins } = defineConfig();
+
+		const { inferredParser } = await getFileInfo(filepath, {
+			plugins,
+			resolveConfig: false,
+		});
+
+		expect(inferredParser).toBe(parser);
+	}
+);
+
+test.each([
+	{ interpreter: 'node', parser: 'oxc' },
+	{ interpreter: 'ts-node', parser: 'oxc-ts' },
+])(
+	'infers the `$parser` parser for an extensionless script with a `$interpreter` shebang from the plugins alone',
+	async ({ interpreter, parser }) => {
+		using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+		const filepath = join(directory.path, 'foo');
+		writeFileSync(filepath, `#!/usr/bin/env ${interpreter}\nfoo();\n`);
+		const { plugins } = defineConfig();
+
+		const { inferredParser } = await getFileInfo(filepath, {
+			plugins,
+			resolveConfig: false,
+		});
+
+		expect(inferredParser).toBe(parser);
+	}
+);
 
 test('supports custom config options', () => {
 	const config = {

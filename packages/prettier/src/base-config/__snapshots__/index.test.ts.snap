@@ -54,43 +54,6 @@ exports[`is a valid Prettier config 2`] = `
       },
     },
     {
-      "files": [
-        "*._js",
-        "*.bones",
-        "*.cjs",
-        "*.end.frag",
-        "*.es",
-        "*.es6",
-        "*.gs",
-        "*.jake",
-        "*.javascript",
-        "*.js",
-        "*.jsb",
-        "*.jscad",
-        "*.jsfl",
-        "*.jslib",
-        "*.jsm",
-        "*.jspre",
-        "*.jss",
-        "*.jsx",
-        "*.mjs",
-        "*.njs",
-        "*.pac",
-        "*.sjs",
-        "*.ssjs",
-        "*.start.frag",
-        "*.wxs",
-        "*.xsjs",
-        "*.xsjslib",
-        "end.frag",
-        "Jakefile",
-        "start.frag",
-      ],
-      "options": {
-        "parser": "oxc",
-      },
-    },
-    {
       "excludeFiles": [
         "package.json",
       ],
@@ -209,17 +172,6 @@ exports[`is a valid Prettier config 2`] = `
       "options": {
         "htmlFragmentPrintWidth": Infinity,
         "htmlFragmentSingleAttributePerLine": true,
-      },
-    },
-    {
-      "files": [
-        "*.cts",
-        "*.mts",
-        "*.ts",
-        "*.tsx",
-      ],
-      "options": {
-        "parser": "oxc-ts",
       },
     },
     {

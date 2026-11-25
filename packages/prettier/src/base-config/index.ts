@@ -3,11 +3,9 @@ import createGlobSet from '@standard-config/utilities/create-glob-set';
 import {
 	GLOB_SET_CSS,
 	GLOB_SET_HTML,
-	GLOB_SET_JAVASCRIPT,
 	GLOB_SET_JSON,
 	GLOB_SET_MARKDOWN,
 	GLOB_SET_MDX,
-	GLOB_SET_TYPESCRIPT,
 	GLOB_SET_YAML,
 } from '../constants/index.ts';
 
@@ -41,12 +39,6 @@ const BASE_CONFIG: StandardConfig = {
 			files: GLOB_SET_HTML,
 			options: {
 				printWidth: 100,
-			},
-		},
-		{
-			files: GLOB_SET_JAVASCRIPT,
-			options: {
-				parser: 'oxc',
 			},
 		},
 		{
@@ -86,12 +78,6 @@ const BASE_CONFIG: StandardConfig = {
 			options: {
 				htmlFragmentPrintWidth: Number.POSITIVE_INFINITY,
 				htmlFragmentSingleAttributePerLine: true,
-			},
-		},
-		{
-			files: GLOB_SET_TYPESCRIPT,
-			options: {
-				parser: 'oxc-ts',
 			},
 		},
 		{

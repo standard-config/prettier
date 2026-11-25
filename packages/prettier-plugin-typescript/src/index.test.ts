@@ -2,6 +2,7 @@ import type { Options, Parser, Plugin } from 'prettier';
 import type { PluginOptions } from './index.ts';
 import { format, formatWithCursor } from 'prettier';
 import { parsers as babelParsers } from 'prettier/plugins/babel';
+import * as pluginEstree from 'prettier/plugins/estree';
 import { parsers as typescriptParsers } from 'prettier/plugins/typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import createOxcParser from './create-oxc-parser/index.ts';
@@ -222,6 +223,7 @@ async function formatEach(
 test('exposes correct public API', () => {
 	expectTypeOf(pluginTypeScript).toExtend<Plugin>();
 
+	expect(pluginTypeScript).toHaveProperty('languages');
 	expect(pluginTypeScript).toHaveProperty('options');
 	expect(pluginTypeScript).toHaveProperty('parsers');
 
@@ -231,6 +233,24 @@ test('exposes correct public API', () => {
 	expect(pluginTypeScript.parsers).toHaveProperty('typescript');
 
 	expectTypeOf<PluginOptions>().toBeObject();
+});
+
+test('assigns the Oxc parsers to Prettier’s JavaScript and TypeScript languages', () => {
+	const parserNames: Record<string, string> = {
+		JavaScript: 'oxc',
+		JSX: 'oxc',
+		TSX: 'oxc-ts',
+		TypeScript: 'oxc-ts',
+	};
+
+	expect(pluginTypeScript.languages).toStrictEqual(
+		(pluginEstree as Plugin)
+			.languages!.filter(({ name }) => name in parserNames)
+			.map((language) => ({
+				...language,
+				parsers: [parserNames[language.name]],
+			}))
+	);
 });
 
 test('formats TypeScript comments', async () => {
@@ -603,6 +623,11 @@ test.each([
 	{
 		input: '<script lang="ts">\n// foo bar baz qux quux corge\nfoo();\n</script>\n',
 		output: '<script lang="ts">\n// foo bar baz qux\n// quux corge\nfoo();\n</script>\n',
+		parser: 'vue',
+	},
+	{
+		input: '<script lang="tsx">\n// foo bar baz qux quux corge\nconst foo = <div />;\n</script>\n',
+		output: '<script lang="tsx">\n// foo bar baz qux\n// quux corge\nconst foo = <div />;\n</script>\n',
 		parser: 'vue',
 	},
 	{

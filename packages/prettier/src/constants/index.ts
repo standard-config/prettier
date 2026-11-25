@@ -15,11 +15,6 @@ export const GLOB_SET_HTML = getSupportedLanguagePatterns(
 	'MJML'
 );
 
-export const GLOB_SET_JAVASCRIPT = getSupportedLanguagePatterns(
-	'JavaScript',
-	'JSX'
-);
-
 export const GLOB_SET_JSON = getSupportedLanguagePatterns(
 	'JSON',
 	'JSON with Comments',
@@ -42,11 +37,6 @@ export const GLOB_SET_SHELL_HOOKS = createGlobSet(
 	'**/.hooks/*',
 	'**/.husky/*',
 	'**/.vite-hooks/*'
-);
-
-export const GLOB_SET_TYPESCRIPT = getSupportedLanguagePatterns(
-	'TSX',
-	'TypeScript'
 );
 
 export const GLOB_SET_YAML = getSupportedLanguagePatterns('YAML');

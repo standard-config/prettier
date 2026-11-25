@@ -10,6 +10,14 @@ The JSON and `package.json` overrides deliberately omit the shell and TypeScript
 
 When an override supplies a `plugins` list, even an empty one, the config prepends a plugin that declares the shell options (`sh*`) and `tsCommentWrap`. This prevents unknown option warnings when the list replaces the global plugins. Prettier uses the last declaration of each option, so the override’s own plugins take precedence. See [`transformConfig`](../packages/prettier/src/transform-config/index.ts).
 
+### Oxc Parser Inference
+
+The TypeScript plugin’s [`languages` export](../packages/prettier-plugin-typescript/src/index.ts) reuses Prettier’s JavaScript, JSX, TypeScript, and TSX definitions, changing only their parser lists. Prettier can then infer `oxc` or `oxc-ts` from the same extensions and file names, including `Jakefile`, without separate `parser` overrides in the base config.
+
+When plugins declare the same file extension, Prettier checks later plugins first. A competing entry can select `babel` or `typescript`. Formatting tests can’t detect that fallback when both parsers produce identical output, so the [config’s inference test](../packages/prettier/src/define-config/index.test.ts) checks the parser name that `getFileInfo` infers from the config’s plugin list.
+
+Prettier selects `babel` explicitly for plain `<script>` blocks in Vue and HTML and for MDX imports and exports. It selects `typescript` for HTML `<script type="application/x-typescript">` blocks. Wrapping both built-in parsers keeps comment reflow active in these embeds, which bypass file name inference.
+
 ### Oxc Parser Parity
 
 The [**Oxc parser parity**](../AGENTS.md#plugins) rule preserves the formatting users get from Prettier’s built-in parsers. For example, `babel` keeps the parentheses in `/** @type {T} */ (obj.key) = value`. Using `@prettier/plugin-oxc` as the reference would drop them.
