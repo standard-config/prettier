@@ -12,7 +12,8 @@
 	"exports": "./src/index.ts",
 	"dependencies": {
 		"@prettier/plugin-oxc": "catalog:",
-		"@standard-config/utilities": "workspace:*"
+		"@standard-config/utilities": "workspace:*",
+		"oxc-parser": "catalog:"
 	},
 	"peerDependencies": {
 		"prettier": "*"
@@ -26,6 +27,7 @@
 	},
 	"scripts": {
 		"test": "vp test",
+		"test:oxc-parser": "node bin/compare-oxc-parsers.ts",
 		"typecheck": "tsc --noEmit"
 	}
 }

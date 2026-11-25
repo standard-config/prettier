@@ -240,7 +240,7 @@ function findTargetLine(
 	let textRange = findRange(targetStart, jsxTextRanges);
 
 	while (textRange) {
-		const element = findJsxElement(textRange, jsxElementRanges);
+		const element = findJSXElement(textRange, jsxElementRanges);
 
 		lineStart = text.lastIndexOf('\n', element.start - 1) + 1;
 		targetStart =
@@ -254,7 +254,7 @@ function findTargetLine(
 /**
  * Returns the innermost JSX element or fragment that holds a range of JSX text.
  */
-function findJsxElement(
+function findJSXElement(
 	range: TextRange,
 	elements: ReadonlyArray<TextRange>
 ): TextRange {

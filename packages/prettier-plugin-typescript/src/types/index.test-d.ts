@@ -2,6 +2,8 @@ import type { ParserOptions, Options as PrettierOptions } from 'prettier';
 import type {
 	CommentEdit,
 	Conversion,
+	OxcLanguage,
+	OxcNode,
 	ParserDelegation,
 	ParserHookName,
 	ParserInitializer,
@@ -24,6 +26,15 @@ test('exposes valid types', () => {
 		isTrailing: boolean;
 		line: number;
 		start: number;
+	}>();
+
+	expectTypeOf<OxcLanguage>().toEqualTypeOf<'js' | 'ts'>();
+
+	expectTypeOf<OxcNode>().toEqualTypeOf<{
+		[key: string]: unknown;
+		end: number;
+		start: number;
+		type: string;
 	}>();
 
 	expectTypeOf<ParserDelegation>().toEqualTypeOf<{

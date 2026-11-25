@@ -43,7 +43,7 @@
 		"sh-syntax": "catalog:"
 	},
 	"peerDependencies": {
-		"prettier": "^3.10.0"
+		"prettier": "^3.10.1"
 	},
 	"devDependencies": {
 		"@standard-config/tsconfig": "catalog:",

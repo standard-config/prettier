@@ -27,6 +27,15 @@ export type Conversion = {
 	start: number;
 };
 
+export type OxcLanguage = 'js' | 'ts';
+
+export type OxcNode = {
+	[key: string]: unknown;
+	end: number;
+	start: number;
+	type: string;
+};
+
 export type ParserDelegation = {
 	hook: ParserHookName;
 	parserName: ParserName;

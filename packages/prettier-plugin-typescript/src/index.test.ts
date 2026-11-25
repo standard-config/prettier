@@ -248,6 +248,24 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 	}
 );
 
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'reflows adjacent doc comments as one comment with the `%s` parser',
+	async (parser) => {
+		const options = {
+			parser,
+			plugins: [pluginOxc, pluginTypeScript],
+		};
+
+		const output = await format(
+			'/**\n * foo\n *//**\n * bar\n */\nbaz();\n',
+			options
+		);
+
+		expect(output).toBe('/**\n * foo //** bar\n */\nbaz();\n');
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
 test('moves comments after JSX text above the element that holds the text', async () => {
 	const options = {
 		parser: 'oxc',

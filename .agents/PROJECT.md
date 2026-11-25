@@ -10,6 +10,18 @@ The JSON and `package.json` overrides deliberately omit the shell and TypeScript
 
 When an override supplies a `plugins` list, even an empty one, the config prepends a plugin that declares the shell options (`sh*`) and `tsCommentWrap`. This prevents unknown option warnings when the list replaces the global plugins. Prettier uses the last declaration of each option, so the override’s own plugins take precedence. See [`transformConfig`](../packages/prettier/src/transform-config/index.ts).
 
+### Oxc Parser Parity
+
+The [**Oxc parser parity**](../AGENTS.md#plugins) rule preserves the formatting users get from Prettier’s built-in parsers. For example, `babel` keeps the parentheses in `/** @type {T} */ (obj.key) = value`. Using `@prettier/plugin-oxc` as the reference would drop them.
+
+The parser names `oxc` and `oxc-ts` matter even when the syntax tree stays the same. Prettier recognizes a fixed set of parser names when it selects the statements to format in a range. Its `estree` printer also checks the parser name when deciding which property keys to quote.
+
+Prettier’s printer reads the private `__contentEnd` field to locate the end of a statement’s content before its semicolon. The [statement-end cases](../packages/prettier-plugin-typescript/src/oxc-parity-cases/index.ts) compare comment placement and the text preserved by `prettier-ignore` across both parsers in a pair. The published config’s Prettier peer range starts at the oldest version verified with these private printer conventions.
+
+Prettier’s built-in parsers merge two multi-line block comments when their delimiters touch and every line of each block starts with `*`, ignoring indentation and the `/` at each end of the block. The star in a plain `/*` opener counts. The adapter preserves that grouping because comment reflow depends on receiving the pair as one comment. The single block containing `foo //** bar` in the [reflow test](../packages/prettier-plugin-typescript/src/index.test.ts) is intentional.
+
+The `~` range for `oxc-parser` admits patch fixes. A new minor release can change the syntax tree, so adopting it calls for checking parity again. For each new type in the parser’s `visitorKeys`, the [node-type coverage test](../packages/prettier-plugin-typescript/src/create-oxc-parser/index.test.ts) requires a parity case that produces it unless the test documents an exception. From the repository root, `pnpm test:oxc-parser` compares one formatting pass per parser on JavaScript and TypeScript files in installed dependencies, using the config’s formatting options with comment reflow off.
+
 ### Shared Constants Without Module Load Work
 
 The shell and TypeScript plugins import shared patterns from `@standard-config/utilities/constants`. The [**Shared constants**](../AGENTS.md#plugins) constraint prevents those imports from triggering unrelated initialization or introducing a dependency that one plugin can’t load.

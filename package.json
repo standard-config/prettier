@@ -40,6 +40,7 @@
 		"test": "vp test",
 		"test:editorconfig": "pnpm --filter @standard-config/prettier test:editorconfig",
 		"test:fixtures": "pnpm build && pnpm --filter @standard-config/tests test:fixtures",
+		"test:oxc-parser": "pnpm --filter prettier-plugin-typescript test:oxc-parser",
 		"typecheck": "tsc --noEmit && pnpm --recursive typecheck"
 	}
 }
