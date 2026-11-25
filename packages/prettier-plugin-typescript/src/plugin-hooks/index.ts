@@ -313,7 +313,7 @@ function assertCompatibleParser(
 			.join(' or ');
 
 		throw new TypeError(
-			`[prettier-plugin-typescript] Unsupported AST format for the \`${name}\` parser. Expected ${expectedAstFormats}, received \`${parser.astFormat}\``
+			`[standard-config] Unsupported AST format for the \`${name}\` parser. Expected ${expectedAstFormats}, received \`${parser.astFormat}\``
 		);
 	}
 }

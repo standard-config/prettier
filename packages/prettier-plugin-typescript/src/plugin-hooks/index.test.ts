@@ -795,7 +795,7 @@ test('rejects prior parsers with incompatible AST formats', async () => {
 			plugins: [customPlugin, pluginTypeScript],
 		})
 	).rejects.toThrowErrorMatchingInlineSnapshot(
-		`[TypeError: [prettier-plugin-typescript] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`custom-javascript\`]`
+		`[TypeError: [standard-config] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`custom-javascript\`]`
 	);
 });
 
@@ -1441,7 +1441,7 @@ test('rejects incompatible wrappers before skipping shared hooks', async () => {
 			plugins: [wrapperPlugin, pluginTypeScript],
 		})
 	).rejects.toThrowErrorMatchingInlineSnapshot(
-		`[TypeError: [prettier-plugin-typescript] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`incompatible-javascript\`]`
+		`[TypeError: [standard-config] Unsupported AST format for the \`babel\` parser. Expected \`estree\`, received \`incompatible-javascript\`]`
 	);
 });
 

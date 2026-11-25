@@ -108,7 +108,7 @@ test.each([
 		expect(result).not.toHaveProperty('loc');
 		expect((result as Error).cause).toBe(error);
 		expect((result as Error).message).toBe(
-			`[prettier-plugin-typescript] Failed to parse the edited code with \`babel\`. The parser accepted the code before this plugin changed it${suffix}`
+			`[standard-config] Failed to parse the edited code with \`babel\`. The parser accepted the code before Standard Config changed it${suffix}`
 		);
 	}
 );

@@ -100,7 +100,7 @@ function createHTMLCommentError(comment: Comment, text: string): SyntaxError {
 	const delimiter = text.startsWith('<!--', comment.start) ? '<!--' : '-->';
 	const diagnostic: Diagnostic = {
 		labels: [label],
-		message: `[prettier-plugin-typescript] Failed to parse TypeScript (${loc.start.line}:${loc.start.column}). Oxc read \`${delimiter}\` as a line comment where TypeScript expects operators`,
+		message: `[standard-config] Failed to parse TypeScript (${loc.start.line}:${loc.start.column}). The Oxc parser read \`${delimiter}\` as a line comment where TypeScript expects operators`,
 	};
 
 	return Object.assign(

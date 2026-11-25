@@ -41,7 +41,7 @@ export default function createParser(
 			// source so this plugin’s edits can’t shift the error location
 			await parseText(unchangedText, options);
 
-			let message = `[prettier-plugin-typescript] Failed to parse the edited code with \`${name}\`. The parser accepted the code before this plugin changed it`;
+			let message = `[standard-config] Failed to parse the edited code with \`${name}\`. The parser accepted the code before Standard Config changed it`;
 			const details = error instanceof Error ? error.message : error;
 
 			if (typeof details === 'string' && details) {

@@ -164,17 +164,17 @@ test('rejects TypeScript parse attempts that read `<!--` or `-->` as a line comm
 	expect(() =>
 		parseOxc('foo = 1 <!-- bar\nbaz();', 'foo.cts', 'ts')
 	).toThrowErrorMatchingInlineSnapshot(
-		`[SyntaxError: [prettier-plugin-typescript] Failed to parse TypeScript (1:9). Oxc read \`<!--\` as a line comment where TypeScript expects operators]`
+		`[SyntaxError: [standard-config] Failed to parse TypeScript (1:9). The Oxc parser read \`<!--\` as a line comment where TypeScript expects operators]`
 	);
 	expect(() =>
 		parseOxc('foo = bar\n--> baz', 'foo.cts', 'ts')
 	).toThrowErrorMatchingInlineSnapshot(
-		`[SyntaxError: [prettier-plugin-typescript] Failed to parse TypeScript (2:1). Oxc read \`-->\` as a line comment where TypeScript expects operators]`
+		`[SyntaxError: [standard-config] Failed to parse TypeScript (2:1). The Oxc parser read \`-->\` as a line comment where TypeScript expects operators]`
 	);
 	expect(() =>
 		parseOxc('if (foo <!--bar) {}', 'foo.cts', 'ts')
 	).toThrowErrorMatchingInlineSnapshot(
-		`[SyntaxError: [prettier-plugin-typescript] Failed to parse TypeScript (1:9). Oxc read \`<!--\` as a line comment where TypeScript expects operators]`
+		`[SyntaxError: [standard-config] Failed to parse TypeScript (1:9). The Oxc parser read \`<!--\` as a line comment where TypeScript expects operators]`
 	);
 	expect(() =>
 		parseOxc('var await;\nfoo = 1 <!-- bar', undefined, 'ts')
