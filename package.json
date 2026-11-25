@@ -14,12 +14,12 @@
 	},
 	"packageManager": "pnpm@12.23.0",
 	"devDependencies": {
-		"@standard-config/oxlint": "^2.12.0",
+		"@standard-config/oxlint": "^2.13.0",
 		"@standard-config/oxlint-stylistic": "^2.13.0",
 		"@standard-config/prettier": "workspace:*",
 		"@standard-config/tsconfig": "catalog:",
 		"@types/node": "catalog:",
-		"@vitest/coverage-v8": "5.1.0",
+		"@vitest/coverage-v8": "5.1.1",
 		"prettier": "catalog:",
 		"typescript": "catalog:",
 		"vite-plus": "catalog:"
