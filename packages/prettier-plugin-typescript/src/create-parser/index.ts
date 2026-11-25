@@ -14,13 +14,45 @@ import wrapComments from '../wrap-comments/index.ts';
 /**
  * Creates a parser that defers to the prior compatible parser before the
  * supplied base parser. After earlier plugins preprocess the source, it reflows
- * comments and separates the shebang before parsing.
+ * comments and separates the shebang before parsing. For invalid input, it
+ * preserves the wrapped parser’s syntax error.
  */
 export default function createParser(
 	name: ParserName,
 	baseParser: Parser
 ): Parser {
+	// Save each call’s source after any earlier preprocessing
+	const unchangedTexts = new WeakMap<ParserOptions, string>();
+
 	async function parse(
+		text: string,
+		options: ParserOptions
+	): Promise<unknown> {
+		try {
+			return await parseText(text, options);
+		} catch (error) {
+			const unchangedText = unchangedTexts.get(options);
+
+			if (unchangedText === undefined || unchangedText === text) {
+				throw error;
+			}
+
+			// Prettier draws the code frame on its input. Retry the saved
+			// source so this plugin’s edits can’t shift the error location
+			await parseText(unchangedText, options);
+
+			let message = `[prettier-plugin-typescript] Failed to parse the edited code with \`${name}\`. The parser accepted the code before this plugin changed it`;
+			const details = error instanceof Error ? error.message : error;
+
+			if (typeof details === 'string' && details) {
+				message += `:\n\n${details}`;
+			}
+
+			throw new Error(message, { cause: error });
+		}
+	}
+
+	async function parseText(
 		text: string,
 		options: ParserOptions
 	): Promise<unknown> {
@@ -86,6 +118,8 @@ export default function createParser(
 		if (isPassThrough) {
 			return preprocessedText;
 		}
+
+		unchangedTexts.set(options, preprocessedText);
 
 		const wrappedText =
 			(options as PluginOptions).tsCommentWrap === 'none'

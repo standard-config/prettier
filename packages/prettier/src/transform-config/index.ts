@@ -29,7 +29,6 @@ const OPTIONS_PLUGIN: PrettierPlugin = {
  */
 const PLUGINS = new Map<string, PrettierPlugin>([
 	...[
-		'@prettier/plugin-oxc',
 		'prettier-plugin-expand-json',
 		'prettier-plugin-markdown-html',
 		'prettier-plugin-pkg',

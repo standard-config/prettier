@@ -20,6 +20,8 @@ Prettier’s printer reads the private `__contentEnd` field to locate the end of
 
 Prettier’s built-in parsers merge two multi-line block comments when their delimiters touch and every line of each block starts with `*`, ignoring indentation and the `/` at each end of the block. The star in a plain `/*` opener counts. The adapter preserves that grouping because comment reflow depends on receiving the pair as one comment. The single block containing `foo //** bar` in the [reflow test](../packages/prettier-plugin-typescript/src/index.test.ts) is intentional.
 
+With reflow off, the parser parity tests require output to stay identical on a second pass. With reflow on, the first pass can move a trailing line comment above a JSDoc comment. The next pass can then expand the JSDoc comment because it now occupies a line of its own. This happens even with a built-in parser, so the plugin tests compare each Oxc pass with the corresponding pass through the wrapped built-in parser.
+
 The `~` range for `oxc-parser` admits patch fixes. A new minor release can change the syntax tree, so adopting it calls for checking parity again. For each new type in the parser’s `visitorKeys`, the [node-type coverage test](../packages/prettier-plugin-typescript/src/create-oxc-parser/index.test.ts) requires a parity case that produces it unless the test documents an exception. From the repository root, `pnpm test:oxc-parser` compares one formatting pass per parser on JavaScript and TypeScript files in installed dependencies, using the config’s formatting options with comment reflow off.
 
 ### Shared Constants Without Module Load Work

@@ -4,7 +4,6 @@ import type {
 	ParserName,
 	ResolvedPriorParser,
 } from '../types/index.d.ts';
-import * as pluginOxc from '@prettier/plugin-oxc';
 import { format, formatWithCursor } from 'prettier';
 import { parsers as babelParsers } from 'prettier/plugins/babel';
 import { parsers as typescriptParsers } from 'prettier/plugins/typescript';
@@ -769,11 +768,11 @@ test.each(JAVASCRIPT_PARSER_NAMES)(
 
 		const expectedOutput = await format(TEST_JAVASCRIPT, {
 			parser: parserName,
-			plugins: [pluginOxc, secondPlugin],
+			plugins: [secondPlugin],
 		});
 		const output = await format(TEST_JAVASCRIPT, {
 			parser: parserName,
-			plugins: [pluginOxc, firstPlugin, secondPlugin],
+			plugins: [firstPlugin, secondPlugin],
 		});
 
 		expect(output).toBe(expectedOutput);
@@ -933,13 +932,13 @@ test.each([
 
 		const expectedOutput = await format('foo(baz,   bar  )\n', {
 			parser: parserName,
-			plugins: [pluginOxc, pluginTypeScript],
+			plugins: [pluginTypeScript],
 		});
 
 		const plugins = {
-			'after this plugin': [pluginOxc, pluginTypeScript, wrapperPlugin],
-			'alone': [pluginOxc, wrapperPlugin],
-			'before this plugin': [pluginOxc, wrapperPlugin, pluginTypeScript],
+			'after this plugin': [pluginTypeScript, wrapperPlugin],
+			'alone': [wrapperPlugin],
+			'before this plugin': [wrapperPlugin, pluginTypeScript],
 		}[placement];
 
 		const output = await format(TEST_JAVASCRIPT, {
@@ -1044,12 +1043,12 @@ test.each([
 
 		const expectedOutput = await format('foo(baz,   bar  )\n', {
 			parser: parserName,
-			plugins: [pluginOxc, pluginTypeScript],
+			plugins: [pluginTypeScript],
 		});
 
 		const output = await format(TEST_JAVASCRIPT, {
 			parser: parserName,
-			plugins: [pluginOxc, innerPlugin, outerPlugin, pluginTypeScript],
+			plugins: [innerPlugin, outerPlugin, pluginTypeScript],
 		});
 
 		expect(priorHook).toHaveBeenCalledTimes(1);

@@ -16,7 +16,6 @@ import {
  */
 const BASE_CONFIG: StandardConfig = {
 	plugins: [
-		'@prettier/plugin-oxc',
 		'prettier-plugin-expand-json',
 		'prettier-plugin-markdown-html',
 		'prettier-plugin-shell',

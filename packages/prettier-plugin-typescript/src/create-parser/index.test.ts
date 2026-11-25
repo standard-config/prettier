@@ -34,6 +34,85 @@ test('adds an empty line after a shebang', async () => {
 	);
 });
 
+test('preserves the syntax error message and location when adding an empty line after a shebang', async () => {
+	const input = '#!/usr/bin/env node\nconst foo = ;\n';
+	const parser = createParser('babel', babelParsers.babel);
+	const options = createOptions(input);
+	const errors: unknown[] = [];
+
+	const text = await parser.preprocess!(input, options);
+
+	for (const [parse, code] of [
+		[parser.parse, `${text}\n\n`],
+		[babelParsers.babel.parse, input],
+	] as const) {
+		try {
+			await parse(code, options);
+		} catch (error) {
+			errors.push(error);
+		}
+	}
+
+	expect(text).not.toBe(input);
+	expect(errors).toStrictEqual([
+		expect.any(SyntaxError),
+		expect.any(SyntaxError),
+	]);
+	expect(errors[0]).toHaveProperty(
+		'loc',
+		(errors[1] as SyntaxError & { loc: unknown }).loc
+	);
+	expect((errors[0] as SyntaxError).message).toBe(
+		(errors[1] as SyntaxError).message
+	);
+});
+
+test.each([
+	{
+		kind: 'a multi-line error',
+		error: new SyntaxError('Unexpected token\nExpected an identifier'),
+		suffix: ':\n\nUnexpected token\nExpected an identifier',
+	},
+	{
+		kind: 'a string',
+		error: 'Unexpected token',
+		suffix: ':\n\nUnexpected token',
+	},
+	{ kind: 'an error with no message', error: new Error(), suffix: '' },
+	{ kind: 'null', error: null, suffix: '' },
+])(
+	'reports a parse failure in the edited code when the parser throws $kind',
+	async ({ error, suffix }) => {
+		const parser = createParser('babel', {
+			...babelParsers.babel,
+			parse(text) {
+				if (text !== TEST_SHEBANG) {
+					throw error;
+				}
+
+				return {};
+			},
+		});
+		const options = createOptions(TEST_SHEBANG);
+		let result: unknown;
+
+		const text = await parser.preprocess!(TEST_SHEBANG, options);
+
+		try {
+			await parser.parse(text, options);
+		} catch (caughtError) {
+			result = caughtError;
+		}
+
+		expect(result).toBeInstanceOf(Error);
+		expect(result).not.toHaveProperty('loc');
+		expect((result as Error).cause).toBe(error);
+		expect((result as Error).message).toBe(
+			`[prettier-plugin-typescript] Failed to parse the edited code with \`babel\`. The parser accepted the code before this plugin changed it${suffix}`
+		);
+	}
+);
+
 test('moves the cursor past an added line', async () => {
 	const input = '#!/usr/bin/env node\nfoo(|  bar  )';
 	const text = input.replace('|', '');
