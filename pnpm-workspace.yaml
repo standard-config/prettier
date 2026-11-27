@@ -4,7 +4,7 @@ autoInstallPeers: false
 
 catalog:
   '@standard-config/tsconfig': ^3.2.0
-  '@types/node': ^26.6.7
+  '@types/node': ^26.6.11
   oxc-parser: ~0.160.0
   prettier: ^3.10.1
   prettier-plugin-sort-json: ^4.2.0
