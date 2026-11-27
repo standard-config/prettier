@@ -7,7 +7,7 @@ catalog:
   '@types/node': ^26.6.11
   oxc-parser: ~0.160.0
   prettier: ^3.10.1
-  prettier-plugin-sort-json: ^4.2.0
+  prettier-plugin-sort-json: ^4.3.0
   sh-syntax: ^0.8.7
   typescript: ^6.0.3
   vite-plus: ^1.8.0
