@@ -77,7 +77,7 @@ export default async function moveTrailingComments(
 			comment.includes(GITLEAKS_ALLOW_MARKER) ||
 			IGNORE_MARKER_PATTERN.test(comment) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||
-			PRAGMA_PATTERN.test(commentText) ||
+			PRAGMA_PATTERN.test(comment.slice(1).trim()) ||
 			SCHEDULER_DIRECTIVE_PATTERN.test(commentText) ||
 			hasPhysicalLineSuppression(comment) ||
 			hasPhysicalLineSuppression(line) ||

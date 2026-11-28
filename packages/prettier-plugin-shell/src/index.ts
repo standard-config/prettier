@@ -4,7 +4,10 @@ import type { PluginOptions } from './types/index.d.ts';
 import separateShebang from '@standard-config/utilities/separate-shebang';
 import { basename, dirname } from 'node:path';
 import { createSourceIndex, ParseError, processor } from 'sh-syntax';
-import { PRAGMA_PATTERN } from './constants/index.ts';
+import {
+	LEADING_TRIVIA_LINE_PATTERN,
+	PRAGMA_PATTERN,
+} from './constants/index.ts';
 import inferVariant from './infer-variant/index.ts';
 import moveTrailingComments from './move-trailing-comments/index.ts';
 import wrapComments from './wrap-comments/index.ts';
@@ -12,26 +15,22 @@ import wrapComments from './wrap-comments/index.ts';
 type ShellOptions = ParserOptions & { variant: number };
 
 /**
- * Checks the leading comments for `@format` or `@prettier`.
+ * Checks for a standalone `@format` or `@prettier` pragma in leading comments.
  */
 function hasPragma(text: string): boolean {
-	const commentLinePattern = /^\s*(#(?<comment>.*))?$/gm;
-	let lastIndex = -1;
+	for (const line of text.split('\n')) {
+		const match = LEADING_TRIVIA_LINE_PATTERN.exec(line);
 
-	for (;;) {
-		const match = commentLinePattern.exec(text);
-
-		if (match?.index !== lastIndex + 1) {
+		if (!match) {
 			return false;
 		}
 
-		({ lastIndex } = commentLinePattern);
-		const comment = match.groups?.comment?.trim();
-
-		if (comment !== undefined && PRAGMA_PATTERN.test(comment)) {
+		if (PRAGMA_PATTERN.test(match.groups?.comment?.trim() ?? '')) {
 			return true;
 		}
 	}
+
+	return false;
 }
 
 /**

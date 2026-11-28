@@ -74,12 +74,6 @@ test('keeps words that would read as markup with the word before them', () => {
 	expect(
 		formatComment('# foo bar baz SPDX-License-Identifier: MIT', options)
 	).toBe('# foo bar baz SPDX-License-Identifier:\n# MIT');
-	expect(
-		formatComment('# foo bar baz @format qux', {
-			...options,
-			isLeading: true,
-		})
-	).toBe('# foo bar baz @format\n# qux');
 });
 
 test('keeps the word after a leading marker on its line', () => {

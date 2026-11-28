@@ -38,10 +38,11 @@ export type CommentSyntax = {
 		lines: ReadonlyArray<string>
 	) => boolean;
 	/**
-	 * Returns whether a word would read as markup at the start of a line. The
-	 * formatter checks list markers and code fence markers separately.
+	 * Returns whether a word could start markup or a directive on a new line.
+	 * The formatter checks list and fence markers separately. `isLastWord` is
+	 * true when only whitespace follows the word.
 	 */
-	isUnsafeLineStart: (word: string) => boolean;
+	isUnsafeLineStart: (word: string, isLastWord: boolean) => boolean;
 	/**
 	 * Returns whether starting a paragraph with this line would change its
 	 * meaning. The line can join the paragraph above but must stay as written

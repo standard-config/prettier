@@ -9,6 +9,8 @@ export const DIRECTIVE_PATTERN =
 
 export const IGNORE_MARKER_PATTERN = /^#+[ \t]*prettier-ignore$/;
 
+export const LEADING_TRIVIA_LINE_PATTERN = /^[ \t]*(?:#(?<comment>.*)|\\)?$/s;
+
 export const MARK_PREFIX = 'prettier_plugin_shell_mark_';
 
 export const MKSH_VARIANT = LangVariant.LangMirBSDKorn;
@@ -17,7 +19,7 @@ export const MKSH_VARIANT = LangVariant.LangMirBSDKorn;
 // reads as a continuation onto the next line
 export const PBS_DIRECTIVE_PATTERN = /^[# \t]*PBS[ \t]*["']?-/;
 
-export const PRAGMA_PATTERN = /^@(?:format|prettier)/;
+export const PRAGMA_PATTERN = /^@(?:format|prettier)$/;
 
 // Batch scheduler directives for Slurm, PBS, LSF, Grid Engine, and Flux,
 // including forms disabled with spaces or more `#` characters

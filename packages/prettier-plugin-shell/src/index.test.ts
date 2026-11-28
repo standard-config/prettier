@@ -1099,7 +1099,7 @@ test('reflows full-line `@test` comments as text', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('respects `checkIgnorePragma`', async () => {
+test('formats scripts with `@noformat` when `checkIgnorePragma` is enabled', async () => {
 	const input = '# @noformat\nfoo    bar\n';
 
 	const expectedOutput = await format(input, {
@@ -1119,7 +1119,7 @@ test('respects `checkIgnorePragma`', async () => {
 	await expect(format(output, options)).resolves.toBe(output);
 });
 
-test('respects `insertPragma`', async () => {
+test('leaves the script without a pragma when `insertPragma` is enabled', async () => {
 	const input = 'foo    bar\n';
 
 	const expectedOutput = await format(input, {
@@ -1155,6 +1155,188 @@ test('respects `requirePragma`', async () => {
 		format(output.replace('bar baz', 'bar    baz'), options)
 	).resolves.toBe(output);
 	await expect(format('foo    bar\n', options)).resolves.toBe('foo    bar\n');
+});
+
+test('finds a pragma surrounded by whitespace after a shebang and blank lines', async () => {
+	const input = '#!/bin/sh\r\n\r\n\t#\t@prettier \t\r\nfoo    bar\r\n';
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		requirePragma: true,
+	};
+
+	const output = await format(input, options);
+
+	expect(output).toBe('#!/bin/sh\n\n#\t@prettier\nfoo bar\n');
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('requires a complete pragma on its own line before the first command', async () => {
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		requirePragma: true,
+	};
+	const longerWord = '# @formatting\nfoo    bar\n';
+	const followingText = '# @prettier foo\nfoo    bar\n';
+	const embeddedLineSeparator = '# @format\u2028foo\nfoo    bar\n';
+	const precedingText = '# foo @format\nfoo    bar\n';
+	const extraHash = '## @format\nfoo    bar\n';
+	const afterCommand = 'foo    bar\n# @prettier\n';
+	const nonbreakingSpaceCommand = '\u00A0\n# @format\nfoo    bar\n';
+	const trailingComment = 'foo    bar # @format\n';
+	const commentsOnly = '# foo    bar\n';
+
+	await expect(format(longerWord, options)).resolves.toBe(longerWord);
+	await expect(format(followingText, options)).resolves.toBe(followingText);
+	await expect(format(embeddedLineSeparator, options)).resolves.toBe(
+		embeddedLineSeparator
+	);
+	await expect(format(precedingText, options)).resolves.toBe(precedingText);
+	await expect(format(extraHash, options)).resolves.toBe(extraHash);
+	await expect(format(afterCommand, options)).resolves.toBe(afterCommand);
+	await expect(format(nonbreakingSpaceCommand, options)).resolves.toBe(
+		nonbreakingSpaceCommand
+	);
+	await expect(format(trailingComment, options)).resolves.toBe(
+		trailingComment
+	);
+	await expect(format(commentsOnly, options)).resolves.toBe(commentsOnly);
+});
+
+test('wraps leading prose containing pragma words and prefixes', async () => {
+	const input =
+		'# foo bar baz @format qux\n#\n# @prettier foo bar baz\n#\n# foo bar baz @formatting\nfoo    bar\n';
+	const options = { parser: 'sh', plugins: [pluginShell], printWidth: 13 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'# foo bar baz\n# @format qux\n#\n# @prettier foo\n# bar baz\n#\n# foo bar baz\n# @formatting\nfoo bar\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each([
+	{
+		case: 'nonbreaking space before a pragma word',
+		input: `# foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud \u00A0@format
+#
+# - foo bar baz qux quux corge grault garply waldo @prettier
+#
+# foo bar baz qux
+foo    bar
+`,
+		output: `# foo bar baz
+# qux quux
+# corge
+# grault
+# garply
+# waldo fred
+# plugh xyzzy
+# thud \u00A0@format
+#
+# - foo bar
+#   baz qux
+#   quux
+#   corge
+#   grault
+#   garply
+#   waldo @prettier
+#
+# foo bar baz
+# qux
+foo bar
+`,
+	},
+	{
+		case: 'Unicode line separator in a comment',
+		input: '# foo\u2028bar\n# foo bar baz @format\nfoo    bar\n',
+		output: '# foo\u2028bar foo\n# bar baz @format\nfoo bar\n',
+	},
+])(
+	'wraps leading comments containing a $case without creating a pragma',
+	async ({ input, output: expectedOutput }) => {
+		const options = {
+			parser: 'sh',
+			plugins: [pluginShell],
+			printWidth: 13,
+		};
+
+		const output = await format(input, options);
+
+		expect(output).toBe(expectedOutput);
+		await expect(format(output, options)).resolves.toBe(output);
+
+		const unformatted = output.replace('\nfoo bar\n', '\nfoo    bar\n');
+		await expect(
+			format(unformatted, { ...options, requirePragma: true })
+		).resolves.toBe(unformatted);
+	}
+);
+
+test('preserves a pragma after a nonbreaking space between leading comments', async () => {
+	const input = '# foo   bar\n#\u00A0@format\n# baz   qux\ncorge    grault\n';
+	const options = { parser: 'sh', plugins: [pluginShell] };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'# foo bar\n#\n#\u00A0@format\n#\n# baz qux\ncorge grault\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+	await expect(
+		format(output.replace('corge grault', 'corge    grault'), {
+			...options,
+			requirePragma: true,
+		})
+	).resolves.toBe(output);
+});
+
+test('finds a leading pragma after standalone shell continuations', async () => {
+	const input = '  \\\n# foo \\\n\\\n# @prettier\nfoo    bar\n';
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		requirePragma: true,
+	};
+
+	const output = await format(input, options);
+
+	expect(output).toBe('# foo \\\n\n# @prettier\nfoo bar\n');
+	await expect(format(output, options)).resolves.toBe(output);
+	await expect(
+		format(output.replace('foo bar', 'foo    bar'), options)
+	).resolves.toBe(output);
+});
+
+test('leaves scripts without an active leading pragma unformatted', async () => {
+	const command = 'foo \\\n# @format\nbar    baz\n';
+	const escapedBackslash = '\\\\\n# @format\nfoo    bar\n';
+	const splitComment = '# @for\\\n\\\n# mat\nfoo    bar\n';
+	const escapedSpace = '\\ \n# @format\nfoo    bar\n';
+	const options = {
+		parser: 'sh',
+		plugins: [pluginShell],
+		requirePragma: true,
+	};
+
+	await expect(format(command, options)).resolves.toBe(command);
+	await expect(format(escapedBackslash, options)).resolves.toBe(
+		escapedBackslash
+	);
+	await expect(format(splitComment, options)).resolves.toBe(splitComment);
+	await expect(format(escapedSpace, options)).resolves.toBe(escapedSpace);
+});
+
+test('keeps a trailing pragma on the same line as its command', async () => {
+	const input = 'foo    bar #\u00A0@format\n';
+	const options = { parser: 'sh', plugins: [pluginShell] };
+
+	const output = await format(input, options);
+
+	expect(output).toBe('foo bar #\u00A0@format\n');
+	await expect(format(output, options)).resolves.toBe(output);
 });
 
 test('locates syntax tree nodes', async () => {

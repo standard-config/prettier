@@ -26,7 +26,7 @@ test('exposes valid types', () => {
 			index: number,
 			lines: ReadonlyArray<string>
 		) => boolean;
-		isUnsafeLineStart: (word: string) => boolean;
+		isUnsafeLineStart: (word: string, isLastWord: boolean) => boolean;
 		isUnsafeParagraphStart: (line: string) => boolean;
 		isUnsafeReflow?: (lines: ReadonlyArray<string>) => boolean;
 	}>();

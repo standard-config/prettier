@@ -373,7 +373,7 @@ function splitWords(text: string): string[] {
 }
 
 /**
- * Fills lines greedily, keeping potential markup with the preceding word.
+ * Fills lines greedily without starting new markup or directives.
  */
 function fillWords(
 	words: ReadonlyArray<string>,
@@ -390,14 +390,14 @@ function fillWords(
 	}
 
 	const lines: string[] = [];
+	const lastWordIndex = words.findLastIndex((word) => word.trim() !== '');
 	let line = prefix + words[0]!;
 
-	for (const word of words.values().drop(1)) {
+	for (const [index, word] of words.entries().drop(1)) {
 		const extendedLine = `${line} ${word}`;
 
-		// Some words would read as markup at the start of a line, and a line
-		// holding only a marker such as `prettier-ignore` would also be parsed
-		// as markup
+		// A break can start markup or a directive on the next line. It can also
+		// leave a marker like `prettier-ignore` alone on the current line
 		if (
 			fits(extendedLine) ||
 			syntax.isBlockKept(line) ||
@@ -406,7 +406,7 @@ function fillWords(
 			) ||
 			FENCE_PATTERN.test(word) ||
 			LIST_MARKER_PATTERN.test(word) ||
-			syntax.isUnsafeLineStart(word)
+			syntax.isUnsafeLineStart(word, index === lastWordIndex)
 		) {
 			line = extendedLine;
 		} else {

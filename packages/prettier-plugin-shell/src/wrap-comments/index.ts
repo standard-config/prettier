@@ -2,6 +2,7 @@ import type { ParserOptions } from 'prettier';
 import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
 import { hasPhysicalNextLineSuppression } from '@standard-config/utilities/line-suppressions';
+import { LEADING_TRIVIA_LINE_PATTERN } from '../constants/index.ts';
 import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
@@ -23,10 +24,9 @@ export default async function wrapComments(
 		return text;
 	}
 
-	// Prettier reads pragmas only from the comments and blank lines that start
-	// the file
+	// Standalone continuations act like blank lines in the leading comments
 	const firstCodeIndex = lines.findIndex(
-		(line) => !/^\s*(?:#.*)?$/.test(line)
+		(line) => !LEADING_TRIVIA_LINE_PATTERN.test(line)
 	);
 	const leadingEnd = firstCodeIndex === -1 ? lines.length : firstCodeIndex;
 	const outputLines: string[] = [];

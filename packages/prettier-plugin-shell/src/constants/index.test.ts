@@ -16,8 +16,11 @@ test('matches `prettier-ignore` markers', () => {
 	expect('# prettier-ignore foo').not.toMatch(IGNORE_MARKER_PATTERN);
 });
 
-test('matches pragmas', () => {
+test('matches complete pragma text', () => {
 	expect('@format').toMatch(PRAGMA_PATTERN);
+	expect('@prettier').toMatch(PRAGMA_PATTERN);
+	expect('@formatting').not.toMatch(PRAGMA_PATTERN);
+	expect('@prettier foo').not.toMatch(PRAGMA_PATTERN);
 	expect('foo @format').not.toMatch(PRAGMA_PATTERN);
 });
 

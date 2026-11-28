@@ -38,7 +38,7 @@ export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 			DIRECTIVE_PATTERN.test(text) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(text) ||
 			SCHEDULER_DIRECTIVE_PATTERN.test(text) ||
-			(isLeading && PRAGMA_PATTERN.test(text)),
+			(isLeading && PRAGMA_PATTERN.test(text.trim())),
 		// A directive that covers the next line stays right above that line,
 		// and a comment there stays as written. Scheduler directives stay as
 		// written without empty lines around them, since they often sit in
@@ -48,14 +48,19 @@ export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 			NEXT_LINE_DIRECTIVE_PATTERN.test(texts[index - 1] ?? '') ||
 			hasPhysicalNextLineSuppression(lines[index - 1] ?? '') ||
 			isSchedulerDirectiveLine(texts, index),
-		isUnsafeLineStart: (word) =>
+		isUnsafeLineStart: (word, isLastWord) =>
 			NEXT_LINE_DIRECTIVE_PATTERN.test(word) ||
 			hasPhysicalLineSuppression(`# ${word}`) ||
 			UNSAFE_LINE_START_PATTERN.test(word) ||
-			(isLeading && PRAGMA_PATTERN.test(word)),
+			(isLeading && isLastWord && PRAGMA_PATTERN.test(word.trim())),
 		isUnsafeParagraphStart: () => false,
+		// A bare pragma matters only if it takes up the whole rendered line
 		isUnsafeReflow: (lines) =>
-			lines.some((line) => hasPhysicalLineSuppression(line)),
+			lines.some(
+				(line) =>
+					hasPhysicalLineSuppression(line) ||
+					(isLeading && PRAGMA_PATTERN.test(line.slice(1).trim()))
+			),
 		marker: '#',
 	};
 }
