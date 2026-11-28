@@ -35,9 +35,6 @@ test('keeps words that would read as markup with the word before them', () => {
 	expect(formatComment('# foo bar baz cspell: qux', options)).toBe(
 		'# foo bar baz cspell:\n# qux'
 	);
-	expect(formatComment('# foo bar baz nosemgrep qux', options)).toBe(
-		'# foo bar baz nosemgrep\n# qux'
-	);
 	expect(formatComment('# foo bar baz SBATCH --qux', options)).toBe(
 		'# foo bar baz SBATCH\n# --qux'
 	);
@@ -101,11 +98,13 @@ test('keeps lines from joining into a directive', () => {
 		'# c8\n# ignore next'
 	);
 	expect(
-		formatComment('# pragma:\n# allowlist nextline secret', options)
+		formatComment('# pragma:\n# allowlist nextline secret', {
+			printWidth: 40,
+		})
 	).toBe('# pragma:\n# allowlist nextline secret');
-	expect(formatComment('# pragma:\n# allowlist\n# nextline secret')).toBe(
-		'# pragma: allowlist\n# nextline secret'
-	);
+	expect(
+		formatComment('# pragma:\n# allowlist\n# nextline secret', options)
+	).toBe('# pragma: allowlist\n# nextline secret');
 	expect(
 		formatComment('# pragma:  allowlist\n# nextline secret', options)
 	).toBe('# pragma: allowlist\n# nextline secret');

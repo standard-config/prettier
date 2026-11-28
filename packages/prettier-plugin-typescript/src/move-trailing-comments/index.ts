@@ -7,6 +7,10 @@ import {
 } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
 import {
+	hasPhysicalLineSuppression,
+	hasPhysicalNextLineSuppression,
+} from '@standard-config/utilities/line-suppressions';
+import {
 	BLOCK_DIRECTIVE_PATTERN,
 	CONTINUED_DIRECTIVE_PATTERN,
 	FALL_THROUGH_PATTERN,
@@ -17,7 +21,10 @@ import {
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 	UNFINISHED_SETTING_PATTERN,
 } from '../constants/index.ts';
-import createCommentSyntax from '../create-comment-syntax/index.ts';
+import createCommentSyntax, {
+	hasLineSensitiveMarker,
+	hasLineSuppression,
+} from '../create-comment-syntax/index.ts';
 
 type MoveContext = {
 	/**
@@ -60,6 +67,9 @@ export default function moveTrailingComments(
 			!comment.isTrailing ||
 			code.trim() === '' ||
 			!commentText.startsWith('//') ||
+			hasLineSuppression(commentText) ||
+			hasPhysicalLineSuppression(text.slice(lineStart, comment.end)) ||
+			isBelowPhysicalSuppression(text, lineStart) ||
 			keptStarts.has(comment.start) ||
 			syntax.isBlockKept(commentText) ||
 			isInsideText(codeStart, textRanges)
@@ -110,11 +120,11 @@ export default function moveTrailingComments(
 			continue;
 		}
 
-		// Empty comments and directives that only work in `//` comments or
-		// cover the next line stay in place, as do unfinished rule settings,
-		// which could continue below
+		// Keep line-sensitive comments here when the conversion rules above
+		// don’t handle them. An unfinished rule setting can continue below
 		if (
 			directive === '' ||
+			hasLineSensitiveMarker(commentText) ||
 			LINE_DIRECTIVE_PATTERN.test(directive) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(directive) ||
 			TYPESCRIPT_DIRECTIVE_PATTERN.test(directive) ||
@@ -161,6 +171,7 @@ export default function moveTrailingComments(
 		// fall-through comment
 		if (
 			isInsideText(targetCodeStart, textRanges) ||
+			isBelowPhysicalSuppression(text, targetLineStart) ||
 			findDirectiveAbove(text, targetLineStart, found) !== undefined ||
 			(fallThroughOffsets.has(targetCodeStart) &&
 				(FALL_THROUGH_PATTERN.test(directive) ||
@@ -355,12 +366,28 @@ export function findDirectiveAbove(
 	found: FoundComments
 ): TextRange | undefined {
 	const previousLineStart = getPreviousLineStart(text, lineStart);
+	const followsSuppression = isBelowPhysicalSuppression(text, lineStart);
 
 	return getAllComments(text, found).find(
 		({ end, start }) =>
 			end >= previousLineStart &&
 			end < lineStart &&
-			isNextLineDirective(text.slice(start, end))
+			(followsSuppression || isNextLineDirective(text.slice(start, end)))
+	);
+}
+
+/**
+ * Checks whether the previous physical line carries a next-line suppression.
+ */
+export function isBelowPhysicalSuppression(
+	text: string,
+	lineStart: number
+): boolean {
+	return (
+		lineStart > 0 &&
+		hasPhysicalNextLineSuppression(
+			text.slice(getPreviousLineStart(text, lineStart), lineStart - 1)
+		)
 	);
 }
 

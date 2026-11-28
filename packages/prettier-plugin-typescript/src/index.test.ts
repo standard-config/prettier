@@ -509,14 +509,257 @@ test('keeps comments around other tools’ directives in place', async () => {
 		inputBelowTslintDirective
 	);
 
-	await expect(
-		format(
-			'foo(); // ggignore\nbar(); // jshint ignore:line\nbaz(); // tslint:disable-line\n',
-			options
-		)
-	).resolves.toBe(
-		'foo(); /* ggignore */\nbar(); /* jshint ignore:line */\nbaz(); /* tslint:disable-line */\n'
+	const input =
+		'foo(); // ggignore\nbar(); // jshint ignore:line\nbaz(); // tslint:disable-line\n';
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'foo(); // ggignore\nbar(); /* jshint ignore:line */\nbaz(); /* tslint:disable-line */\n'
 	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'preserves suppressions and their targets in block comments with the `%s` parser',
+	async (parser) => {
+		const input = `/* PLACEHOLDER sample text // ggignore
+ * these ordinary words have room to wrap and keep flowing
+ * wrod sample text // codespell:ignore wrod
+ * fooo sample text CSpElL:disable-line
+ * PLACEHOLDER sample text # ggignore
+ * PLACEHOLDER sample text trufflehog:ignore
+ * PLACEHOLDER sample text // pragma: allowlist secret
+ * codespell:ignore-next-line wrod
+ * wrod these words must stay on the original line
+ * SpElL-ChEcKeR: disable-next
+ * fooo these words must stay on the original line
+ * nearby ordinary words also have room to wrap and keep flowing
+ */
+foo( );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 30 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/* PLACEHOLDER sample text // ggignore
+ * these ordinary words have
+ * room to wrap and keep
+ * flowing
+ * wrod sample text // codespell:ignore wrod
+ * fooo sample text CSpElL:disable-line
+ * PLACEHOLDER sample text # ggignore
+ * PLACEHOLDER sample text trufflehog:ignore
+ * PLACEHOLDER sample text // pragma: allowlist secret
+ * codespell:ignore-next-line wrod
+ * wrod these words must stay on the original line
+ * SpElL-ChEcKeR: disable-next
+ * fooo these words must stay on the original line
+ * nearby ordinary words also
+ * have room to wrap and keep
+ * flowing
+ */
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps the next line under a suppression at a block comment boundary with the `%s` parser',
+	async (parser) => {
+		const input = `/**
+ * @remarks context ; codespell:ignore-next-line
+ *     wrod these words must stay on the original line
+ *     more ordinary words have room to wrap and keep flowing
+ */
+foo();
+
+/* pragma: allowlist nextline secret */
+/* PLACEHOLDER words on the opener should stay here
+ * more ordinary words have room to wrap and keep flowing
+ * spellchecker:disable-next-line
+ * fooo these words stay with the closer */
+foo();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 30 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/**
+ * @remarks context ; codespell:ignore-next-line
+ *     wrod these words must stay on the original line
+ *     more ordinary words
+ *     have room to wrap and
+ *     keep flowing
+ */
+foo();
+
+/* pragma: allowlist nextline secret */
+/* PLACEHOLDER words on the opener should stay here
+ * more ordinary words have
+ * room to wrap and keep
+ * flowing
+ * spellchecker:disable-next-line
+ * fooo these words stay with the closer */
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'reflows suppression mentions without activating them in block comments with the `%s` parser',
+	async (parser) => {
+		const input = `/*
+ * PLACEHOLDER sample text pragma: allowlist secret
+ * these ordinary words have room to wrap and keep flowing
+ */
+/*
+ * some ordinary words are long enough to wrap
+ * pragma: allowlist nextline secret */
+foo();
+/*
+ * foo bar baz qux foo bar baz codespell:ignore wrod
+ */
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 30 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/*
+ * PLACEHOLDER sample text
+ * pragma: allowlist secret
+ * these ordinary words have
+ * room to wrap and keep
+ * flowing
+ */
+/*
+ * some ordinary words are
+ * long enough to wrap pragma:
+ * allowlist nextline secret
+ */
+foo();
+/*
+ * foo bar baz qux foo bar baz codespell:ignore
+ * wrod
+ */
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps blank lines covered by next-line suppressions in and around blocks with the `%s` parser',
+	async (parser) => {
+		const input = `/*
+ * codespell:ignore-next-line wrod
+ *
+ *
+ */
+/**
+ * @param bar sample ; codespell:ignore-next-line wrod
+ *
+ * @param wrod next
+ */
+function foo(bar, wrod) {}
+
+/* pragma: allowlist nextline secret */
+/** PLACEHOLDER one-line text */
+/* pragma: allowlist nextline secret */
+/**
+ * other words already below the first physical line are free to wrap
+ */
+/* pragma: allowlist nextline secret */
+//
+// longer words on the line below the blank are also free to wrap
+foo();
+`;
+		const options = {
+			parser,
+			plugins: [pluginTypeScript],
+			printWidth: 32,
+		};
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/*
+ * codespell:ignore-next-line wrod
+ *
+ */
+/**
+ * @param bar sample ; codespell:ignore-next-line wrod
+ *
+ * @param wrod next
+ */
+function foo(bar, wrod) {}
+
+/* pragma: allowlist nextline secret */
+/** PLACEHOLDER one-line text */
+/* pragma: allowlist nextline secret */
+/**
+ * other words already below the
+ * first physical line are free
+ * to wrap
+ */
+/* pragma: allowlist nextline secret */
+//
+// longer words on the line
+// below the blank are also free
+// to wrap
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps suppressions and their targets on their original comment lines with the `%s` parser',
+	async (parser) => {
+		const input = `// preliminary words spill onto another line
+// PLACEHOLDER sample text ggignore
+// wrod sample text ; codespell:ignore wrod
+// fooo sample text SpElL-ChEcKeR: disable-line
+// PLACEHOLDER sample text # ggignore
+// PLACEHOLDER sample text trufflehog:ignore
+// PLACEHOLDER sample text // pragma: allowlist secret
+// codespell:ignore-next-line wrod
+// wrod these words must stay on the original line
+// pragma: allowlist nextline secret
+foo(); // PLACEHOLDER remains on this line
+bar(); // ggignore
+baz(); // this unrelated note can move
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 30 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`// preliminary words spill
+// onto another line
+// PLACEHOLDER sample text ggignore
+// wrod sample text ; codespell:ignore wrod
+// fooo sample text SpElL-ChEcKeR: disable-line
+// PLACEHOLDER sample text # ggignore
+// PLACEHOLDER sample text trufflehog:ignore
+// PLACEHOLDER sample text // pragma: allowlist secret
+// codespell:ignore-next-line wrod
+// wrod these words must stay on the original line
+// pragma: allowlist nextline secret
+foo(); // PLACEHOLDER remains on this line
+bar(); // ggignore
+// this unrelated note can
+// move
+baz();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test('keeps a trailing comment on a code line carrying a suppression', async () => {
+	const input = 'const foo = "; codespell:ignore wrod"; // wrod text\n';
+	const options = { parser: 'oxc', plugins: [pluginTypeScript] };
+
+	await expect(format(input, options)).resolves.toBe(input);
 });
 
 test('formats comments in JSX', async () => {
@@ -1021,6 +1264,678 @@ test('supports `tsCommentWrap`', async () => {
 		})
 	).resolves.toBe(outputs['full-line']);
 });
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'preserves raw block lint directives and wraps inactive mentions with the `%s` parser',
+	async (parser) => {
+		const input = `/* deno-lint-ignore no-explicit-any
+ * foo   bar
+ */
+foo(  );
+
+/* tslint:disable-next-line:quotemark
+ * baz   qux
+ */
+bar(  );
+
+/* tslint:disable:no-debugger
+ */
+debugger ;
+/* tslint:enable:no-debugger
+ */
+
+/*
+ * deno-lint-ignore no-explicit-any
+ * quux   corge
+ */
+baz(  );
+
+/**
+ * tslint:disable-next-line:quotemark
+ * grault   garply
+ */
+qux(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/* deno-lint-ignore no-explicit-any
+ * foo   bar
+ */
+foo();
+
+/* tslint:disable-next-line:quotemark
+ * baz   qux
+ */
+bar();
+
+/* tslint:disable:no-debugger
+ */
+debugger;
+/* tslint:enable:no-debugger
+ */
+
+/*
+ * deno-lint-ignore no-explicit-any quux corge
+ */
+baz();
+
+/**
+ * tslint:disable-next-line:quotemark grault garply
+ */
+qux();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'preserves SonarJS markers on block comment openers with the `%s` parser',
+	async (parser) => {
+		const input = `const foo=1;
+
+/* NOSONAR TODO foo bar baz qux quux corge
+ * grault   garply waldo fred
+ */
+foo(  );
+
+/** nOsOnAr TODO foo bar baz qux quux corge
+ * plugh   xyzzy
+ */
+bar(  );
+
+/**
+ * NOSONAR is a named marker in prose
+ * thud   foo
+ */
+baz(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 25 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`const foo = 1;
+
+/* NOSONAR TODO foo bar baz qux quux corge
+ * grault garply waldo
+ * fred
+ */
+foo();
+
+/** nOsOnAr TODO foo bar baz qux quux corge
+ * plugh xyzzy
+ */
+bar();
+
+/**
+ * NOSONAR is a named
+ * marker in prose thud
+ * foo
+ */
+baz();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps Semgrep markers next to the lines they suppress with the `%s` parser',
+	async (parser) => {
+		const input = `/*
+ * foo   bar baz qux quux corge
+ * nosemgrep: local.demo, local.foo */
+foo(  );
+
+/**
+ * grault   garply
+ *
+ * NOSEM */
+bar(  );
+
+/*
+ * nosemgrep: local.demo
+ * several words before TODO and several words after it
+ * waldo   fred
+ * TODO several interesting words nosemgrep
+ * plugh   xyzzy
+ */
+baz(  );
+
+/**
+ * nosemgrep: local.demo
+ * @returns several words before TODO and several words after it
+ */
+qux(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 25 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/*
+ * foo bar baz qux quux
+ * corge
+ * nosemgrep: local.demo, local.foo */
+foo();
+
+/**
+ * grault garply
+ *
+ * NOSEM */
+bar();
+
+/*
+ * nosemgrep: local.demo
+ * several words before TODO and several words after it
+ * waldo fred
+ * TODO several interesting words nosemgrep
+ * plugh xyzzy
+ */
+baz();
+
+/**
+ * nosemgrep: local.demo
+ * @returns several words before TODO and several words after it
+ */
+qux();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps a Semgrep marker immediately before the code it covers with the `%s` parser',
+	async (parser) => {
+		const input =
+			'// foo   bar\n// baz\n// NoSeM: local.demo\nfoo(  ); // qux\n\n// NOSEMGREP: local.foo\nbar(  ); // quux\n';
+		const options = { parser, plugins: [pluginTypeScript] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(
+			'// foo bar baz\n// NoSeM: local.demo\nfoo(); // qux\n\n// NOSEMGREP: local.foo\nbar(); // quux\n'
+		);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps Semgrep markers with the comment text they cover with the `%s` parser',
+	async (parser) => {
+		const input = `// NoSeMgReP: local.demo
+// foo bar baz qux quux corge TODO
+// grault   garply
+// waldo
+foo(  );
+
+// TODO sample with long prose mentioning a basic detail nosemgrep
+// fred   plugh
+bar(  ); // baz NOSEM
+// xyzzy   thud
+// foo
+baz(  );
+
+// qux\tNOSEM: local.demo
+// quux
+qux(  );
+
+// NoSeM: local.demo
+// eslint-disable-next-line foo
+quux(  );
+
+// NOSEM
+//
+corge(  );
+
+/*
+ * foo   bar
+ * NOSEM */
+// qux quux corge grault garply TODO
+// waldo   fred
+grault(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 24 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`// NoSeMgReP: local.demo
+// foo bar baz qux quux corge TODO
+// grault garply waldo
+foo();
+
+// TODO sample with long prose mentioning a basic detail nosemgrep
+// fred plugh
+bar(); // baz NOSEM
+// xyzzy thud foo
+baz();
+
+// qux\tNOSEM: local.demo
+// quux
+qux();
+
+// NoSeM: local.demo
+// eslint-disable-next-line foo
+quux();
+
+// NOSEM
+//
+corge();
+
+/*
+ * foo bar
+ * NOSEM */
+// qux quux corge grault garply TODO
+// waldo fred
+grault();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps SonarJS markers on the source lines they suppress with the `%s` parser',
+	async (parser) => {
+		const input = `const foo=1;
+// NoSoNaRReason
+// TODO   foo
+// bar
+foo(  );
+
+// NOSONAR foo bar baz qux quux corge TODO
+// grault   garply
+bar(  ); //* NoSoNaR
+baz(  ); /// NoSoNaR
+
+// foo bar baz qux NoSoNaR examples
+// quux   corge
+qux(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 24 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`const foo = 1;
+// NoSoNaRReason
+// TODO foo bar
+foo();
+
+// NOSONAR foo bar baz qux quux corge TODO
+// grault garply
+bar(); //* NoSoNaR
+/// NoSoNaR
+baz();
+
+// foo bar baz qux NoSoNaR
+// examples quux corge
+qux();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'rewraps prose mentioning `prettier-ignore` at a different width with the `%s` parser',
+	async (parser) => {
+		const input = `/**
+ * prettier-ignore foo bar baz qux
+ */
+const  foo= [1,2];
+
+/* prettier-ignore */
+bar(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 80 };
+		const narrowOptions = { ...options, printWidth: 20 };
+
+		const narrow = await format(input, narrowOptions);
+
+		expect(narrow).toBe(`/**
+ * prettier-ignore
+ * foo bar baz qux
+ */
+const foo = [1, 2];
+
+/* prettier-ignore */
+bar(  );
+`);
+		await expect(format(narrow, narrowOptions)).resolves.toBe(narrow);
+
+		const wide = await format(input, options);
+
+		expect(wide).toBe(`/**
+ * prettier-ignore foo bar baz qux
+ */
+const foo = [1, 2];
+
+/* prettier-ignore */
+bar(  );
+`);
+		await expect(format(wide, options)).resolves.toBe(wide);
+		await expect(format(narrow, options)).resolves.toBe(wide);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'rewraps starred coverage prose at a different width with the `%s` parser',
+	async (parser) => {
+		const input = `/**
+ * c8
+ * ignore next foo bar baz qux
+ */
+foo(  );
+
+/**
+ * istanbul
+ * ignore next foo bar baz qux
+ */
+bar(  );
+
+/**
+ * v8
+ * ignore next foo bar baz qux
+ */
+baz(  );
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 80 };
+		const narrowOptions = { ...options, printWidth: 20 };
+
+		const narrow = await format(input, narrowOptions);
+
+		expect(narrow).toBe(`/**
+ * c8 ignore next
+ * foo bar baz qux
+ */
+foo();
+
+/**
+ * istanbul ignore
+ * next foo bar baz
+ * qux
+ */
+bar();
+
+/**
+ * v8 ignore next
+ * foo bar baz qux
+ */
+baz();
+`);
+		await expect(format(narrow, narrowOptions)).resolves.toBe(narrow);
+
+		const wide = await format(input, options);
+
+		expect(wide).toBe(`/**
+ * c8 ignore next foo bar baz qux
+ */
+foo();
+
+/**
+ * istanbul ignore next foo bar baz qux
+ */
+bar();
+
+/**
+ * v8 ignore next foo bar baz qux
+ */
+baz();
+`);
+		await expect(format(wide, options)).resolves.toBe(wide);
+		await expect(format(narrow, options)).resolves.toBe(wide);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'preserves physical lines that contain Gitleaks suppressions with the `%s` parser',
+	async (parser) => {
+		const input = `/*
+ * foo   bar
+ * baz
+ * gitleaks:allow
+ * qux gitleaks:allow quux corge
+ * grault
+ * garply   waldo
+ */
+foo();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 22 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/*
+ * foo bar baz
+ * gitleaks:allow
+ * qux gitleaks:allow quux corge
+ * grault garply waldo
+ */
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'preserves coverage range markers and the lines they occupy with the `%s` parser',
+	async (parser) => {
+		// The coverage converter also scans the source of this test file
+		const [start, stop] = ['start', 'stop'];
+		const input = `/*
+ * foo c8
+ * ignore start
+ *
+ * bar   baz
+ */
+foo();
+
+/** @returns c8 ignore ${start} and c8 ignore ${stop}
+ *
+ * qux   quux corge grault
+ */
+bar();
+
+/**
+ * garply waldo fred plugh xyzzy v8 ignore ${stop}
+ *
+ * thud   foo
+ */
+baz();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 32 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/*
+ * foo c8
+ * ignore start
+ *
+ * bar baz
+ */
+foo();
+
+/**
+ * @returns c8 ignore ${start} and c8 ignore ${stop}
+ *
+ *     qux quux corge grault
+ */
+bar();
+
+/**
+ * garply waldo fred plugh xyzzy v8 ignore ${stop}
+ *
+ * thud foo
+ */
+baz();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps single-line and multi-line coverage markers on their openers with the `%s` parser',
+	async (parser) => {
+		const [start, stop] = ['start', 'stop'];
+		const input = `/* c8 ignore ${start}
+ * foo   bar
+ */
+foo();
+/* c8 ignore ${stop} */
+bar();
+
+/* v8 ignore ${start} */
+baz();
+/* v8 ignore ${stop}
+ *
+ * qux   quux
+ */
+corge();
+`;
+		const options = { parser, plugins: [pluginTypeScript] };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/* c8 ignore ${start}
+ * foo bar
+ */
+foo();
+/* c8 ignore ${stop} */
+bar();
+
+/* v8 ignore ${start} */
+baz();
+/* v8 ignore ${stop}
+ *
+ * qux quux
+ */
+corge();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps Gitleaks suppressions on their original comment lines with the `%s` parser',
+	async (parser) => {
+		const input = `// foo   bar
+// baz
+// gitleaks:allow
+// qux quux corge grault garply gitleaks:allow
+// waldo
+// fred   plugh
+foo(); // bargitleaks:allow
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 25 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`// foo bar baz
+// gitleaks:allow
+// qux quux corge grault garply gitleaks:allow
+// waldo fred plugh
+foo(); // bargitleaks:allow
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'keeps line comment reflow from changing coverage ranges with the `%s` parser',
+	async (parser) => {
+		const [start, stop] = ['start', 'stop'];
+		const input = `// foo c8
+// ignore start
+//
+// foo   bar
+foo();
+
+// baz qux quux corge grault c8 ignore ${start}
+// garply   waldo
+bar(); // fred c8 ignore ${stop}
+baz();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 32 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`// foo c8
+// ignore start
+//
+// foo bar
+foo();
+
+// baz qux quux corge grault c8 ignore ${start}
+// garply waldo
+bar(); // fred c8 ignore ${stop}
+baz();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'reflows JSDoc list prose below protected lines with the `%s` parser',
+	async (parser) => {
+		const start = 'start';
+		const input = `/**
+ * 1.  foo   bar gitleaks:allow
+ *     baz   qux quux corge grault garply waldo fred plugh xyzzy
+ * - foo bar
+ *   baz c8 ignore ${start}
+ *   qux   quux corge grault garply waldo fred plugh xyzzy thud
+ *   foo bar
+ * - baz   qux
+ */
+foo();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 40 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/**
+ * 1.  foo   bar gitleaks:allow
+ *     baz qux quux corge grault garply
+ *     waldo fred plugh xyzzy
+ * - foo bar
+ *   baz c8 ignore ${start}
+ *   qux quux corge grault garply waldo
+ *   fred plugh xyzzy thud foo bar
+ * - baz qux
+ */
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'reflows line comment list prose below protected lines with the `%s` parser',
+	async (parser) => {
+		const input = `// 1. foo   bar gitleaks:allow
+//    baz   qux quux corge grault garply waldo fred plugh xyzzy
+//    - thud gitleaks:allow
+//      foo   bar baz qux quux corge grault garply waldo
+// - fred
+//   plugh   xyzzy gitleaks:allow
+//   thud   foo bar baz qux quux corge grault garply waldo
+foo();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 40 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`// 1. foo   bar gitleaks:allow
+//    baz qux quux corge grault garply
+//    waldo fred plugh xyzzy
+//    - thud gitleaks:allow
+//      foo bar baz qux quux corge
+//      grault garply waldo
+// - fred
+//   plugh   xyzzy gitleaks:allow
+//   thud foo bar baz qux quux corge
+//   grault garply waldo
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
 
 test.each(OXC_CASES)(
 	'formats $group cases with comment reflow like the built-in parser with the `$parser` parser: $input',

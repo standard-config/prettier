@@ -334,6 +334,155 @@ test('reads directives and pragmas around extra whitespace', () => {
 	).toBeUndefined();
 });
 
+test('keeps active V8 coverage hints as written', () => {
+	const docHint = '/** istanbul ignore next\n * foo   bar\n */';
+	const literalHint = '/* c8 ignore nextline\n * foo   bar\n */';
+
+	expect(formatComment(docHint)).toBeUndefined();
+	expect(formatComment(literalHint)).toBeUndefined();
+});
+
+test('reflows prose naming inactive lint directives', () => {
+	const input = '/* deno-lint-ignore-file foo\n * bar   baz\n */';
+
+	expect(formatComment(input)).toBe(
+		'/*\n * deno-lint-ignore-file foo bar baz\n */'
+	);
+});
+
+test('keeps an otherwise empty comment with a Semgrep marker on the closing line', () => {
+	expect(formatComment('/*\n * nosemgrep */')).toBeUndefined();
+});
+
+test('keeps the delimiter after an inline Semgrep marker', () => {
+	const input = '/*\n * foo   bar\n * TODO nosemgrep: */';
+
+	expect(formatComment(input)).toBe('/*\n * foo bar\n * TODO nosemgrep: */');
+});
+
+test('avoids creating an inline Semgrep marker when collapsing a tab', () => {
+	const input =
+		'/**\n * foo\tnosemgrep: local.demo\n * bar\n *\n * baz   qux\n */';
+
+	expect(formatComment(input)).toBe(
+		'/**\n * foo\tnosemgrep: local.demo\n * bar\n *\n * baz qux\n */'
+	);
+});
+
+test('reflows prose with an inactive Semgrep mention', () => {
+	const input = '/**\n * foo   bar baz qux `nosemgrep` quux\n */';
+
+	expect(formatComment(input, { printWidth: 20 })).toBe(
+		'/**\n * foo bar baz qux `nosemgrep`\n * quux\n */'
+	);
+});
+
+test('reflows prose below a coverage range marker on a plain block comment opener', () => {
+	const start = 'start';
+	const input = `/* c8 ignore ${start}\n *\n * foo   bar\n */`;
+
+	expect(formatComment(input)).toBe(
+		`/* c8 ignore ${start}\n *\n * foo bar\n */`
+	);
+	expect(formatComment(`/* c8 ignore ${start}\n */`)).toBeUndefined();
+});
+
+test('keeps a coverage range marker on its original tag continuation line', () => {
+	const stop = 'stop';
+	const input = `/**\n * @returns foo bar baz\n * qux v8 ignore ${stop} and quux\n * corge   grault\n */`;
+
+	expect(formatComment(input, { printWidth: 31 })).toBe(
+		`/**\n * @returns foo bar baz\n *     qux v8 ignore ${stop} and quux\n *     corge grault\n */`
+	);
+});
+
+test('keeps Markdown structure after reflowing prose below protected list lines', () => {
+	const input = `/**
+ * - foo
+ *   bar gitleaks:allow
+ *   baz gitleaks:allow
+ *   qux   quux
+ *   > corge gitleaks:allow
+ *   grault   garply
+ * - waldo
+ *   fred gitleaks:allow
+ *   plugh   xyzzy
+ *       thud   foo
+ */`;
+
+	expect(formatComment(input)).toBe(`/**
+ * - foo
+ *   bar gitleaks:allow
+ *   baz gitleaks:allow
+ *   qux quux
+ *   > corge gitleaks:allow
+ *   grault   garply
+ * - waldo
+ *   fred gitleaks:allow
+ *   plugh xyzzy
+ *       thud   foo
+ */`);
+});
+
+test('reflows list prose below a protected lazy continuation', () => {
+	const input = `/**
+ * - foo
+ * bar gitleaks:allow
+ *   baz   qux
+ */`;
+
+	expect(formatComment(input)).toBe(`/**
+ * - foo
+ * bar gitleaks:allow
+ *   baz qux
+ */`);
+});
+
+test('keeps code indentation in lists with protected lines', () => {
+	const input = `/**
+ * -     foo gitleaks:allow
+ *       bar   baz
+ * - qux gitleaks:allow
+ *   quux   corge
+ *   \`\`\`text
+ *   grault   garply
+ *   \`\`\`
+ *
+ *   waldo   fred
+ */`;
+
+	expect(formatComment(input)).toBe(`/**
+ * -     foo gitleaks:allow
+ *       bar   baz
+ * - qux gitleaks:allow
+ *   quux corge
+ *   \`\`\`text
+ *   grault   garply
+ *   \`\`\`
+ *
+ *   waldo   fred
+ */`);
+});
+
+test('keeps list items and tag text from creating coverage range markers', () => {
+	const inputWithList =
+		'/**\n * - foo node:coverage ignore\n *   stop\n * - bar   baz\n */';
+	const inputWithTag =
+		'/**\n * @returns foo c8\n * ignore start\n *\n * bar   baz\n */';
+	const inputWithTagBlock =
+		'/**\n * @remarks\n * foo c8\n * ignore start\n *\n * bar   baz\n */';
+
+	expect(formatComment(inputWithList)).toBe(
+		'/**\n * - foo node:coverage ignore\n *   stop\n * - bar baz\n */'
+	);
+	expect(formatComment(inputWithTag)).toBe(
+		'/**\n * @returns foo c8\n * ignore start\n *\n *     bar baz\n */'
+	);
+	expect(formatComment(inputWithTagBlock)).toBe(
+		'/**\n * @remarks\n * foo c8\n * ignore start\n *\n * bar baz\n */'
+	);
+});
+
 test.each(['# bar', '* * *', '--', '---', '==', '> bar', 'a | b'])(
 	'keeps the Markdown block `%s` on a line of its own',
 	(block) => {

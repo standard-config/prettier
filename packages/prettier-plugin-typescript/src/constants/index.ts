@@ -15,6 +15,10 @@ export const CONFIGURATION_COMMENT_PATTERN =
 // on the next line
 export const CONTINUED_DIRECTIVE_PATTERN = /[,:][ \t]*$/;
 
+// Vitest’s coverage converter reads the first range marker on a source line
+export const COVERAGE_RANGE_PATTERN =
+	/(?:c8|istanbul|node:coverage|v8)\s+ignore\s+(?:start|stop)(?=\W|$)/;
+
 export const FALL_THROUGH_PATTERN = /falls?\s?through/i;
 
 // A `//` line with text indented past one space after the slashes can continue

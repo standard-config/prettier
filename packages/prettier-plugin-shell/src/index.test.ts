@@ -170,6 +170,169 @@ test('keeps directives that cover the next line next to their code', async () =>
 	await expect(format(input, options)).resolves.toBe(input);
 });
 
+test('keeps a Semgrep marker immediately before the code it covers', async () => {
+	const input =
+		'# foo   bar\n# baz\n# NoSeM: local.demo\nfoo    bar # qux\n\n# NOSEMGREP: local.foo\nbar    baz # quux\n';
+	const options = { parser: 'sh', plugins: [pluginShell] };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(
+		'# foo bar baz\n# NoSeM: local.demo\nfoo bar # qux\n\n# NOSEMGREP: local.foo\nbar baz # quux\n'
+	);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps Semgrep markers with the comment text they cover', async () => {
+	const input = `# NoSeM: local.demo
+#
+foo    bar
+
+# NOSEM
+# foo bar baz qux quux corge TODO
+# grault   garply
+# waldo
+bar    baz
+
+# TODO sample with long prose mentioning a basic detail nosemgrep
+# fred   plugh
+baz    qux # fred NOSEM
+# xyzzy   thud
+# foo
+qux    quux
+
+# bar\tNoSeM: local.demo
+# baz
+#
+# NoSoNaR qux   quux
+# corge
+quux    corge
+`;
+	const options = { parser: 'sh', plugins: [pluginShell], printWidth: 24 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(`# NoSeM: local.demo
+#
+foo bar
+
+# NOSEM
+# foo bar baz qux quux corge TODO
+# grault garply waldo
+bar baz
+
+# TODO sample with long prose mentioning a basic detail nosemgrep
+# fred plugh
+baz qux # fred NOSEM
+# xyzzy thud foo
+qux quux
+
+# bar\tNoSeM: local.demo
+# baz
+#
+# NoSoNaR qux quux corge
+quux corge
+`);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps Gitleaks suppressions on their original comment lines', async () => {
+	const input = `# foo   bar
+# baz
+# gitleaks:allow
+# qux quux corge grault garply gitleaks:allow
+# waldo
+# fred   plugh
+foo # bargitleaks:allow
+`;
+	const options = { parser: 'sh', plugins: [pluginShell], printWidth: 25 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(`# foo bar baz
+# gitleaks:allow
+# qux quux corge grault garply gitleaks:allow
+# waldo fred plugh
+foo # bargitleaks:allow
+`);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('keeps suppressions and their targets on their original comment lines', async () => {
+	const input = `# preliminary words spill onto another line
+# PLACEHOLDER sample text ggignore
+# wrod sample text ; codespell:ignore wrod
+# fooo sample text SpElL-ChEcKeR: disable-line
+# PLACEHOLDER sample text # ggignore
+# PLACEHOLDER sample text trufflehog:ignore
+# PLACEHOLDER sample text // pragma: allowlist secret
+# codespell:ignore-next-line wrod
+# wrod these words must stay on the original line
+# pragma: allowlist nextline secret
+foo # PLACEHOLDER remains on this line
+bar # ggignore
+baz # this unrelated note can move
+echo "; codespell:ignore wrod" # wrod text
+`;
+	const options = { parser: 'sh', plugins: [pluginShell], printWidth: 30 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(`# preliminary words spill onto
+# another line PLACEHOLDER
+# sample text ggignore
+# wrod sample text ; codespell:ignore wrod
+# fooo sample text SpElL-ChEcKeR: disable-line
+# PLACEHOLDER sample text # ggignore
+# PLACEHOLDER sample text trufflehog:ignore
+# PLACEHOLDER sample text // pragma: allowlist secret
+# codespell:ignore-next-line wrod
+# wrod these words must stay on the original line
+# pragma: allowlist nextline secret
+foo # PLACEHOLDER remains on this line
+bar # ggignore
+# this unrelated note can move
+baz
+echo "; codespell:ignore wrod" # wrod text
+`);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
+test('reflows line comment list prose below protected lines', async () => {
+	const input = `# 1. foo   bar gitleaks:allow
+#    baz   qux quux corge grault garply waldo fred plugh xyzzy
+#    - thud gitleaks:allow
+#      foo   bar baz qux quux corge grault garply waldo
+# - fred
+#   plugh   xyzzy gitleaks:allow
+#   thud   foo bar baz qux quux corge grault garply waldo
+# - foo
+#   region foo gitleaks:allow
+#   bar   baz
+foo
+`;
+	const options = { parser: 'sh', plugins: [pluginShell], printWidth: 40 };
+
+	const output = await format(input, options);
+
+	expect(output).toBe(`# 1. foo   bar gitleaks:allow
+#    baz qux quux corge grault garply
+#    waldo fred plugh xyzzy
+#    - thud gitleaks:allow
+#      foo bar baz qux quux corge grault
+#      garply waldo
+# - fred
+#   plugh   xyzzy gitleaks:allow
+#   thud foo bar baz qux quux corge
+#   grault garply waldo
+# - foo
+#   region foo gitleaks:allow
+#   bar   baz
+foo
+`);
+	await expect(format(output, options)).resolves.toBe(output);
+});
+
 test('keeps wrapped comments from starting lines with directives that cover the next line', async () => {
 	const options = {
 		parser: 'sh',

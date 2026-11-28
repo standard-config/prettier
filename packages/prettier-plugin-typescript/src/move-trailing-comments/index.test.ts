@@ -172,16 +172,17 @@ test('moves comments that change lines below other directives', async () => {
 	);
 });
 
+test('keeps the line comment delimiter for a detect-secrets suppression', async () => {
+	const input = "foo(); // pragma: allowlist nextline secret\nbar = 'baz';\n";
+
+	await expect(move(input)).resolves.toBe(input);
+});
+
 test('turns directives and suppressions into block comments in place', async () => {
 	await expect(
 		move("foo(); // eslint-disable-line\nbar = 'baz'; // gitleaks:allow\n")
 	).resolves.toBe(
 		"foo(); /* eslint-disable-line */\nbar = 'baz'; /* gitleaks:allow */\n"
-	);
-	await expect(
-		move("foo(); // pragma: allowlist nextline secret\nbar = 'baz';\n")
-	).resolves.toBe(
-		"foo(); /* pragma: allowlist nextline secret */\nbar = 'baz';\n"
 	);
 	await expect(
 		move('switch (foo) {\ncase 1:\nbar(); // falls through\ncase 2:\n}\n')

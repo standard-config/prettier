@@ -2,10 +2,16 @@ import type { CommentBlockOptions } from '../types/index.d.ts';
 import { util } from 'prettier';
 
 type BlockNode =
-	| { continuation: string; prefix: string; texts: string[]; type: 'item' }
+	| {
+			continuation: string;
+			lines: string[];
+			prefix: string;
+			texts: string[];
+			type: 'continuation' | 'item';
+	  }
 	| { isDirective: boolean; line: string; type: 'verbatim' }
 	| { line: string; type: 'kept' }
-	| { texts: string[]; type: 'paragraph'; words: string }
+	| { lines: string[]; texts: string[]; type: 'paragraph'; words: string }
 	| { type: 'empty' };
 
 const EMPTY_NODE: BlockNode = { type: 'empty' };
@@ -27,7 +33,13 @@ export default function formatCommentBlock(
 
 	const nodes = separateNodes(parseNodes(lines, options));
 
-	return nodes.flatMap((node) => printNode(node, options));
+	return nodes.flatMap((node) => {
+		const formatted = printNode(node, options);
+
+		return 'lines' in node && options.syntax.isUnsafeReflow?.(formatted)
+			? node.lines
+			: formatted;
+	});
 }
 
 /**
@@ -101,11 +113,15 @@ function parseNodes(
 			: line.replace(markerPattern, '').replace(/^[ \t]*/, '')
 	);
 	let openNode: Extract<BlockNode, { texts: string[] }> | undefined;
+	let keptItemContinuation: string | undefined;
 
 	for (const [index, line] of lines.entries()) {
+		const previousContinuation = keptItemContinuation;
+		keptItemContinuation = undefined;
 		const rest = line.replace(markerPattern, '');
 		const [indentation] = /^[ \t]*/.exec(rest)!;
 		const text = rest.slice(indentation.length);
+		const linePrefix = marker + indentation;
 
 		// Code fences keep their content as written, including empty lines
 		if (fencedLines.has(index)) {
@@ -120,18 +136,38 @@ function parseNodes(
 			continue;
 		}
 
-		if (syntax.isLineKept(texts, index)) {
+		const listMarker = LIST_MARKER_PATTERN.exec(text);
+		const keepLine = syntax.isLineKept(texts, index, lines);
+
+		if (keepLine || syntax.hasLineSensitiveMarker?.(line)) {
+			if (!keepLine && !syntax.isDirective(text)) {
+				const continuation =
+					openNode && 'continuation' in openNode
+						? openNode.continuation
+						: previousContinuation;
+
+				if (listMarker) {
+					const padding = listMarker[0].slice(listMarker[1]!.length);
+
+					// Extra padding can begin a Markdown code block
+					if (/^ {1,4}$/.test(padding)) {
+						keptItemContinuation = `${linePrefix}${' '.repeat(listMarker[0].length)}`;
+					}
+				} else if (continuation?.startsWith(linePrefix)) {
+					keptItemContinuation = continuation;
+				}
+			}
+
 			nodes.push({ line, type: 'kept' });
 			openNode = undefined;
 			continue;
 		}
 
-		const listMarker = LIST_MARKER_PATTERN.exec(text);
-
 		if (listMarker) {
 			const itemIndentation = indentation || ' ';
 			openNode = {
 				continuation: `${marker}${itemIndentation}${' '.repeat(listMarker[1]!.length + 1)}`,
+				lines: [line],
 				prefix: `${marker}${itemIndentation}${listMarker[1]!} `,
 				texts: [text.slice(listMarker[0].length)],
 				type: 'item',
@@ -148,9 +184,27 @@ function parseNodes(
 			continue;
 		}
 
-		// Remaining lines continue an open list item regardless of indentation
-		if (openNode?.type === 'item') {
+		// An ordinary list item can include lazy continuations, while prose
+		// that resumes below a kept line uses the item’s continuation indent
+		if (
+			openNode?.type === 'item' ||
+			(openNode?.type === 'continuation' &&
+				openNode.continuation === linePrefix)
+		) {
+			openNode.lines.push(line);
 			openNode.texts.push(text);
+			continue;
+		}
+
+		if (previousContinuation === linePrefix) {
+			openNode = {
+				continuation: linePrefix,
+				lines: [line],
+				prefix: linePrefix,
+				texts: [text],
+				type: 'continuation',
+			};
+			nodes.push(openNode);
 			continue;
 		}
 
@@ -176,6 +230,7 @@ function parseNodes(
 		}
 
 		if (openNode?.type === 'paragraph') {
+			openNode.lines.push(line);
 			openNode.texts.push(text);
 			openNode.words = paragraphWords;
 			continue;
@@ -186,7 +241,7 @@ function parseNodes(
 			continue;
 		}
 
-		openNode = { texts: [text], type: 'paragraph', words };
+		openNode = { lines: [line], texts: [text], type: 'paragraph', words };
 		nodes.push(openNode);
 	}
 
@@ -248,6 +303,8 @@ function printNode(node: BlockNode, options: CommentBlockOptions): string[] {
 	switch (node.type) {
 		case 'empty':
 			return [marker];
+
+		case 'continuation':
 
 		case 'item':
 			return fillWords(

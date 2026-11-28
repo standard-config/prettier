@@ -11,18 +11,22 @@ import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constant
 import formatCommentBlock, {
 	findFencedLines,
 } from '@standard-config/utilities/format-comment-block';
+import { hasPhysicalNextLineSuppression } from '@standard-config/utilities/line-suppressions';
 import {
 	BLOCK_DIRECTIVE_PATTERN,
 	FALL_THROUGH_PATTERN,
 	TYPESCRIPT_SUPPRESSION_PATTERN,
 } from '../constants/index.ts';
-import createCommentSyntax from '../create-comment-syntax/index.ts';
+import createCommentSyntax, {
+	hasLineSuppression,
+} from '../create-comment-syntax/index.ts';
 import findComments, { formatCode } from '../find-comments/index.ts';
 import formatBlockComment from '../format-block-comment/index.ts';
 import mapCursor from '../map-cursor/index.ts';
 import moveTrailingComments, {
 	findDirectiveAbove,
 	getCommentText,
+	isBelowPhysicalSuppression,
 	isContinuedList,
 } from '../move-trailing-comments/index.ts';
 
@@ -197,6 +201,10 @@ function createEdits(
 			text:
 				formatBlockComment(text.slice(start, end), {
 					indentation,
+					keepFirstLine: isBelowPhysicalSuppression(
+						text,
+						text.lastIndexOf('\n', start - 1) + 1
+					),
 					printWidth: options.printWidth,
 					tabWidth: options.tabWidth,
 				}) ?? text.slice(start, end),
@@ -433,11 +441,19 @@ function formatGroup(
 	// A next-line directive can sit above the group or end up outside the
 	// following block after conversion
 	const directiveAbove = findDirectiveAbove(text, lineStart, found);
+	const isBelowPhysical = isBelowPhysicalSuppression(text, lineStart);
 	let isBelowDirective =
-		directiveAbove !== undefined &&
-		NEXT_LINE_DIRECTIVE_PATTERN.test(
-			getCommentText(text.slice(directiveAbove.start, directiveAbove.end))
-		);
+		isBelowPhysical ||
+		(directiveAbove !== undefined &&
+			NEXT_LINE_DIRECTIVE_PATTERN.test(
+				getCommentText(
+					text.slice(directiveAbove.start, directiveAbove.end)
+				)
+			));
+	const followsSuppression = (index: number): boolean =>
+		index === 0
+			? isBelowPhysical
+			: hasPhysicalNextLineSuppression(lines[index - 1]!);
 
 	const convert = (commentText: string, start: number) => {
 		// Prettier keeps a block comment on the line of the code it follows, so
@@ -472,9 +488,9 @@ function formatGroup(
 					syntax: isBelowDirective
 						? {
 								...syntax,
-								isLineKept: (texts, lineIndex) =>
+								isLineKept: (texts, lineIndex, lines) =>
 									lineIndex === 0 ||
-									syntax.isLineKept(texts, lineIndex),
+									syntax.isLineKept(texts, lineIndex, lines),
 							}
 						: syntax,
 					tabWidth: options.tabWidth,
@@ -482,16 +498,15 @@ function formatGroup(
 			);
 		}
 
-		const lastText = (formattedLines.at(-1) ?? '').replace(
-			/^\/+[ \t]*/,
-			''
-		);
+		const lastLine = formattedLines.at(-1) ?? '';
+		const lastText = lastLine.replace(/^\/+[ \t]*/, '');
 
 		// Keep an empty `//` line after a directive so the directive doesn’t
 		// start covering the code below
 		if (
 			EMPTY_LINE_PATTERN.test(block.at(-1) ?? '') &&
 			(conversions.at(-1)?.line === formattedLines.length - 1 ||
+				hasPhysicalNextLineSuppression(lastLine) ||
 				syntax.isDirective(lastText))
 		) {
 			formattedLines.push('//');
@@ -529,6 +544,8 @@ function formatGroup(
 			!isAfterSuppression &&
 			!fencedLines.has(index) &&
 			!keptStarts.has(group[index]!.start) &&
+			!followsSuppression(index) &&
+			!hasLineSuppression(line) &&
 			/^\/\/(?!\/)/.test(line) &&
 			(BLOCK_DIRECTIVE_PATTERN.test(commentText) || isFallThrough) &&
 			!commentText.includes('*/')
@@ -557,6 +574,8 @@ function formatGroup(
 		!isAfterSuppression &&
 		!fencedLines.has(lines.length - 1) &&
 		!keptStarts.has(group.at(-1)!.start) &&
+		!followsSuppression(lines.length - 1) &&
+		!hasLineSuppression(lastLine) &&
 		/^\/\/(?!\/)/.test(lastLine) &&
 		FALL_THROUGH_PATTERN.test(lastText) &&
 		!lastText.includes('*/')

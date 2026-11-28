@@ -64,9 +64,9 @@ test('keeps words that would start a directive with the word before them', () =>
 	expect(formatComment('// foo bar baz pragma: qux', options)).toBe(
 		'// foo bar baz pragma:\n// qux'
 	);
-	expect(formatComment('// foo bar baz pragma:allowlist qux', options)).toBe(
-		'// foo bar baz pragma:allowlist\n// qux'
-	);
+	expect(
+		formatComment('// foo bar baz pragma:allowlist-secret', options)
+	).toBe('// foo bar baz pragma:allowlist-secret');
 	expect(formatComment('// foo bar baz region qux', options)).toBe(
 		'// foo bar baz region\n// qux'
 	);
@@ -79,11 +79,13 @@ test('keeps lines from joining into a directive', () => {
 		'// c8\n// ignore next'
 	);
 	expect(
-		formatComment('// pragma:\n// allowlist nextline secret', options)
+		formatComment('// pragma:\n// allowlist nextline secret', {
+			printWidth: 40,
+		})
 	).toBe('// pragma:\n// allowlist nextline secret');
-	expect(formatComment('// pragma:\n// allowlist\n// nextline secret')).toBe(
-		'// pragma: allowlist\n// nextline secret'
-	);
+	expect(
+		formatComment('// pragma:\n// allowlist\n// nextline secret', options)
+	).toBe('// pragma: allowlist\n// nextline secret');
 	expect(
 		formatComment('// pragma:  allowlist\n// nextline secret', options)
 	).toBe('// pragma: allowlist\n// nextline secret');

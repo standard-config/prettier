@@ -1,9 +1,14 @@
 import type { ParserOptions } from 'prettier';
 import {
+	GITLEAKS_ALLOW_MARKER,
 	NEXT_LINE_DIRECTIVE_PATTERN,
 	SUPPRESSION_PATTERN,
 } from '@standard-config/utilities/constants';
 import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
+import {
+	hasPhysicalLineSuppression,
+	hasPhysicalNextLineSuppression,
+} from '@standard-config/utilities/line-suppressions';
 import {
 	DIRECTIVE_PATTERN,
 	IGNORE_MARKER_PATTERN,
@@ -69,10 +74,14 @@ export default async function moveTrailingComments(
 			comment.startsWith('#!') ||
 			commentText === '@test' ||
 			DIRECTIVE_PATTERN.test(commentText) ||
+			comment.includes(GITLEAKS_ALLOW_MARKER) ||
 			IGNORE_MARKER_PATTERN.test(comment) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(commentText) ||
 			PRAGMA_PATTERN.test(commentText) ||
 			SCHEDULER_DIRECTIVE_PATTERN.test(commentText) ||
+			hasPhysicalLineSuppression(comment) ||
+			hasPhysicalLineSuppression(line) ||
+			hasPhysicalNextLineSuppression(lines[index - 1] ?? '') ||
 			SUPPRESSION_PATTERN.test(comment)
 		) {
 			continue;
@@ -195,17 +204,18 @@ export default async function moveTrailingComments(
 
 		// `sh-syntax` can take more than one pass to settle the indentation of
 		// a moved comment. A change in the number of `#` characters can
-		// indicate duplicated or lost comment text, so keep the previous result
+		// indicate duplicated or lost text, so reject that set of moves
 		let result = movedText;
 
 		for (let pass = 0; pass < MAX_REPRINTS; pass += 1) {
 			const reprinted = await reprint(result);
 
-			if (
-				reprinted === result ||
-				countHashes(reprinted) !== countHashes(result)
-			) {
+			if (reprinted === result) {
 				break;
+			}
+
+			if (countHashes(reprinted) !== countHashes(result)) {
+				return undefined;
 			}
 
 			result = reprinted;

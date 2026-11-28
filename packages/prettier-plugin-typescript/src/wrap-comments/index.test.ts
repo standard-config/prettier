@@ -453,14 +453,12 @@ test('keeps the line below a directive that covers it as written', async () => {
 	const inputBelowIgnoreMarker =
 		'/* prettier-ignore */\n// foo bar\n// baz\nqux();\n';
 
-	await expect(wrap(input)).resolves.toBe(
-		'/* cspell:disable-next-line */\n// foo bar baz qux\n// quux\ncorge();\n'
-	);
+	await expect(wrap(input)).resolves.toBe(input);
 	await expect(wrap(inputBelowBlockComment)).resolves.toBe(
 		inputBelowBlockComment
 	);
 	await expect(wrap(inputWithEmptyLine)).resolves.toBe(
-		'/* cspell:disable-next-line */\n//\n// foo bar baz\nqux();\n'
+		'// cspell:disable-next-line\n//\n// foo bar baz\nqux();\n'
 	);
 	await expect(
 		wrap('// prettier-ignore\n// foo bar\n// baz\nqux();\n')

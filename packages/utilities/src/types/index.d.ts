@@ -1,9 +1,6 @@
 import type { Options as PrettierOptions } from 'prettier';
 
 export type CommentBlockOptions = {
-	/**
-	 * Spaces and tabs before each comment line.
-	 */
 	indentation: string;
 	printWidth: number;
 	syntax: CommentSyntax;
@@ -17,6 +14,11 @@ export type CommentSyntax = {
 	 */
 	marker: string;
 	/**
+	 * Returns whether a marker must stay on its source line. The line includes
+	 * its comment marker and can still start or continue a list item.
+	 */
+	hasLineSensitiveMarker?: (line: string) => boolean;
+	/**
 	 * Returns whether a line keeps its whole block as written, such as a line
 	 * that can hold license text.
 	 */
@@ -26,11 +28,15 @@ export type CommentSyntax = {
 	 */
 	isDirective: (text: string) => boolean;
 	/**
-	 * Returns whether a line stays as written without the blank lines added
-	 * around directives. Each entry holds the text after its comment marker,
-	 * with empty strings for lines inside code fences.
+	 * Returns whether a line stays as written without extra blank lines.
+	 * `lines` keeps the original markers. In `texts`, markers are stripped and
+	 * fenced lines are empty.
 	 */
-	isLineKept: (texts: ReadonlyArray<string>, index: number) => boolean;
+	isLineKept: (
+		texts: ReadonlyArray<string>,
+		index: number,
+		lines: ReadonlyArray<string>
+	) => boolean;
 	/**
 	 * Returns whether a word would read as markup at the start of a line. The
 	 * formatter checks list markers and code fence markers separately.
@@ -42,6 +48,11 @@ export type CommentSyntax = {
 	 * on its own.
 	 */
 	isUnsafeParagraphStart: (line: string) => boolean;
+	/**
+	 * Returns whether the rendered lines change the meaning of the paragraph or
+	 * list item. If so, the formatter keeps its original lines.
+	 */
+	isUnsafeReflow?: (lines: ReadonlyArray<string>) => boolean;
 };
 
 export type EditorConfigProperties = Record<string, boolean | number | string>;

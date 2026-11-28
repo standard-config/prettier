@@ -135,7 +135,7 @@ test('keeps directives, pragmas, and `prettier-ignore` markers at the end of the
 test('keeps comments below directives that cover the next line in place', async () => {
 	const input = '# nosemgrep: foo\neval "$bar" # baz\n';
 	const inputBelowTrailingDirective =
-		'foo=bar # pragma: allowlist nextline secret\nbaz=qux # quux\n';
+		'foo=bar # codespell:ignore-next-line wrod\nbaz=qux # quux\n';
 	const inputOnContinuedCommand =
 		'# cspell:disable-next-line\nfoo \\\n  bar # baz\n';
 	const inputBelowIgnoreMarker = '# prettier-ignore\nfoo # bar\n';
@@ -154,12 +154,12 @@ test('keeps comments below directives that cover the next line in place', async 
 	).resolves.toBe(inputBelowIgnoreMarker);
 });
 
-test('moves comments on branch lines below directives that cover the next line', async () => {
+test('keeps comments on branch lines below directives that cover the next line', async () => {
 	const input =
 		'if foo; then\n  bar\n# cspell:disable-next-line\nelif baz; then # qux\n  quux\nfi\n';
 
 	await expect(moveTrailingComments(input, OPTIONS, reprint)).resolves.toBe(
-		'if foo; then\n  bar\n# cspell:disable-next-line\nelif baz; then\n  # qux\n  quux\nfi\n'
+		input
 	);
 });
 
@@ -293,16 +293,33 @@ test('moves comments on lines that start with `&&` or `||` above their first lin
 	).resolves.toBe('# baz\n[[ -n "$foo"\n  || -n "$bar" ]]\n');
 });
 
-test('stops reprinting before a pass that adds a comment', async () => {
-	const addComment = async (text: string): Promise<string> => {
-		await Promise.resolve();
-		return `${text}# foo\n`;
-	};
+test.each([
+	{ effect: 'drops', replacement: 'foo\n' },
+	{ effect: 'duplicates', replacement: '# bar\n# bar\nfoo\n' },
+])(
+	'moves the other comment when reprinting $effect one',
+	async ({ replacement }) => {
+		const input = 'foo # bar\nbaz # qux\n';
 
-	await expect(
-		moveTrailingComments('bar # baz\n', OPTIONS, addComment)
-	).resolves.toBe('# baz\nbar\n');
-});
+		const reprintWithFault = async (text: string) => {
+			const output = await reprint(
+				text.replace('# bar\nfoo\n', replacement)
+			);
+			return output;
+		};
+
+		const output = await moveTrailingComments(
+			input,
+			OPTIONS,
+			reprintWithFault
+		);
+
+		expect(output).toBe('foo # bar\n# qux\nbaz\n');
+		await expect(
+			moveTrailingComments(output, OPTIONS, reprintWithFault)
+		).resolves.toBe(output);
+	}
+);
 
 test('keeps comments in place when reprinting puts one back at the end of its line', async () => {
 	const restoreComment = async (): Promise<string> => {

@@ -1,6 +1,7 @@
 import type { ParserOptions } from 'prettier';
 import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import formatCommentBlock from '@standard-config/utilities/format-comment-block';
+import { hasPhysicalNextLineSuppression } from '@standard-config/utilities/line-suppressions';
 import createCommentSyntax from '../create-comment-syntax/index.ts';
 import findComments, {
 	isBelowNextLineDirective,
@@ -62,9 +63,9 @@ export default async function wrapComments(
 			syntax: isBelowDirective
 				? {
 						...syntax,
-						isLineKept: (texts, lineIndex) =>
+						isLineKept: (texts, lineIndex, lines) =>
 							lineIndex === 0 ||
-							syntax.isLineKept(texts, lineIndex),
+							syntax.isLineKept(texts, lineIndex, lines),
 					}
 				: syntax,
 			tabWidth: options.tabWidth,
@@ -82,11 +83,14 @@ export default async function wrapComments(
 
 		// Keep an empty `#` line after a directive that covers the next line,
 		// so the directive doesn’t start covering the code below
+		const lastLine = formattedBlock.at(-1)!;
+
 		if (
 			/^#+[ \t]*$/.test(block.at(-1)!) &&
-			NEXT_LINE_DIRECTIVE_PATTERN.test(
-				formattedBlock.at(-1)!.replace(/^#+[ \t]*/, '')
-			)
+			(hasPhysicalNextLineSuppression(lastLine) ||
+				NEXT_LINE_DIRECTIVE_PATTERN.test(
+					lastLine.replace(/^#+[ \t]*/, '')
+				))
 		) {
 			formattedBlock.push('#');
 		}

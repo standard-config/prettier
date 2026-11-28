@@ -1,5 +1,12 @@
 import type { CommentSyntax } from '@standard-config/utilities/types';
-import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
+import {
+	GITLEAKS_ALLOW_MARKER,
+	NEXT_LINE_DIRECTIVE_PATTERN,
+} from '@standard-config/utilities/constants';
+import {
+	hasPhysicalLineSuppression,
+	hasPhysicalNextLineSuppression,
+} from '@standard-config/utilities/line-suppressions';
 import {
 	DIRECTIVE_PATTERN,
 	IGNORE_MARKER_PATTERN,
@@ -20,6 +27,9 @@ const UNSAFE_LINE_START_PATTERN =
  */
 export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 	return {
+		hasLineSensitiveMarker: (line) =>
+			line.includes(GITLEAKS_ALLOW_MARKER) ||
+			hasPhysicalLineSuppression(line),
 		// Keep blocks with a `#!` line as written in case they hold license
 		// text, as with JavaScript’s `/*! */` comments
 		isBlockKept: (line) =>
@@ -33,15 +43,19 @@ export default function createCommentSyntax(isLeading: boolean): CommentSyntax {
 		// and a comment there stays as written. Scheduler directives stay as
 		// written without empty lines around them, since they often sit in
 		// groups below short comments
-		isLineKept: (texts, index) =>
+		isLineKept: (texts, index, lines) =>
 			NEXT_LINE_DIRECTIVE_PATTERN.test(texts[index]!) ||
 			NEXT_LINE_DIRECTIVE_PATTERN.test(texts[index - 1] ?? '') ||
+			hasPhysicalNextLineSuppression(lines[index - 1] ?? '') ||
 			isSchedulerDirectiveLine(texts, index),
 		isUnsafeLineStart: (word) =>
 			NEXT_LINE_DIRECTIVE_PATTERN.test(word) ||
+			hasPhysicalLineSuppression(`# ${word}`) ||
 			UNSAFE_LINE_START_PATTERN.test(word) ||
 			(isLeading && PRAGMA_PATTERN.test(word)),
 		isUnsafeParagraphStart: () => false,
+		isUnsafeReflow: (lines) =>
+			lines.some((line) => hasPhysicalLineSuppression(line)),
 		marker: '#',
 	};
 }

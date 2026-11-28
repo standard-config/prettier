@@ -78,9 +78,11 @@ When joining a line to a paragraph or collapsing its spaces would create a direc
 
 ### Next-Line Directives
 
-[`NEXT_LINE_DIRECTIVE_PATTERN`](../packages/utilities/src/constants/index.ts) identifies directives whose meaning depends on the line immediately below them, including Semgrep’s `nosemgrep`, detect-secrets’ `pragma: allowlist nextline secret`, and cspell’s `cspell:disable-next-line`.
+Both cspell’s `cspell:disable-next-line` and detect-secrets’ `pragma: allowlist nextline secret` depend on physical source lines. For detect-secrets to recognize a C-style next-line pragma, the line must start with the `/*` opener after any indentation and include the closing `*/`. A bare `* pragma: allowlist nextline secret` continuation can reflow as prose. See the [detect-secrets allowlist matcher](https://github.com/Yelp/detect-secrets/blob/v1.5.0/detect_secrets/filters/allowlist.py#L72-L87).
 
-ShellCheck directives are deliberately excluded from this pattern. `# shellcheck disable=…` continues to apply across intervening comment lines, so moving a comment between the directive and its command doesn’t change the suppression.
+ShellCheck directives are deliberately excluded from the [shared next-line pattern](../packages/utilities/src/constants/index.ts). `# shellcheck disable=…` continues to apply across intervening comment lines, so moving a comment between the directive and its command doesn’t change the suppression.
+
+Semgrep checks a finding’s own line and the line immediately above it for `nosem` or `nosemgrep`, ignoring case. Moving a block comment’s closing `*/` onto its own line can separate a suppression from the code it covers. See [Semgrep’s matcher](https://github.com/semgrep/semgrep/blob/v1.187.0/src/reporting/Nosemgrep.ml#L154-L177).
 
 The shell plugin keeps comments below `# prettier-ignore` in place, as the TypeScript plugin does for its ignore marker. `sh-syntax` still formats the command beneath the marker.
 

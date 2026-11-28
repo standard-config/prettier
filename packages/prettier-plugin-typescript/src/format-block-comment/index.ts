@@ -6,10 +6,22 @@ import formatCommentBlock, {
 	fillCommentText,
 	findFencedLines,
 } from '@standard-config/utilities/format-comment-block';
-import { BLOCK_DIRECTIVE_PATTERN } from '../constants/index.ts';
+import {
+	hasPhysicalLineSuppression,
+	hasPhysicalNextLineSuppression,
+} from '@standard-config/utilities/line-suppressions';
+import {
+	BLOCK_DIRECTIVE_PATTERN,
+	COVERAGE_RANGE_PATTERN,
+} from '../constants/index.ts';
+import {
+	hasLineSensitiveMarker,
+	hasSonarMarker,
+} from '../create-comment-syntax/index.ts';
 
 type BlockCommentOptions = {
 	indentation: string;
+	keepFirstLine?: boolean;
 	printWidth: number;
 	tabWidth: number;
 };
@@ -19,17 +31,33 @@ type Section = {
 	tag?: string;
 };
 
-const DOC_SYNTAX: CommentSyntax = {
-	marker: '*',
+// Vitest strips the comment delimiters before reading these hints
+const COVERAGE_HINT_PATTERN =
+	/^\s*(?:c8|istanbul|v8)\s+ignore\s+(?:else|file|if|next)(?=\W|$)/;
+
+const COVERAGE_HINT_PREFIX_PATTERN = /^(?:c8|istanbul|v8)[ \t]+ignore\b/;
+
+const DOC_SYNTAX = {
+	hasLineSensitiveMarker: hasBlockLineSensitiveMarker,
 	isBlockKept: () => false,
 	isDirective: () => false,
-	isLineKept: isMarkdownBlock,
+	isLineKept: (texts, index, lines) =>
+		hasPhysicalNextLineSuppression(lines[index - 1] ?? '') ||
+		isMarkdownBlock(texts, index),
 	// At the start of a line, these words can turn prose into a block tag,
 	// Markdown quote, heading, or rule
 	isUnsafeLineStart: (word) =>
-		/^(?:#{1,6}$|>|@|[-=]+$|\*{3,}$|_{3,}$)/.test(word),
+		/^(?:#{1,6}$|>|@|[-=]+$|\*{3,}$|_{3,}$)/.test(word) ||
+		hasPhysicalLineSuppression(`* ${word}`),
 	isUnsafeParagraphStart: () => false,
-};
+	isUnsafeReflow: (lines) =>
+		lines.some(
+			(line) =>
+				COVERAGE_RANGE_PATTERN.test(line) ||
+				hasPhysicalLineSuppression(line)
+		),
+	marker: '*',
+} satisfies CommentSyntax;
 
 // Wrapped tag text gets four extra spaces after the usual `* ` prefix,
 // following Google’s JavaScript style guide
@@ -57,6 +85,13 @@ const NAMED_TAGS = new Set([
 const PRAGMA_PATTERN =
 	/^@(?:flow|format|jest-environment|jsx(?:Frag|ImportSource|Runtime)?|noflow|noformat|noprettier|prettier|vitest-environment)\b/;
 
+// v8-to-istanbul reads these markers with the literal `/* ` opener
+const RANGE_OPENER_PATTERN = /^\/\* [cv]8 ignore (?:start|stop)/;
+
+// Deno and TSLint read the directive from the raw comment body
+const RAW_LINT_DIRECTIVE_PATTERN =
+	/^\s*(?:deno-lint-ignore(?=\s|$)|tslint:(?:disable|enable)(?:-(?:line|next-line))?(?=[:\s]|$))/;
+
 // ESLint rule settings can span several lines in a block comment
 const RULE_SETTING_PATTERN = /^eslint(?=[ \t]|$)/;
 
@@ -73,6 +108,9 @@ const TAG_PATTERN = /^@([A-Za-z][\w-]*)(?=[\s{]|$)/;
 const TAG_TEXT_END_PATTERN =
 	/^(?:(?:[*+-]|\d+[).])(?:[ \t]|$)|`{3,}(?!.*`)|~{3,})/;
 
+// v8-to-istanbul also accepts a literal opener followed by this prefix
+const V8_NEXT_OPENER_PATTERN = /^\/\* [cv]8 ignore next/;
+
 /**
  * Formats a block comment on lines of its own, or returns `undefined` when it
  * stays as written.
@@ -83,6 +121,8 @@ export default function formatBlockComment(
 ): string | undefined {
 	const isDocComment = /^\/\*\*(?![*/])/.test(comment);
 	const commentLines = comment.split('\n');
+	const firstLine = commentLines[0]!;
+	const lastLine = commentLines.at(-1)!;
 
 	// Banners keep their rows of `*`, and TypeScript reads a suppression from
 	// the last line of a block comment
@@ -91,9 +131,7 @@ export default function formatBlockComment(
 		comment.startsWith('/***') ||
 		comment.endsWith('**/') ||
 		/@(?:license|preserve)\b/.test(comment) ||
-		/^[ \t]*[*/]*[ \t]*@ts-(?:expect-error|ignore)\b/.test(
-			commentLines.at(-1)!
-		) ||
+		/^[ \t]*[*/]*[ \t]*@ts-(?:expect-error|ignore)\b/.test(lastLine) ||
 		(!isDocComment && commentLines.length === 1) ||
 		commentLines.slice(1).some((line) => !line.trimStart().startsWith('*'))
 	) {
@@ -102,15 +140,70 @@ export default function formatBlockComment(
 
 	const contents = getContents(comment, isDocComment);
 	const firstContent = contents[0]?.trim() ?? '';
+	const rawContent = comment.slice(2, -2);
+	const openerContent = isDocComment ? rawContent.slice(1) : rawContent;
+	const keptOpener =
+		RANGE_OPENER_PATTERN.test(comment) ||
+		hasSonarMarker(rawContent) ||
+		hasPhysicalLineSuppression(firstLine) ||
+		(options.keepFirstLine &&
+			openerContent.split('\n', 1)[0]!.trim() !== '')
+			? firstLine
+			: undefined;
 
-	// Tools read directives at the start of a block comment and pragmas from
-	// any of its lines
+	if (keptOpener !== undefined && commentLines.length === 1) {
+		return undefined;
+	}
+
+	// Reflow can give prose a directive’s spelling on its first rendered line.
+	// Check the raw comment for markers whose readers inspect it directly
 	if (
-		BLOCK_DIRECTIVE_PATTERN.test(firstContent) ||
+		rawContent.trim() === 'prettier-ignore' ||
+		RAW_LINT_DIRECTIVE_PATTERN.test(rawContent) ||
+		COVERAGE_HINT_PATTERN.test(openerContent) ||
+		V8_NEXT_OPENER_PATTERN.test(comment) ||
+		(keptOpener === undefined &&
+			BLOCK_DIRECTIVE_PATTERN.test(firstContent) &&
+			firstContent !== 'prettier-ignore' &&
+			!COVERAGE_HINT_PREFIX_PATTERN.test(firstContent) &&
+			COVERAGE_RANGE_PATTERN.exec(firstContent)?.index !== 0) ||
 		RULE_SETTING_PATTERN.test(firstContent) ||
 		contents.some((content) => PRAGMA_PATTERN.test(content.trimStart()))
 	) {
 		return undefined;
+	}
+
+	// Moving the closer can change how a tool reads or applies a suppression
+	const keptCloser =
+		hasPhysicalLineSuppression(lastLine) ||
+		(lastLine
+			.slice(0, -2)
+			.replace(/^[ \t]*\*/, '')
+			.trim() !== '' &&
+			hasPhysicalNextLineSuppression(commentLines.at(-2) ?? ''))
+			? ` ${lastLine.trimStart()}`
+			: undefined;
+
+	if (keptCloser !== undefined) {
+		contents.pop();
+
+		if (contents.length === 0) {
+			return undefined;
+		}
+	}
+
+	const lines: string[] = [];
+
+	if (keptOpener !== undefined) {
+		contents.shift();
+
+		if (contents.every((content) => content === '')) {
+			return undefined;
+		}
+
+		if (contents[0] === '') {
+			lines.push('*');
+		}
 	}
 
 	const blockOptions: CommentBlockOptions = {
@@ -123,29 +216,60 @@ export default function formatBlockComment(
 	const sections = isDocComment
 		? splitSections(contents)
 		: [{ lines: contents }];
-	const lines: string[] = [];
 
 	for (const [index, section] of sections.entries()) {
 		const previousSection = sections[index - 1];
+		const previousLine = previousSection
+			? toCommentLine(previousSection.lines.at(-1)!)
+			: (keptOpener ?? '');
+		const followsSuppression = hasPhysicalNextLineSuppression(previousLine);
 
-		if (previousSection && section.tag !== previousSection.tag) {
+		if (
+			previousSection &&
+			section.tag !== previousSection.tag &&
+			lines.at(-1) !== '*' &&
+			!followsSuppression
+		) {
 			lines.push('*');
 		}
 
-		lines.push(...formatSection(section, blockOptions));
+		lines.push(...formatSection(section, blockOptions, followsSuppression));
+
+		if (
+			section.lines.at(-1) === '' &&
+			hasPhysicalNextLineSuppression(
+				toCommentLine(section.lines.findLast((line) => line !== '')!)
+			)
+		) {
+			lines.push('*');
+		}
+	}
+
+	if (
+		keptCloser !== undefined &&
+		contents.at(-1) === '' &&
+		lines.at(-1) !== '*'
+	) {
+		lines.push('*');
 	}
 
 	return [
-		isDocComment ? '/**' : '/*',
+		keptOpener ?? (isDocComment ? '/**' : '/*'),
 		...(lines.length > 0 ? lines : ['*']).map((line) => ` ${line}`),
-		' */',
+		keptCloser ?? ' */',
 	].join('\n');
 }
 
 /**
- * Returns comment text without the markers, gutter, or following space,
- * omitting leading and trailing blank lines. Other whitespace-only lines become
- * empty strings.
+ * Checks for a suppression or coverage marker that must stay with its line.
+ */
+function hasBlockLineSensitiveMarker(line: string): boolean {
+	return hasLineSensitiveMarker(line) || hasPhysicalLineSuppression(line);
+}
+
+/**
+ * Strips comment delimiters and gutters, leaving blank lines as empty strings.
+ * Trims outer blank lines except for a trailing line covered by a suppression.
  */
 function getContents(comment: string, isDocComment: boolean): string[] {
 	const contents = comment
@@ -163,7 +287,15 @@ function getContents(comment: string, isDocComment: boolean): string[] {
 		contents.shift();
 	}
 
-	while (contents.at(-1) === '') {
+	// Drop the closer’s empty line before checking for a suppressed blank line
+	if (contents.at(-1) === '') {
+		contents.pop();
+	}
+
+	while (
+		contents.at(-1) === '' &&
+		!hasPhysicalNextLineSuppression(toCommentLine(contents.at(-2)!))
+	) {
 		contents.pop();
 	}
 
@@ -237,10 +369,15 @@ function isInTable(texts: ReadonlyArray<string>, index: number): boolean {
  */
 function formatSection(
 	{ lines: contents, tag }: Section,
-	options: CommentBlockOptions
+	options: CommentBlockOptions,
+	followsSuppression: boolean
 ): string[] {
 	if (tag === undefined) {
-		return formatCommentBlock(toCommentLines(contents), options);
+		return formatBody(
+			toCommentLines(contents),
+			options,
+			followsSuppression
+		);
 	}
 
 	const [tagLine = '', ...rest] = contents;
@@ -285,26 +422,41 @@ function formatSection(
 	}
 
 	const restTexts = rest.map((line) => line.trim());
-	const paragraphEnd = restTexts.findIndex(
-		(text, index) =>
-			text === '' ||
-			isMarkdownBlock(restTexts, index) ||
-			TAG_TEXT_END_PATTERN.test(text)
-	);
+	const restLines = toCommentLines(rest);
+	const firstLine = toCommentLine(tagLine);
+	const firstLineKept =
+		followsSuppression || hasBlockLineSensitiveMarker(firstLine);
+	const paragraphEnd = firstLineKept
+		? 0
+		: restTexts.findIndex(
+				(text, index) =>
+					text === '' ||
+					hasBlockLineSensitiveMarker(restLines[index]!) ||
+					DOC_SYNTAX.isLineKept(restTexts, index, restLines) ||
+					TAG_TEXT_END_PATTERN.test(text)
+			);
 	const paragraph = paragraphEnd === -1 ? rest : rest.slice(0, paragraphEnd);
 	const remainder = paragraphEnd === -1 ? [] : rest.slice(paragraphEnd);
 
 	const [prefix, text] = splitTagText(tag, tagText);
+	const formatted = fillCommentText(
+		[text, ...paragraph.map((line) => line.trim())].join(' ').trim(),
+		prefix === '' ? `* @${tag} ` : `* @${tag} ${prefix} `,
+		`*${HANGING_INDENT} `,
+		options
+	);
 
 	return [
-		...fillCommentText(
-			[text, ...paragraph.map((line) => line.trim())].join(' ').trim(),
-			prefix === '' ? `* @${tag} ` : `* @${tag} ${prefix} `,
-			`*${HANGING_INDENT} `,
-			options
-		),
+		...(firstLineKept || DOC_SYNTAX.isUnsafeReflow(formatted)
+			? toCommentLines([tagLine, ...paragraph])
+			: formatted),
 		...(remainder.some((line) => line !== '')
-			? formatHangingBlock(remainder, options)
+			? formatHangingBlock(
+					remainder,
+					options,
+					paragraphEnd === 0 &&
+						hasPhysicalNextLineSuppression(firstLine)
+				)
 			: []),
 	];
 }
@@ -315,7 +467,8 @@ function formatSection(
  */
 function formatHangingBlock(
 	contents: ReadonlyArray<string>,
-	options: CommentBlockOptions
+	options: CommentBlockOptions,
+	followsSuppression: boolean
 ): string[] {
 	const nonEmptyContents = contents.filter((content) => content !== '');
 	const indentedCount = nonEmptyContents.filter((content) =>
@@ -330,7 +483,7 @@ function formatHangingBlock(
 
 	// Lines that all have the hanging indent lose it while they’re formatted,
 	// keeping nested lists and fenced code indented relative to each other
-	const lines = formatCommentBlock(
+	const lines = formatBody(
 		toCommentLines(
 			indentedCount > 0
 				? contents.map((content) =>
@@ -338,7 +491,8 @@ function formatHangingBlock(
 					)
 				: contents
 		),
-		{ ...options, indentation: options.indentation + HANGING_INDENT }
+		{ ...options, indentation: options.indentation + HANGING_INDENT },
+		followsSuppression
 	);
 
 	// Formatting removes the empty line that can separate these lines from the
@@ -358,13 +512,38 @@ function formatHangingBlock(
  * `*` alone.
  */
 function toCommentLines(texts: ReadonlyArray<string>): string[] {
-	return texts.map((text) => {
-		if (text === '') {
-			return '*';
-		}
+	return texts.map(toCommentLine);
+}
 
-		// A tab after the gutter stays in place of the space
-		return text.startsWith('\t') ? `*${text}` : `* ${text}`;
+/**
+ * Adds the block comment gutter while preserving a tab after it.
+ */
+function toCommentLine(text: string): string {
+	if (text === '') {
+		return '*';
+	}
+
+	return text.startsWith('\t') ? `*${text}` : `* ${text}`;
+}
+
+/**
+ * Reflows a body and preserves its first line when it follows a suppression.
+ */
+function formatBody(
+	lines: ReadonlyArray<string>,
+	options: CommentBlockOptions,
+	followsSuppression: boolean
+): string[] {
+	const { syntax } = options;
+	return formatCommentBlock(lines, {
+		...options,
+		syntax: followsSuppression
+			? {
+					...syntax,
+					isLineKept: (texts, index, lines) =>
+						index === 0 || syntax.isLineKept(texts, index, lines),
+				}
+			: syntax,
 	});
 }
 

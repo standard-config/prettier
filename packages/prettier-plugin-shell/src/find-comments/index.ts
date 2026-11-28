@@ -1,6 +1,7 @@
 import type { ParserOptions } from 'prettier';
 import { NEXT_LINE_DIRECTIVE_PATTERN } from '@standard-config/utilities/constants';
 import createMarkPrefix from '@standard-config/utilities/create-mark-prefix';
+import { hasPhysicalNextLineSuppression } from '@standard-config/utilities/line-suppressions';
 import { MARK_PREFIX } from '../constants/index.ts';
 import printWithoutComments from '../print-without-comments/index.ts';
 
@@ -127,8 +128,7 @@ export default async function findComments(
 }
 
 /**
- * Returns whether the preceding line’s comment text starts with a directive
- * that covers the given line.
+ * Checks whether a directive on the preceding line covers this line.
  */
 export function isBelowNextLineDirective(
 	lines: ReadonlyArray<string>,
@@ -141,9 +141,10 @@ export function isBelowNextLineDirective(
 		: trailing.get(index - 1);
 
 	return (
-		column !== undefined &&
-		NEXT_LINE_DIRECTIVE_PATTERN.test(
-			lineAbove.slice(column).replace(/^#+[ \t]*/, '')
-		)
+		hasPhysicalNextLineSuppression(lineAbove) ||
+		(column !== undefined &&
+			NEXT_LINE_DIRECTIVE_PATTERN.test(
+				lineAbove.slice(column).replace(/^#+[ \t]*/, '')
+			))
 	);
 }
