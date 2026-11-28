@@ -43,7 +43,7 @@ const BASE_CONFIG: StandardConfig = {
 		},
 		{
 			files: GLOB_SET_JSON,
-			excludeFiles: ['package.json'],
+			excludeFiles: createGlobSet('package.json', GLOB_SET_YAML),
 			options: {
 				plugins: [
 					'prettier-plugin-sort-json',

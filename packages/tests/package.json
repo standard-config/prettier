@@ -22,6 +22,7 @@
 	"scripts": {
 		"fixtures:scramble": "prettier --config fixtures/config.mts --write fixtures",
 		"fixtures:unscramble": "pnpm prettier --config prettier.config.ts --write fixtures",
+		"test": "vp test",
 		"test:fixtures": "node bin/check-inferred-parsers.ts && pnpm run --sequential '/^fixtures:/' && git diff --exit-code -- fixtures",
 		"typecheck": "tsc --noEmit"
 	}
