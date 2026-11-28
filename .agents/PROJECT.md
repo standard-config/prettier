@@ -8,7 +8,7 @@ This document records constraints, durable facts, maintenance decisions, and rat
 
 The JSON and `package.json` overrides deliberately omit the shell and TypeScript plugins. Prettier checks every option in effect for a file against its active plugins. That includes options from earlier matching overrides, such as the Markdown override’s `shUseTabs` setting.
 
-When an override supplies a `plugins` list, even an empty one, the config prepends a plugin that declares the shell options (`sh*`) and `tsCommentWrap`. This prevents unknown option warnings when the list replaces the global plugins. Prettier uses the last declaration of each option, so the override’s own plugins take precedence. See [`transformConfig`](../packages/prettier/src/transform-config/index.ts).
+When an override supplies a `plugins` list, even an empty one, the config prepends a plugin containing the option definitions from every plugin Standard Config ships. Prettier can then recognize those options when the list replaces the global plugins. Prettier uses the last declaration of each option, so the override’s own plugins take precedence. See [`transformConfig`](../packages/prettier/src/transform-config/index.ts).
 
 ### Oxc Parser Inference
 

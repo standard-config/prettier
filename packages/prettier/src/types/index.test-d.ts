@@ -15,4 +15,7 @@ test('exposes valid types', () => {
 	expectTypeOf<StandardOptions>()
 		.toHaveProperty('shUseTabs')
 		.toEqualTypeOf<boolean | undefined>();
+	expectTypeOf<StandardOptions>()
+		.toHaveProperty('tsCommentWrap')
+		.toEqualTypeOf<'all' | 'full-line' | 'none' | undefined>();
 });

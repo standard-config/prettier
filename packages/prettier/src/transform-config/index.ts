@@ -1,44 +1,42 @@
+import type { PrettierPlugins } from '@standard-config/utilities/types';
 import type {
-	PrettierPlugin,
-	PrettierPlugins,
-} from '@standard-config/utilities/types';
-import type {
+	Plugin,
 	Config as PrettierConfig,
 	Options as PrettierOptions,
 } from 'prettier';
 import type { StandardConfig, StandardOptions } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import { fileURLToPath } from 'node:url';
+import * as pluginExpandJSON from 'prettier-plugin-expand-json';
+import * as pluginMarkdownHTML from 'prettier-plugin-markdown-html';
+import * as pluginPkg from 'prettier-plugin-pkg';
 import * as pluginShell from 'prettier-plugin-shell';
+import * as pluginSortJSON from 'prettier-plugin-sort-json';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
+import * as pluginYAML from 'prettier-plugin-yaml';
 
 /**
- * Declares the shell and TypeScript plugins’ options so Prettier recognizes
- * them when an override supplies its own `plugins` list.
+ * Maps shipped plugin names to their options and modules or absolute paths.
  */
-const OPTIONS_PLUGIN: PrettierPlugin = {
-	options: {
-		...pluginShell.options,
-		...pluginTypeScript.options,
-	},
-};
-
-/**
- * Maps known plugin names to absolute paths or imported modules so Prettier can
- * load them without resolving their names from the consuming project.
- */
-const PLUGINS = new Map<string, PrettierPlugin>([
-	...[
-		'prettier-plugin-expand-json',
-		'prettier-plugin-markdown-html',
-		'prettier-plugin-pkg',
-		'prettier-plugin-sort-json',
-		'prettier-plugin-yaml',
-	].map((name) => [name, transformPlugin(name)] as const),
-	// Private plugins
-	['prettier-plugin-shell', pluginShell],
-	['prettier-plugin-typescript', pluginTypeScript],
+const PLUGINS = new Map([
+	registerPlugin('prettier-plugin-expand-json', pluginExpandJSON),
+	registerPlugin('prettier-plugin-markdown-html', pluginMarkdownHTML),
+	registerPlugin('prettier-plugin-pkg', pluginPkg),
+	registerPlugin('prettier-plugin-shell', pluginShell, true),
+	registerPlugin('prettier-plugin-sort-json', pluginSortJSON),
+	registerPlugin('prettier-plugin-typescript', pluginTypeScript, true),
+	registerPlugin('prettier-plugin-yaml', pluginYAML),
 ]);
+
+/**
+ * Declares the shipped plugins’ options so an override can replace the plugin
+ * list without losing option definitions or inheriting parsers and printers.
+ */
+const OPTIONS_PLUGIN = { options: {} } satisfies Plugin;
+
+for (const { options } of PLUGINS.values()) {
+	Object.assign(OPTIONS_PLUGIN.options, options);
+}
 
 /**
  * Converts Standard Config to an exportable, Prettier-compatible format.
@@ -80,7 +78,7 @@ function transformOptions(
 				...fallbackPlugins,
 				...plugins.map((plugin) =>
 					typeof plugin === 'string'
-						? (PLUGINS.get(plugin) ?? plugin)
+						? (PLUGINS.get(plugin)?.plugin ?? plugin)
 						: plugin
 				),
 			],
@@ -100,8 +98,21 @@ function transformJSONSortOrder(jsonSortOrder: string | string[]): string {
 }
 
 /**
- * Returns the path to a plugin that this package depends on.
+ * Reads options from the same export Prettier would load. An absolute path lets
+ * Prettier load an external plugin from Standard Config’s dependencies.
  */
-function transformPlugin(plugin: string): string {
-	return fileURLToPath(import.meta.resolve(plugin));
+function registerPlugin(
+	name: string,
+	module: Plugin & { default?: Plugin },
+	bundled = false
+) {
+	const plugin = module.default ?? module;
+
+	return [
+		name,
+		{
+			options: plugin.options,
+			plugin: bundled ? plugin : fileURLToPath(import.meta.resolve(name)),
+		},
+	] as const;
 }

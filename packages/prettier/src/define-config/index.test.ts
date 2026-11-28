@@ -2,7 +2,7 @@ import type { Config as PrettierConfig } from 'prettier';
 import { mkdtempDisposableSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { getFileInfo, getSupportInfo } from 'prettier';
+import { getFileInfo } from 'prettier';
 import * as pluginShell from 'prettier-plugin-shell';
 import * as pluginTypeScript from 'prettier-plugin-typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
@@ -111,27 +111,4 @@ test('supports custom config options', () => {
 	expect(result).toHaveProperty('shTabWidth', 4);
 	expect(result).toHaveProperty('shUseTabs', true);
 	expect(result).toHaveProperty('tsCommentWrap', 'none');
-});
-
-test('supports custom config options where overrides replace `plugins`', async () => {
-	const { overrides = [] } = defineConfig();
-
-	const pluginLists = overrides.flatMap((override) =>
-		override.options?.plugins ? [override.options.plugins] : []
-	);
-
-	expect(pluginLists).not.toHaveLength(0);
-
-	for (const plugins of pluginLists) {
-		const { options } = await getSupportInfo({ plugins });
-
-		expect(options.map((option) => option.name)).toStrictEqual(
-			expect.arrayContaining([
-				'shCommentWrap',
-				'shTabWidth',
-				'shUseTabs',
-				'tsCommentWrap',
-			])
-		);
-	}
 });

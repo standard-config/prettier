@@ -9,20 +9,23 @@ import { expect, test } from 'vite-plus/test';
 const PRETTIER_BIN = fileURLToPath(
 	import.meta.resolve('prettier/bin/prettier.cjs')
 );
+const TEST_YAML = '{ foo: bar }\n';
 const execFileAsync = promisify(execFile);
 
 async function runPrettier(path: string, input: string) {
+	const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1' };
+	delete env.FORCE_COLOR;
 	writeFileSync(path, input);
 
-	return execFileAsync(process.execPath, [PRETTIER_BIN, path]);
+	return execFileAsync(process.execPath, [PRETTIER_BIN, path], { env });
 }
 
-function writeConfig(directory: string): void {
+function writeConfig(directory: string, options: object = {}): void {
 	const entry = new URL('../../prettier/src/index.ts', import.meta.url).href;
 	writeFileSync(
 		join(directory, 'prettier.config.mjs'),
 		`import { defineConfig } from ${JSON.stringify(entry)};
-export default defineConfig();
+export default defineConfig(${JSON.stringify(options)});
 `
 	);
 }
@@ -58,3 +61,73 @@ test.each([
 		expect(secondPass).toBe(output);
 	}
 );
+
+test.each(['foo.json', 'package.json'])(
+	'recognizes options from inactive shipped plugins when formatting `%s`',
+	async (filepath) => {
+		using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+		writeConfig(directory.path, {
+			htmlFragmentPrintWidth: 40,
+			jsonSortArrays: true,
+			packageIgnoreSort: ['foo'],
+			shUseTabs: false,
+			tsCommentWrap: 'none',
+			yamlCollectionStyle: 'block',
+		});
+		const path = join(directory.path, filepath);
+		const input = '{"name":"foo"}';
+
+		const { stderr, stdout } = await runPrettier(path, input);
+
+		expect(stderr).toBe('');
+		expect(stdout).toBe('{\n\t"name": "foo"\n}\n');
+		const { stdout: secondPass } = await runPrettier(path, stdout);
+		expect(secondPass).toBe(stdout);
+	}
+);
+
+test('recognizes shipped options and warns about unknown options with an empty replacement list', async () => {
+	using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+	writeConfig(directory.path, {
+		overrides: [
+			{
+				files: ['foo.yaml'],
+				options: { plugins: [], unknownPluginOption: true },
+			},
+		],
+	});
+	const path = join(directory.path, 'foo.yaml');
+
+	const { stderr, stdout } = await runPrettier(path, TEST_YAML);
+
+	expect(stderr).toBe(
+		'[warn] Ignored unknown option { unknownPluginOption: true }.\n'
+	);
+	expect(stdout).toBe(TEST_YAML);
+});
+
+test('uses the option declaration from a plugin resolved relative to the consumer config', async () => {
+	using directory = mkdtempDisposableSync(join(tmpdir(), 'foo-'));
+	writeFileSync(
+		join(directory.path, 'foo.mjs'),
+		`
+export const options = {
+	yamlCollectionStyle: { category: 'YAML', type: 'choice', choices: [{ value: 'foo' }] },
+};
+`
+	);
+	writeConfig(directory.path, {
+		overrides: [
+			{
+				files: ['foo.yaml'],
+				options: { plugins: ['./foo.mjs'], yamlCollectionStyle: 'foo' },
+			},
+		],
+	});
+	const path = join(directory.path, 'foo.yaml');
+
+	const { stderr, stdout } = await runPrettier(path, TEST_YAML);
+
+	expect(stderr).toBe('');
+	expect(stdout).toBe(TEST_YAML);
+});

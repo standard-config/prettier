@@ -2,15 +2,11 @@ import type { Plugin, Config as PrettierConfig } from 'prettier';
 import type { StandardConfig } from '../types/index.d.ts';
 import prioritizeKeys from '@standard-config/utilities/prioritize-keys';
 import * as pluginShell from 'prettier-plugin-shell';
-import * as pluginTypeScript from 'prettier-plugin-typescript';
 import { expect, expectTypeOf, test } from 'vite-plus/test';
 import transformConfig from './index.ts';
 
 const OPTIONS_PLUGIN = {
-	options: {
-		...pluginShell.options,
-		...pluginTypeScript.options,
-	},
+	options: expect.any(Object),
 };
 
 test('returns a Prettier config', () => {
@@ -169,7 +165,7 @@ test('keeps plugin objects as provided', () => {
 	expect(result.plugins?.[0]).toBe(plugin);
 });
 
-test('declares shell and TypeScript options in overrides that set `plugins`', () => {
+test('prepends only option definitions in overrides that set `plugins`', () => {
 	const config = {
 		plugins: ['prettier-plugin-foo'],
 		overrides: [
