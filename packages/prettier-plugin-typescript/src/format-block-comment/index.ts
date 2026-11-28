@@ -54,7 +54,8 @@ const DOC_SYNTAX = {
 		lines.some(
 			(line) =>
 				COVERAGE_RANGE_PATTERN.test(line) ||
-				hasPhysicalLineSuppression(line)
+				hasPhysicalLineSuppression(line) ||
+				THEMATIC_BREAK_PATTERN.test(line.replace(/^\*[ \t]*/, ''))
 		),
 	marker: '*',
 } satisfies CommentSyntax;
@@ -107,6 +108,10 @@ const TAG_PATTERN = /^@([A-Za-z][\w-]*)(?=[\s{]|$)/;
 // A list item or a code fence ends the first paragraph of a tag’s text
 const TAG_TEXT_END_PATTERN =
 	/^(?:(?:[*+-]|\d+[).])(?:[ \t]|$)|`{3,}(?!.*`)|~{3,})/;
+
+// A thematic break uses matching markers and can start inside a list item
+const THEMATIC_BREAK_PATTERN =
+	/^(?:(?:[*+-]|\d{1,9}[.)])[ \t]+)*?([*_-])(?:[ \t]*\1){2,}[ \t]*$/;
 
 // v8-to-istanbul also accepts a literal opener followed by this prefix
 const V8_NEXT_OPENER_PATTERN = /^\/\* [cv]8 ignore next/;
@@ -336,6 +341,7 @@ function isMarkdownBlock(texts: ReadonlyArray<string>, index: number): boolean {
 	// outside a table
 	return (
 		MARKDOWN_BLOCK_PATTERN.test(text) ||
+		THEMATIC_BREAK_PATTERN.test(text) ||
 		text.replaceAll(/`[^`]*`|\{@[^}]*\}/g, '').includes('|') ||
 		isInTable(texts, index)
 	);
@@ -421,11 +427,15 @@ function formatSection(
 		return toCommentLines([tagLine, ...rest]);
 	}
 
+	const [prefix, text] = splitTagText(tag, tagText);
+	const tagPrefix = prefix === '' ? `* @${tag} ` : `* @${tag} ${prefix} `;
 	const restTexts = rest.map((line) => line.trim());
 	const restLines = toCommentLines(rest);
 	const firstLine = toCommentLine(tagLine);
 	const firstLineKept =
-		followsSuppression || hasBlockLineSensitiveMarker(firstLine);
+		followsSuppression ||
+		hasBlockLineSensitiveMarker(firstLine) ||
+		THEMATIC_BREAK_PATTERN.test(text);
 	const paragraphEnd = firstLineKept
 		? 0
 		: restTexts.findIndex(
@@ -438,16 +448,17 @@ function formatSection(
 	const paragraph = paragraphEnd === -1 ? rest : rest.slice(0, paragraphEnd);
 	const remainder = paragraphEnd === -1 ? [] : rest.slice(paragraphEnd);
 
-	const [prefix, text] = splitTagText(tag, tagText);
 	const formatted = fillCommentText(
 		[text, ...paragraph.map((line) => line.trim())].join(' ').trim(),
-		prefix === '' ? `* @${tag} ` : `* @${tag} ${prefix} `,
+		tagPrefix,
 		`*${HANGING_INDENT} `,
 		options
 	);
 
 	return [
-		...(firstLineKept || DOC_SYNTAX.isUnsafeReflow(formatted)
+		...(firstLineKept ||
+		DOC_SYNTAX.isUnsafeReflow(formatted) ||
+		THEMATIC_BREAK_PATTERN.test(formatted[0]!.slice(tagPrefix.length))
 			? toCommentLines([tagLine, ...paragraph])
 			: formatted),
 		...(remainder.some((line) => line !== '')

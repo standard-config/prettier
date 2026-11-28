@@ -1937,6 +1937,41 @@ foo();
 	}
 );
 
+test.each(JAVASCRIPT_PARSER_NAMES)(
+	'reflows prose without creating Markdown thematic breaks with the `%s` parser',
+	async (parser) => {
+		const input = `/**
+ * foo bar corge _ _ _ continuation
+ *
+ * qux quux baz _ _ _ then grault
+ *
+ * _ _ _
+ *
+ * garply   waldo
+ */
+foo();
+`;
+		const options = { parser, plugins: [pluginTypeScript], printWidth: 16 };
+
+		const output = await format(input, options);
+
+		expect(output).toBe(`/**
+ * foo bar corge _ _ _ continuation
+ *
+ * qux quux baz
+ * _ _ _ then
+ * grault
+ *
+ * _ _ _
+ *
+ * garply waldo
+ */
+foo();
+`);
+		await expect(format(output, options)).resolves.toBe(output);
+	}
+);
+
 test.each(OXC_CASES)(
 	'formats $group cases with comment reflow like the built-in parser with the `$parser` parser: $input',
 	async ({ input, parser }) => {

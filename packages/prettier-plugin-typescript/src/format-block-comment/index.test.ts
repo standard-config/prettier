@@ -607,6 +607,53 @@ test('keeps words that would start a Markdown block with the word before them', 
 	);
 });
 
+test('keeps prose from wrapping into standalone thematic breaks', () => {
+	const options = { printWidth: 16 };
+	const input = '/**\n * foo bar corge _ _ _ continuation\n */';
+	const inputWithBreakAtStart = '/**\n * _ _ _ continuation\n */';
+	const inputWithBreakAtEnd = '/**\n * foo bar corge _ _ _\n */';
+	const inputWithAsterisks = '/**\n * foo bar corge ** * continuation\n */';
+
+	expect(formatComment(input, options)).toBe(input);
+	expect(formatComment(inputWithBreakAtStart, options)).toBe(
+		inputWithBreakAtStart
+	);
+	expect(formatComment(inputWithBreakAtEnd, options)).toBe(
+		inputWithBreakAtEnd
+	);
+	expect(formatComment(inputWithAsterisks, options)).toBe(inputWithAsterisks);
+});
+
+test('keeps list items from wrapping into thematic breaks', () => {
+	const input = '/**\n * - foo bar corge _ _ _ continuation\n */';
+	const inputWithNestedList = '/**\n * 1. - _ _ _ continuation\n */';
+
+	expect(formatComment(input, { printWidth: 18 })).toBe(input);
+	expect(formatComment(inputWithNestedList, { printWidth: 16 })).toBe(
+		inputWithNestedList
+	);
+});
+
+test('keeps an existing thematic break in a nested list', () => {
+	const input = '/**\n * 1. - _ _ _\n */';
+
+	expect(formatComment(input, { printWidth: 9 })).toBe(input);
+});
+
+test('preserves thematic breaks and prose in tag descriptions', () => {
+	const input = '/**\n * @returns _ _ _ continuation text\n */';
+	const inputWithContinuation =
+		'/**\n * @returns foo bar corge foo bar _ _ _ continuation\n */';
+
+	expect(formatComment(input, { printWidth: 19 })).toBe(input);
+	expect(formatComment(inputWithContinuation, { printWidth: 21 })).toBe(
+		inputWithContinuation
+	);
+	expect(formatComment('/**\n * @returns _ _ _\n * foo   bar\n */')).toBe(
+		'/**\n * @returns _ _ _\n *     foo bar\n */'
+	);
+});
+
 test('keeps doc comments with a pragma on any line as written', () => {
 	expect(formatComment('/** @format */')).toBeUndefined();
 	expect(
